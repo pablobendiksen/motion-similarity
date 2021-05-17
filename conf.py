@@ -4,7 +4,7 @@ data_pipe_file = 'models/pipeline.sav'
 pdist_model_file = 'models/pdist.h5'
 
 
-synthetic_data_folder = "../PERFORM/out/effort/"
+synthetic_data_folder = "data/effort/"
 synthetic_data_pipe_file = 'models/pipeline_synthetic.sav'
 all_synthetic_motions_file = 'data/all_synthetic_motions_effort.csv'
 
