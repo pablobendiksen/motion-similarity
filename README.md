@@ -34,10 +34,10 @@ Free: Uncontrolled, abandoned, unlimited
 Bound: Careful, controlled, restrained Human beings exhibit a variety of Effort combinations. 
 
 The Efforts are on a continuum between two ends:  
-Indirect (-)<--> Direct (+) 
-Light (-) <--> Strong (+) 
-Sustained (-) <--> Sudden (+) 
-Free (-) <--> Bound (+) 
+Indirect (-)<--> Direct (+)   
+Light (-) <--> Strong (+)  
+Sustained (-) <--> Sudden (+)  
+Free (-) <--> Bound (+)  
 
 Single Effort elements and combinations of all four Efforts are highly unlikely, and they appear only in extreme cases. In our daily lives, we tend to use Effort in combinations of 2 (States) or 3 (Drives). States are more ordinary and common in everyday usage, whereas Drives are reserved for extraordinary moments in life. We have more intense feelings in these distinctive moments, therefore, they convey more information about our personality.
 
