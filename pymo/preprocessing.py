@@ -8,8 +8,9 @@ import copy
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
-
 from pymo.rotation_tools import Rotation
+import warnings
+
 
 class MocapParameterizer(BaseEstimator, TransformerMixin):
     def __init__(self, param_type = 'euler'):
@@ -406,7 +407,14 @@ class RootTransformer(BaseEstimator, TransformerMixin):
         Q = []
 
         for track in X:
+            print(f'Type of track: {type(track)}')
+            print(f"skeleton (track.skeleton): {track.skeleton}")
+            print(f"skeleton segments order (track.values.columns): {track.values.columns}")
+            # for count, col in enumerate(track.values.columns):
+            #     print(f"index, column: {count}, {col}")
+            #     # print(f"track columns by index: {track.values.columns}\ncolumns len: {len(track.values.columns)}")
             if self.method == 'absolute_translation_deltas':
+                # calculates deltas for x and z position segments of root
                 new_df = track.values.copy()
                 xpcol = '%s_Xposition'%track.root_name
                 ypcol = '%s_Yposition'%track.root_name
@@ -432,6 +440,7 @@ class RootTransformer(BaseEstimator, TransformerMixin):
             # end of absolute_translation_deltas
             
             elif self.method == 'pos_rot_deltas':
+                # calculates deltas for x and z position segments of root as well as for x,y,z rotations of root
                 new_track = track.clone()
 
                 # Absolute columns
@@ -479,12 +488,21 @@ class RootTransformer(BaseEstimator, TransformerMixin):
                 new_df[dzr_col] = root_rot_z_diff
 
                 new_track.values = new_df
+            print(f"preprocessed skeleton (RootTransformer) segments order (new_df.columns): {new_df.columns}")
+            # for count, col in enumerate(new_df.columns):
+            #     print(f"index, column: {count}, {col}")
+            print(f"parsed bvh (RootTransformer) columns check:\n {new_df[['LeftFoot_Yrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Zrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Xrotation']].iloc[0:10]}")
 
+            row_first = new_df.iloc[0]
+            # for count, value in enumerate(row_first):
+            #     for inner_count, inner_value in enumerate(zip(value, self.data_mean_, self.data_std_)):
+            #         print(f"index: {inner_count}, norm_value: {inner_value[0]} with associated mean {inner_value[1]} and std dev {inner_value[2]}")
             Q.append(new_track)
 
         return Q
 
     def inverse_transform(self, X, copy=None, start_pos=None):
+        print("inverse_transform() called")
         Q = []
 
         #TODO: simplify this implementation
@@ -605,6 +623,7 @@ class RootCentricPositionNormalizer(BaseEstimator, TransformerMixin):
         Q = []
 
         for track in X:
+            # new_df = track.values.copy()
             new_track = track.clone()
 
             rxp = '%s_Xposition'%track.root_name
@@ -619,6 +638,8 @@ class RootCentricPositionNormalizer(BaseEstimator, TransformerMixin):
 
             all_but_root = [joint for joint in track.skeleton if track.root_name not in joint]
             # all_but_root = [joint for joint in track.skeleton]
+            print(f"all but root: {all_but_root}")
+            print(f"skeleton segments orders: {track.values.columns}")
             for joint in all_but_root:                
                 new_df['%s_Xposition'%joint] = pd.Series(data=track.values['%s_Xposition'%joint]-projected_root_pos[rxp], index=new_df.index)
                 new_df['%s_Yposition'%joint] = pd.Series(data=track.values['%s_Yposition'%joint]-projected_root_pos[ryp], index=new_df.index)
@@ -720,57 +741,72 @@ class ConstantsRemover(BaseEstimator, TransformerMixin):
         return Q
 
 class ListStandardScaler(BaseEstimator, TransformerMixin):
-    def __init__(self, is_DataFrame=False):
-        self.is_DataFrame = is_DataFrame
-    
-    def fit(self, X, y=None):
-        if self.is_DataFrame:
-            X_train_flat = np.concatenate([m.values for m in X], axis=0)
-        else:
-            X_train_flat = np.concatenate([m for m in X], axis=0)
 
-        self.data_mean_ = np.mean(X_train_flat, axis=0)
-        self.data_std_ = np.std(X_train_flat, axis=0)
+        def __init__(self, is_DataFrame=False):
+            self.is_DataFrame = is_DataFrame
 
-        return self
-    
-    def transform(self, X, y=None):
-        Q = []
-        
-        for track in X:
+        def fit(self, X, y=None):
             if self.is_DataFrame:
-                normalized_track = track.copy()
-
-                normalized_track.values = (track.values - self.data_mean_) / self.data_std_
-                normalized_track.values = np.nan_to_num(normalized_track.values)
+                X_train_flat = np.concatenate([m.values for m in X], axis=0)
             else:
-                normalized_track = (track - self.data_mean_) / self.data_std_
-                normalized_track = np.nan_to_num(normalized_track)
+                X_train_flat = np.concatenate([m for m in X], axis=0)
 
-            Q.append(normalized_track)
-        
-        if self.is_DataFrame:
-            return Q
-        else:
-            return np.array(Q)
+            self.data_mean_ = np.mean(X_train_flat, axis=0)
+            self.data_std_ = np.std(X_train_flat, axis=0)
 
-    def inverse_transform(self, X, copy=None):
-        Q = []
-        
-        for track in X:
-            
+            return self
+
+        def transform(self, X, y=None):
+            # with warnings.catch_warnings(record=True) as w:
+            #     warnings.simplefilter(action="always", category="RuntimeWarning", lineno=0, append=True)
+            Q = []
+            # X and track both represent a single bvh file as we call the pipeline per each bvh file
+            for track in X:
+                if self.is_DataFrame:
+                    normalized_track = track.copy()
+                    normalized_track.values = (track.values - self.data_mean_) / self.data_std_
+                    normalized_track.values = np.nan_to_num(normalized_track.values)
+                else:
+                    for idx, std_dev in enumerate(self.data_std_):
+                        # print(f"one: {self.data_std_[idx]}")
+                        if self.data_std_[idx] < 1e-9:
+                            # print(f"two: {self.data_std_[idx]}")
+                            self.data_std_[idx] = 0.0
+                    # print(f"mean len: {len(self.data_mean_)}, std len: {len(self.data_std_)}, track_len {len(track)}")
+                    for count, number in enumerate(self.data_std_):
+                        if str(number) == '0.0':
+                            print(f"std 0.0 indexed at {count} with mean val: {self.data_mean_[count]}")
+                    normalized_track = (track - self.data_mean_) / self.data_std_
+                    # for count, value in enumerate(normalized_track):
+                    #     if count == 0:
+                    #         for inner_count, inner_value in enumerate(zip(value, self.data_mean_, self.data_std_)):
+                    #             print(f"index: {inner_count}, norm_value: {inner_value[0]} with associated mean {inner_value[1]} and std dev {inner_value[2]}")
+                    normalized_track = np.nan_to_num(normalized_track)
+                    Q.append(normalized_track)
+
+                if self.is_DataFrame:
+                    return Q
+                else:
+                    return np.array(Q)
+
+        def inverse_transform(self, X, copy=None):
+            Q = []
+
+            for track in X:
+
+                if self.is_DataFrame:
+                    unnormalized_track = track.copy()
+                    unnormalized_track.values = (track.values * self.data_std_) + self.data_mean_
+                else:
+                    unnormalized_track = (track * self.data_std_) + self.data_mean_
+
+                Q.append(unnormalized_track)
+
             if self.is_DataFrame:
-                unnormalized_track = track.copy()
-                unnormalized_track.values = (track.values * self.data_std_) + self.data_mean_
+                return Q
             else:
-                unnormalized_track = (track * self.data_std_) + self.data_mean_
+                return np.array(Q)
 
-            Q.append(unnormalized_track)
-        
-        if self.is_DataFrame:
-            return Q
-        else:
-            return np.array(Q)
 
 class DownSampler(BaseEstimator, TransformerMixin):
     def __init__(self, rate):
