@@ -30,12 +30,11 @@ np_config.enable_numpy_behavior()
 
 
 # Classifies personality or LMA efforts
-if __name__ == "__main__":
+def predict_efforts_cnn(x, y):
     onehot_encoder = OneHotEncoder(sparse=False)
     tf.compat.v1.enable_eager_execution()
-    # x, y = osd.load_data()
-    x, y = np.load('data/organized_synthetic_data_150.npy'), np.load('data/organized_synthetic_labels_150.npy')
-    # 87 features
+
+    # 183 features
     feature_size = x.shape[2]
     #for window size = 150:
     # x_dim: (692, 150, 87), y_dim: (692, 4)
@@ -94,7 +93,8 @@ if __name__ == "__main__":
 
         # validation_data - tuple on which to evaluate the loss and any model metrics at end of each epoch
         # val_loss correesponds to the value of the cost function for this cross-validation data
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=200, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=50)
+        # steps_per_epoch is usually: ceil(num_samples / batch_size)
+        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=1092, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
 
         # model.save(conf.synthetic_model_file)
     else:
@@ -104,3 +104,7 @@ if __name__ == "__main__":
         # y_pred = onehot_encoder.inverse_transform(y_pred_enc)
         print(y_test[0])
         print(y_pred_enc)
+
+if __name__ == "__main__":
+    data, labels = osd.load_data(velocities=True)
+    predict_efforts_cnn(data, labels)

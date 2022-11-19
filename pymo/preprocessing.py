@@ -491,7 +491,7 @@ class RootTransformer(BaseEstimator, TransformerMixin):
             print(f"preprocessed skeleton (RootTransformer) segments order (new_df.columns): {new_df.columns}")
             # for count, col in enumerate(new_df.columns):
             #     print(f"index, column: {count}, {col}")
-            print(f"parsed bvh (RootTransformer) columns check:\n {new_df[['LeftFoot_Yrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Zrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Xrotation']].iloc[0:10]}")
+            # print(f"parsed bvh (RootTransformer) columns check:\n {new_df[['LeftFoot_Yrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Zrotation']].iloc[0:10]}\n{new_df[['LeftToeBase_Xrotation']].iloc[0:10]}")
 
             row_first = new_df.iloc[0]
             # for count, value in enumerate(row_first):
@@ -767,11 +767,11 @@ class ListStandardScaler(BaseEstimator, TransformerMixin):
                     normalized_track.values = (track.values - self.data_mean_) / self.data_std_
                     normalized_track.values = np.nan_to_num(normalized_track.values)
                 else:
-                    for idx, std_dev in enumerate(self.data_std_):
+                    # for idx, std_dev in enumerate(self.data_std_):
                         # print(f"one: {self.data_std_[idx]}")
-                        if self.data_std_[idx] < 1e-9:
-                            # print(f"two: {self.data_std_[idx]}")
-                            self.data_std_[idx] = 0.0
+                        # if self.data_std_[idx] < 1e-9:
+                        #     # print(f"two: {self.data_std_[idx]}")
+                        #     self.data_std_[idx] = 0.0
                     # print(f"mean len: {len(self.data_mean_)}, std len: {len(self.data_std_)}, track_len {len(track)}")
                     for count, number in enumerate(self.data_std_):
                         if str(number) == '0.0':

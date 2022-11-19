@@ -8,11 +8,30 @@ import conf
 from sklearn.pipeline import Pipeline
 import pickle
 import warnings
-import statistics
 
-anim_ind = {'WALKING':0, 'POINTING': 1, 'PICKING': 2, 'WAVING':3, 'THROWING':4, 'AIMING':5}
+anim_ind = {'WALKING':0, 'POINTING': 1, 'PICKING': 2, 'WAVING':3, 'THROWING':4, 'AIMING':5, 'WALKINGTURNING':6, 'PICKINGSTRETCHING':7, 'ARMSSTRETCHING':8}
 
 parser = BVHParser()
+
+def visualize(file_bvh):
+    parsed_data = parser.parse(file_bvh)
+    data_pipe = Pipeline([
+        # ('param2', ConverterToRightHandedCoordinates()),
+        ('param1', MocapParameterizer('expmap')),
+        # ('down', DownSampler(4)),  # downsample to 30fps
+        # ('stdscale', ListStandardScaler())
+    ])
+    data = parsed_data
+    # # #
+    # inv_data = data_pipe._inverse_transform([data])[0]
+
+    # print_skel(parsed_data)
+    mp = MocapParameterizer('position')
+    positions = mp.transform([data])[0]
+
+    nb_play_mocap(positions, 'pos',
+                  scale=2, camera_z=800, frame_time=1 /30,
+                  base_url='pymo/mocapplayer/playBuffer2.html')
 
 def clear_file(file):
     # removes character name from the file
@@ -32,8 +51,16 @@ def clear_file(file):
     # close the file
     fin.close()
 
-# all_synthetic_motions_effort plus the 3 all_synthetic_motions_ANIM csv files (as well as Pipeline sav file) generated and saved, here
+# all_synthetic_motions_effort (as well as Pipeline sav file) generated and saved, here
 def concat_all_data_as_np(animName=None, velocities=False):
+
+    def z_score_generator(np_array):
+        scaler = StandardScaler()
+        scaler = scaler.fit(np_array)
+        z_scores = scaler.transform(np_array)
+        np_array = z_scores
+        return np_array
+
     frames = []
     motion_id = 0  # unique for each motion/participant
     # data/effort
@@ -41,7 +68,7 @@ def concat_all_data_as_np(animName=None, velocities=False):
     # f represents an element from within the directory
     bvh_counter = 0
     bvh_frame_lens = []
-    bvh_frame_rates = set()
+    bvh_frame_rate = set()
     for f in os.listdir(dir):
         if f.endswith("bvh"):
             name = path.splitext(f)[0] # exclude extension bvh by returning the root
@@ -55,43 +82,54 @@ def concat_all_data_as_np(animName=None, velocities=False):
                 efforts_list = [float(p) for p in name.split('_')[1:]]
                 print(f"parsing bvh file {bvh_counter}: {str.upper(anim)} + {efforts_list}")
                 clear_file(f_full_path) # remove the : from the file
-                # pymo.data.MocapData
+                # parsed file of type pymo.data.MocapData
                 parsed_data = parser.parse(f_full_path)
-                bvh_frame_rates.add(parsed_data.framerate)
-                if len(bvh_frame_rates) > 1:
-                    fr = bvh_frame_rates.pop()
+                #print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
+                bvh_frame_rate.add(parsed_data.framerate)
+                if len(bvh_frame_rate) > 1:
+                    fr = bvh_frame_rate.pop()
                     print(f"frame rate of: {fr} found for bvh file index {bvh_counter}.\nfile discarded")
                     continue
-                assert len(bvh_frame_rates) == 1, f"More than one frame rate present!!! {bvh_frame_rates}"
+                    # ensure consistent frame rate across motion files (otherwise velocities miscalculated)
+                assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
                 if velocities:
                     file_name = 'data/all_synthetic_motions_velocities_effort.csv'
-                    # print(f"positions pymo object column len: {len(positions[0].values.columns)}")
                     data_pipe_positions = Pipeline(steps=[
                         # gives list of pymo.data.MocapData object
                         ('param', MocapParameterizer('position')),
-                        ('np', Numpyfier()),
+                        ('np', Numpyfier())
                         # ListStandardScaler() produces  RuntimeWarning: invalid value encountered in divide
-                        # normalized_track = (track - self.data_mean_) / self.data_std_ for cases whose std vector contains value(s) of 0.0
-                        ('stdscale', ListStandardScaler()),
                     ])
-                    data_pipe_euler = Pipeline(steps=[
+                    data_pipe_expmap = Pipeline(steps=[
                         ('param', MocapParameterizer('expmap')),
-                        ('np', Numpyfier()),
-                        ('stdscale', ListStandardScaler()),
+                        ('np', Numpyfier())
                     ])
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        data_positions = data_pipe_positions.fit_transform([parsed_data])[0]
-                        data_eulers = data_pipe_euler.fit_transform([parsed_data])[0]
-                        # concat rows of data_eulers, minus first 3 (corresponds to root joint z,x,y positions)
-                        # to those of data_positions, horizontally.
-                        data = np.hstack((data_positions, data_eulers[:, 3:]))
-                    bvh_frame_lens.append(data_positions.shape[0])
+                    # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
+                    data_positions = data_pipe_positions.fit_transform([parsed_data])[0]
+                    data_expmaps = data_pipe_expmap.fit_transform([parsed_data])[0]
+                    # Both data_positions and data_expmaps share 'Hips_Xposition', 'Hips_Yposition', 'Hips_Zposition'
+                    # as first three columns. Drop these from data_expmaps to remove redundancy
+                    data_expmaps = data_expmaps[:,3:]
+                    # calculate velocities
+                    data_velocities = data_positions.copy()
+                    # needed for proper broadcasting of following step
+                    frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_positions.shape[0] - 1, data_positions.shape[1]))
+                    # now calculate velocities from positions
+                    data_velocities[1:] = (data_velocities[1:,:] - data_velocities[:-1, :]) / frame_rate_array
+                    data_velocities[0] = 0
+
+                    # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
+                    data_velocities = z_score_generator(data_velocities)
+                    data_expmaps = z_score_generator(data_expmaps)
+
+                    # stack expmap angles for all joints horizontally to data_velocities
+                    data = np.hstack((data_velocities, data_expmaps))
+                    print(f"frame count: {data.shape[0]}")
                     bvh_counter+=1
                 else:
                     file_name = 'data/all_synthetic_motions_effort.csv'
                     data_pipe = Pipeline([
-                        ('param', MocapParameterizer('euler')),
+                        ('param', MocapParameterizer('expmap')),
                         # ('rcpn', RootCentricPositionNormalizer()),
                         ('delta', RootTransformer('absolute_translation_deltas')),
                         # ('const', ConstantsRemover()),  # causes problems
@@ -113,7 +151,7 @@ def concat_all_data_as_np(animName=None, velocities=False):
                 a_rep = np.tile(anim_ind[str.upper(anim)], (data.shape[0], 1))
                 # the animation name index will ultimately end up as the fifth column
                 file_data = np.concatenate((a_rep, data), axis=1)
-                # the first 4 column(s) will be the efforts
+                # append efforts (the first 4 column(s) will be the efforts, i.e., the ML label)
                 file_data = np.concatenate((f_rep, file_data), axis=1)
                 # if len(frames) > 0 and file_data.shape[1] < 64:
                 #     d_rep = np.repeat(file_data[0, -1] , 64 - file_data.shape[1])
@@ -121,7 +159,7 @@ def concat_all_data_as_np(animName=None, velocities=False):
                 frames.append(file_data)
 
     # bvh mean frame #: 67.16410256410256, mode: 58, std_dev: 59.91612473867754
-    # print(f"bvh mean frame #: {statistics.mean(bvh_frame_lens)}, mode: {statistics.mode(bvh_frame_lens)}, std_dev: {statistics.stdev(bvh_frame_lens)}")
+    print(f"processed {bvh_counter} files")
     motions = np.concatenate(frames)
     # all_synthetic_motions_effort.csv accessed here to generate corresponding named file that includes anim name
     if animName:
@@ -134,8 +172,10 @@ def concat_all_data_as_np(animName=None, velocities=False):
 # generate .npy for 3D array of moving window instances of size conf.time_series_size; 3D stack of 2D slices of size (time_series_size x 87)
 def organize_into_time_series(velocities=False):
 
-    motions = np.genfromtxt(conf.all_synthetic_motions_file, delimiter=',')
-    print(f"shape: {motions.shape}")
+    if velocities:
+        motions = np.genfromtxt(conf.all_concatenated_motions_file_2, delimiter=',')
+    else:
+        motions = np.genfromtxt(conf.all_concatenated_motions_file, delimiter=',')
     start_index = conf.time_series_size
     end_index = motions.shape[0]
 
@@ -150,7 +190,6 @@ def organize_into_time_series(velocities=False):
         # aka check if features and animation names are all the same for sliding_window (time_series_size); otherwise, skip
         # if np.all((motions[indices] == motions[i - conf.time_series_size, 0])[:, 0]):
         if np.all((motions[indices, 0:conf.feature_size+1] == motions[i - conf.time_series_size, 0:conf.feature_size+1])):
-            print(f"sliding window count: {sliding_window_counter}")
             # we can now drop the fifth column (anim type) for labels, and the first 5 columns for data
             # dim: (692, 4)
             labels.append(motions[indices[0]][0:conf.feature_size])
@@ -164,15 +203,28 @@ def organize_into_time_series(velocities=False):
         np.save('data/organized_synthetic_data_' + str(conf.time_series_size) + '.npy', np.array(data))
     np.save('data/organized_synthetic_labels_' + str(conf.time_series_size) + '.npy', np.array(labels))
 
-
+# called when 'data/organized_synthetic_data_velocities_' + str(conf.time_series_size) + '.npy' is not present
+# i.e., the file with data prepped for machine learning
 def prepare_data(velocities=False):
-    # STEP 1: Reads all the synthetic mocap data and combines them as a numpy array
     if velocities:
-        concat_all_data_as_np(velocities=True)
+        # enter if <all_synthetic_motions_velocities_effort.csv> file is not present; this file is needed for making the
+        # 'data/organized_synthetic_data_velocities_' + str(conf.time_series_size) + '.npy' file
+        if not path.exists(conf.all_concatenated_motions_file_2):
+            # STEP 1: Reads all the synthetic mocap data and combines them as a numpy array
+            #  i.e., pre-process motion files (i.e., standardize and add velocities) and concatenate
+            # creates <all_synthetic_motions_velocities_effort.csv> file
+            concat_all_data_as_np(velocities=True)
+            # STEP 2: organizes the previously concatenated motion data by subsetting it in terms of sliding window
+            # creates <organized_synthetic_data_velocities_' + str(conf.time_series_size) + '.npy'> file
+            organize_into_time_series(velocities=True)
+        else:
+            print("path does exist!")
+            # STEP 2: organizes the data  with sliding window
+            # creates <organized_synthetic_data_velocities_ + str(conf.time_series_size) + .npy> file
+            organize_into_time_series(velocities=True)
     else:
         concat_all_data_as_np()
-    # STEP 2: organizes the data  with sliding windows
-    organize_into_time_series()
+        organize_into_time_series()
 
 
 
@@ -234,7 +286,7 @@ def load_data_for_prediction():
 # param efforts matched against synthetic_motion array indices and efforts removed from resulting array
 def load_effort_animation(animName, efforts):
 
-    name = path.splitext(conf.all_synthetic_motions_file)[0]  # exclude extension csv
+    name = path.splitext(conf.all_concatenated_motions_file)[0]  # exclude extension csv
     file_name = name + "_" + str.upper(animName) + '.csv'
 
     motions = np.genfromtxt(file_name, delimiter=',')
@@ -254,10 +306,5 @@ def prepare_comparison_data():
     concat_all_data_as_np("pointing")
 
 if __name__ == "__main__":
-    data = load_data(velocities=False)
-    print(f"2 data shape: {data[0].shape}")
-
-# prepare_comparison_data()
-
-# prepare_data()
-# load_data()
+    pass
+    # visualize("data/cmu_motions/running_143_101.bvh")

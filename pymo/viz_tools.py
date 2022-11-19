@@ -198,7 +198,7 @@ def nb_play_mocap(mocap, mf, meta=None, frame_time=1/30, scale=1, camera_z=500, 
     if base_url is None:
         base_url = os.path.join(dir_path, 'mocapplayer/playBuffer.html')
     
-    # print(dir_path)
+    print(dir_path)
 
     if mf == 'bvh':
         pass

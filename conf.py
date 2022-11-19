@@ -6,7 +6,8 @@ pdist_model_file = 'models/pdist.h5'
 
 synthetic_data_folder = "data/effort/"
 synthetic_data_pipe_file = 'models/pipeline_synthetic.sav'
-all_synthetic_motions_file = 'data/all_synthetic_motions_effort.csv'
+all_concatenated_motions_file = 'data/all_synthetic_motions_effort.csv'
+all_concatenated_motions_file_2 = 'data/all_synthetic_motions_velocities_effort.csv'
 
 synthetic_model_file = 'models/synthetic_LMA.h5'
 n_participants = 144
@@ -18,7 +19,7 @@ latent_dim = 100
 batch_size = 32
 buffer_size = 60000
 kernel_size = 5
-n_epochs = 50
+n_epochs = 25
 feature_size = 4
 
 
