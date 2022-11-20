@@ -3,7 +3,9 @@ Python code to analyze existing user experiment data and motion distance.
 
 See the paper [here](https://drive.google.com/file/d/1x_s68q_QcSxHmW7XdQGjGIGRS34B5cop/view).
 
-All sample videos found [here](https://www.cs.umb.edu/~fundad/drives/); each sample, with the exception of the neutral-neutral sample, compares the neutral action animation (left) to the same action animation stylized by one of the 32 drives (right). 
+All sample videos, regarding the stylized motion comparisons enacted in the aforementioned paper, found [here](https://www.cs.umb.edu/~fundad/drives/); each sample, with the exception of the neutral-neutral sample, compares the neutral action animation (left) to the same action animation stylized by one of the 32 drives (right); read on to learn about Drives.
+
+All motion data is stored as .bvh files; read about the .bvh format [here] (https://research.cs.wisc.edu/graphics/Courses/cs-838-1999/Jeff/BVH.html)
 
 ## On LMA
 Laban Movement Analysis is a technique created by Rudolf Laban to formally describe human movement. It is used in a broad range of fields such as dance, physical therapy, drama, psychology, and anthropology. LMA comprises four categories: Body, Effort, Shape, and Space. LMA terms are capitalized.  
