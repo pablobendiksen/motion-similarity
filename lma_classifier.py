@@ -94,7 +94,7 @@ def predict_efforts_cnn(x, y):
         # validation_data - tuple on which to evaluate the loss and any model metrics at end of each epoch
         # val_loss correesponds to the value of the cost function for this cross-validation data
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=1092, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=18, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
 
         # model.save(conf.synthetic_model_file)
     else:
