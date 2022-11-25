@@ -1,3 +1,4 @@
 /data/all_synthetic_motions_velocities_effort.csv
 /data/organized_synthetic_data_velocities_150.npy
 /data/organized_synthetic_labels_150.npy
+/logs
