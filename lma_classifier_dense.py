@@ -25,9 +25,9 @@ eta = 0.1
 decay_factor = 0.98
 feature_size = x.shape[2]
 size_input = (conf.time_series_size, feature_size)
-size_hidden_1 = 200
-size_hidden_2 = 200
-size_hidden_3 = 200
+size_hidden_1 = 100
+size_hidden_2 = 100
+size_hidden_3 = 100
 size_output = y_train.shape[1]
 print(f"size_output: {size_output}")
 
