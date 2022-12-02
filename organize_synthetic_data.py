@@ -84,7 +84,7 @@ def concat_all_data_as_np(animName=None, velocities=False):
                 clear_file(f_full_path) # remove the : from the file
                 # parsed file of type pymo.data.MocapData
                 parsed_data = parser.parse(f_full_path)
-                #print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
+                # print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
                 bvh_frame_rate.add(parsed_data.framerate)
                 if len(bvh_frame_rate) > 1:
                     fr = bvh_frame_rate.pop()
@@ -308,3 +308,12 @@ def prepare_comparison_data():
 if __name__ == "__main__":
     pass
     # visualize("data/cmu_motions/running_143_101.bvh")
+    # to see the features assoicated with any bvh file of our training/testing data, run the following
+    dir = conf.synthetic_data_folder
+    for count, f in enumerate(os.listdir(dir)):
+        if count == 1:
+            f_full_path = dir + f
+            if f.endswith("bvh"):
+                parsed_data = parser.parse(f_full_path)
+                print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
+                break
