@@ -105,5 +105,5 @@ def build_and_run_autoencoder(x, y):
         print(y_pred_enc)
 
 if __name__ == "__main__":
-    data, labels = osd.load_data(rotations=True, velocities=False)
+    data, labels = osd.load_data(rotations=False, velocities=True)
     build_and_run_autoencoder(data, labels)

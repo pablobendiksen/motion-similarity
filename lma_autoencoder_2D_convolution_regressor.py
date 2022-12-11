@@ -27,15 +27,29 @@ import organize_synthetic_data as osd
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
+def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=11):
+    print(x.shape)
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
+    train_size = int(train_split * data.shape[0])
+    train_ds = ds.take(train_size)
+    test_ds = ds.skip(train_size)
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    print(f"len train: {len(list(train_data))}, len test: {len(list(test_data))}")
+    print(tf.data.experimental.cardinality(train_ds))
+    return train_data, test_data
+
 # Classifies personality or LMA efforts
 def build_and_run_autoencoder(x, y):
     tf.compat.v1.enable_eager_execution()
 
     # 183 features with velocities, 87 features without velocities
-    feature_size = x.shape[2]
-    print(f'x_dim: {x.shape}, y_dim: {y.shape}')
-
+    # add extra dimension so 2D convolutions can be applied to a given exemplar (which will have three dimensions now)
     x = np.expand_dims(x, 3)
+    train_data, test_data = partition_dataset(x, y, x.shape[0])
+
+    # No randomization of train / test splitting done here, only within either after splitting, must change approach
     train_split = (int)(x.shape[0] * 0.8)
     x_train = x[0:train_split, :, :,:]
     print(f'train size: {x_train.shape}')
@@ -45,15 +59,13 @@ def build_and_run_autoencoder(x, y):
     print(f'test size: {x_test.shape}')
     y_test = y[train_split+1:,:]
 
-    p_count = y_train.shape[1]
-
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    output_layer_node_count = y.shape[1]
 
 
     n_batches = int(x.shape[0] / conf.batch_size)
     train_mode = True
-    size_input = (conf.time_series_size, feature_size, 1)  # Shape of an individual input
+    size_input = (x.shape[1], x.shape[2], x.shape[3])
+    # size_input = (conf.time_series_size, feature_size, 1)  # Shape of an individual input
     if train_mode:
         lma_model = Sequential(
             [Input(shape=size_input, name='input_layer'),
@@ -71,7 +83,7 @@ def build_and_run_autoencoder(x, y):
              Conv2DTranspose(64, kernel_size=(3, 3), strides=(2, 2), name='conv_decode_3'),
              Conv2DTranspose(1, kernel_size=(3, 3), name='conv_decode_4'),
              Flatten(name='flat_layer'),
-             Dense(p_count, activation='tanh', name='output_layer')])
+             Dense(output_layer_node_count, activation='tanh', name='output_layer')])
         lma_model.summary()
         # using a small learning rate provides better accuracy
         # B = 0.5 gives better accuracy than 0.9
