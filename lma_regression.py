@@ -53,44 +53,27 @@ def predict_efforts_cnn(x, y):
     print(f'test size: {x_test.shape}')
     y_test = y[train_split+1:,:]
 
-
-    p_count = y_train.shape[1]
-
     train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
     test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
 
-
-    n_batches = int(x.shape[0] / conf.batch_size)
-    size_input_2D = (conf.time_series_size, feature_size, 1)
+    p_count = y_train.shape[1]
     train_mode = True
     if train_mode:
         model = tf.keras.models.Sequential()
-
-        # using a small learning rate provides better accuracy
-        # B = 0.5 gives better accuracy than 0.9
         opt = Adam(learning_rate=0.0001, beta_1=0.5)
-
         # input for a CNN-based neural network: (Batch_size, Spatial_dimensions, feature_maps/channels)
-        # we have (conf.batch_size, 150, 87) meaning spatial_dim is 1, so we use a 1D convolution
-        # Out featuremaps = 256
         model.add(Conv1D(filters=256, kernel_size=15, activation='relu', input_shape=(conf.time_series_size, feature_size)))
-        # model.add(Conv2D(filters=256, kernel_size=(3,3), padding="Same", activation='relu', input_shape=size_input_2D))
         model.add(Dropout(0.5))
         model.add(MaxPooling1D(pool_size=2))
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Flatten())
+        # p_count = 4; one per effort
         model.add(Dense(p_count, activation='tanh'))
         model.compile(loss='mse', optimizer=opt, metrics=['accuracy'])
 
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-
-        # validation_data - tuple on which to evaluate the loss and any model metrics at end of each epoch
-        # val_loss correesponds to the value of the cost function for this cross-validation data
-        # steps_per_epoch is usually: ceil(num_samples / batch_size)
         model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
 
-        # model.save(conf.synthetic_model_file)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)
 

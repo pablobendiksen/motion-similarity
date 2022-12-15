@@ -54,6 +54,24 @@ def clear_file(file):
 # all_synthetic_motions_effort (as well as Pipeline sav file) generated and saved, here
 def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
 
+    def get_standardized_velocities(parsed_data):
+        data_pipe_positions = Pipeline(steps=[
+            # gives list of pymo.data.MocapData object
+            ('param', MocapParameterizer('position')),
+            ('np', Numpyfier())
+        ])
+        # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
+        data_velocities = data_pipe_positions.fit_transform([parsed_data])[0]
+        # calculate velocities
+        # needed for proper broadcasting of following step
+        frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_velocities.shape[0] - 1, data_velocities.shape[1]))
+        # now calculate velocities from positions
+        data_velocities[1:] = (data_velocities[1:, :] - data_velocities[:-1, :]) / frame_rate_array
+        data_velocities[0] = 0
+        # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
+        data_velocities = z_score_generator(data_velocities)
+        return data_velocities
+
     def z_score_generator(np_array):
         scaler = StandardScaler()
         scaler = scaler.fit(np_array)
@@ -97,52 +115,19 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
                 if rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_effort.csv'
-                    data_pipe_positions = Pipeline(steps=[
-                        # gives list of pymo.data.MocapData object
-                        ('param', MocapParameterizer('position')),
-                        ('np', Numpyfier())
-                        # ListStandardScaler() produces  RuntimeWarning: invalid value encountered in divide
-                    ])
                     data_pipe_expmap = Pipeline(steps=[
                         ('param', MocapParameterizer('expmap')),
                         ('np', Numpyfier())
                     ])
-                    # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
-                    data_positions = data_pipe_positions.fit_transform([parsed_data])[0]
                     data_expmaps = data_pipe_expmap.fit_transform([parsed_data])[0]
-                    # Both data_positions and data_expmaps share 'Hips_Xposition', 'Hips_Yposition', 'Hips_Zposition'
-                    # as first three columns. Drop these from data_expmaps to remove redundancy
-                    data_expmaps = data_expmaps[:,3:]
-                    # calculate velocities
-                    data_velocities = data_positions.copy()
-                    # needed for proper broadcasting of following step
-                    frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_positions.shape[0] - 1, data_positions.shape[1]))
-                    # now calculate velocities from positions
-                    data_velocities[1:] = (data_velocities[1:,:] - data_velocities[:-1, :]) / frame_rate_array
-                    data_velocities[0] = 0
-
                     # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
-                    data_velocities = z_score_generator(data_velocities)
                     data_expmaps = z_score_generator(data_expmaps)
-
+                    data_velocities = get_standardized_velocities(parsed_data)
                     # stack expmap angles for all joints horizontally to data_velocities
                     data = np.hstack((data_velocities, data_expmaps))
                 elif not rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_only_effort.csv'
-                    data_pipe_positions = Pipeline(steps=[
-                        # gives list of pymo.data.MocapData object
-                        ('param', MocapParameterizer('position')),
-                        ('np', Numpyfier())
-                        # ListStandardScaler() produces  RuntimeWarning: invalid value encountered in divide
-                    ])
-                    # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
-                    data_velocities = data_pipe_positions.fit_transform([parsed_data])[0]
-                    # needed for proper broadcasting of following step
-                    frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_velocities.shape[0] - 1, data_velocities.shape[1]))
-                    # now calculate velocities from positions
-                    data_velocities[1:] = (data_velocities[1:, :] - data_velocities[:-1, :]) / frame_rate_array
-                    data_velocities[0] = 0
-                    data = z_score_generator(data_velocities)
+                    data = get_standardized_velocities(parsed_data)
                 else:
                     file_name = 'data/all_synthetic_motions_effort.csv'
                     data_pipe = Pipeline([

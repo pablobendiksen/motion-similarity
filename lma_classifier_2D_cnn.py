@@ -112,22 +112,20 @@ def predict_efforts_cnn(x, y):
 
     output_layer_node_count = len(np.unique(y))
     train_data, test_data = partition_dataset(x, y, x.shape[0])
-
     train_mode = True
     size_input = (x.shape[1], x.shape[2], x.shape[3]) # Shape of one sample: (conf.time_series_size, feature_size, 1)
     if train_mode:
         lma_model = Sequential(
             [Input(shape=size_input, name='input_layer'),
+             # Use 256 conv. filters of size 3x3 and shift them in 1-pixel steps
              Conv2D(256, kernel_size=(3, 3), strides=(1, 1), activation='ReLU', name='conv_1'),
-             # Use 64 conv. filters of size 3x3 and shift them in 1-pixel steps
-             MaxPool2D((2, 2), name='maxpool_1'),
              # Max pooling with a window size of 2x2 pixels. Default stride equals window size, i.e., no window overlap
-             Dropout(0.3),
+             MaxPool2D((2, 2), name='maxpool_1'),
              # Deactivate random subset of 30% of neurons in the previous layer in each learning step to avoid overfitting
-             Flatten(name='flat_layer'),
+             Dropout(0.3),
              # Reshape the input tensor provided the previous layer into a vector (1-dim. array) required by dense layers
-             # Dense(100, activation='ReLU', name='dense_layer_1'),
-             # A dense layer of 100 neurons ("dense" implies complete connections to all of its inputs)
+             Flatten(name='flat_layer'),
+             # A dense layer of 33 neurons ("dense" implies complete connections to all of its inputs)
              Dense(output_layer_node_count, activation='softmax', name='output_layer')])
 
         # using a small learning rate provides better accuracy
@@ -135,16 +133,12 @@ def predict_efforts_cnn(x, y):
         opt = Adam(learning_rate=0.0001, beta_1=0.5)
         loss = 'mse'
         loss_2 = losses.sparse_categorical_crossentropy
-
         lma_model.compile(loss=loss_2, optimizer=opt, metrics=['accuracy'])
-
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-
         # validation_data - tuple on which to evaluate the loss and any model metrics at end of each epoch
-        # val_loss correesponds to the value of the cost function for this cross-validation data
+        # val_loss corresponds to the value of the cost function for this cross-validation data
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
-        # accidental use of steps_per_epoch = 1052, with 1D Convolution,  was leading to val_accuracy of 100% for a couple of epochs earlier in the training sequence
         lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
         lma_model.summary()
@@ -157,5 +151,5 @@ def predict_efforts_cnn(x, y):
         print(y_pred_enc)
 
 if __name__ == "__main__":
-    data, labels = osd.load_data(rotations=False, velocities=True)
+    data, labels = osd.load_data(rotations=True, velocities=True)
     predict_efforts_cnn(data, labels)
