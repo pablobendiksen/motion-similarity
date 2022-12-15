@@ -54,29 +54,43 @@ def clear_file(file):
 # all_synthetic_motions_effort (as well as Pipeline sav file) generated and saved, here
 def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
 
-    def get_standardized_velocities(parsed_data):
-        data_pipe_positions = Pipeline(steps=[
-            # gives list of pymo.data.MocapData object
-            ('param', MocapParameterizer('position')),
-            ('np', Numpyfier())
-        ])
-        # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
-        data_velocities = data_pipe_positions.fit_transform([parsed_data])[0]
-        # calculate velocities
-        # needed for proper broadcasting of following step
-        frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_velocities.shape[0] - 1, data_velocities.shape[1]))
-        # now calculate velocities from positions
-        data_velocities[1:] = (data_velocities[1:, :] - data_velocities[:-1, :]) / frame_rate_array
-        data_velocities[0] = 0
-        # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
-        data_velocities = z_score_generator(data_velocities)
+    def _get_standardized_rotations(parsed_data):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            data_pipe_expmap = Pipeline(steps=[
+                ('param', MocapParameterizer('expmap')),
+                ('np', Numpyfier())
+            ])
+            # pickle.dump(data_pipe_expmap, open(conf.synthetic_data_pipe_file, 'wb'))
+            data_expmaps = data_pipe_expmap.fit_transform([parsed_data])[0]
+            # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
+            data_expmaps = _z_score_generator(data_expmaps)
+        return data_expmaps
+
+    def _get_standardized_velocities(parsed_data):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            data_pipe_positions = Pipeline(steps=[
+                # gives list of pymo.data.MocapData object
+                ('param', MocapParameterizer('position')),
+                ('np', Numpyfier())
+            ])
+            # all joints (corresponding to 3 columns each [Z, X,Y dimensions]) now have absolute positions
+            data_velocities = data_pipe_positions.fit_transform([parsed_data])[0]
+            # calculate velocities
+            # needed for proper broadcasting of following step
+            frame_rate_array = np.tile(bvh_frame_rate.pop(), (data_velocities.shape[0] - 1, data_velocities.shape[1]))
+            # now calculate velocities from positions
+            data_velocities[1:] = (data_velocities[1:, :] - data_velocities[:-1, :]) / frame_rate_array
+            data_velocities[0] = 0
+            # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
+            data_velocities = _z_score_generator(data_velocities)
         return data_velocities
 
-    def z_score_generator(np_array):
+    def _z_score_generator(np_array):
         scaler = StandardScaler()
         scaler = scaler.fit(np_array)
-        z_scores = scaler.transform(np_array)
-        np_array = z_scores
+        np_array = scaler.transform(np_array)
         return np_array
 
     frames = []
@@ -94,7 +108,6 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
         if f.endswith("bvh"):
             name = path.splitext(f)[0] # exclude extension bvh by returning the root
             # get personality/effort values from the file name
-
             name_split = name.split('_')
             anim = name_split[0]
             anim_extended = anim + name_split[1]
@@ -115,35 +128,16 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
                 if rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_effort.csv'
-                    data_pipe_expmap = Pipeline(steps=[
-                        ('param', MocapParameterizer('expmap')),
-                        ('np', Numpyfier())
-                    ])
-                    data_expmaps = data_pipe_expmap.fit_transform([parsed_data])[0]
-                    # generate z-scores for all values by means of sklearn StandardScaler (i.e., standardize!)
-                    data_expmaps = z_score_generator(data_expmaps)
-                    data_velocities = get_standardized_velocities(parsed_data)
+                    data_expmaps = _get_standardized_rotations(parsed_data)
+                    data_velocities = _get_standardized_velocities(parsed_data)
                     # stack expmap angles for all joints horizontally to data_velocities
                     data = np.hstack((data_velocities, data_expmaps))
                 elif not rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_only_effort.csv'
-                    data = get_standardized_velocities(parsed_data)
+                    data = _get_standardized_velocities(parsed_data)
                 else:
                     file_name = 'data/all_synthetic_motions_effort.csv'
-                    data_pipe = Pipeline([
-                        ('param', MocapParameterizer('expmap')),
-                        # ('rcpn', RootCentricPositionNormalizer()),
-                        # ('delta', RootTransformer('absolute_translation_deltas')),
-                        # ('const', ConstantsRemover()),  # causes problems
-                        ('np', Numpyfier())
-                        # ('down', DownSampler(2)),  # already 30fps
-                        # ('stdscale', ListStandardScaler())
-                    ])
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        data = data_pipe.fit_transform([parsed_data])[0]
-                        data = z_score_generator(data)
-                    pickle.dump(data_pipe, open(conf.synthetic_data_pipe_file, 'wb'))
+                    data = _get_standardized_rotations(parsed_data)
                 # construct column array of extracted efforts themselves repeated
                 # (# of frames for corresponding bvh file, 1) times
                 # will be incorporated as columns to the data
@@ -161,9 +155,6 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 file_data = np.concatenate((a_rep, data), axis=1)
                 # append efforts (the first 4 column(s) will be the efforts, i.e., the ML label)
                 file_data = np.concatenate((f_rep, file_data), axis=1)
-                # if len(frames) > 0 and file_data.shape[1] < 64:
-                #     d_rep = np.repeat(file_data[0, -1] , 64 - file_data.shape[1])
-                #     file_data = np.concatenate((file_data, d_rep), axis=1)
                 frames.append(file_data)
 
     # bvh mean frame #: 67.16410256410256, mode: 58, std_dev: 59.91612473867754

@@ -41,18 +41,12 @@ def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
     train_size = int(train_split * data.shape[0])
     train_ds = ds.take(train_size)
     test_ds = ds.skip(train_size)
-    y_train_list = []
-    y_test_list = []
-    for element in train_ds.as_numpy_iterator():
-        y_train_list.append(element[1])
-    for element in test_ds.as_numpy_iterator():
-        y_test_list.append(element[1])
+    y_train_list = [elem[1] for elem in train_ds.as_numpy_iterator()]
+    y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
     print(f"train classes #: {len(np.unique(y_train_list))}")
     print(f"test classes #: {len(np.unique(y_test_list))}")
     train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
     test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    # print(f"len train: {len(list(train_data))}, len test: {len(list(test_data))}")
-    # print(tf.data.experimental.cardinality(train_ds))
     return train_data, test_data
 
 def make_classes_from_labels(labels):
@@ -118,7 +112,7 @@ def predict_efforts_cnn(x, y):
         lma_model = Sequential(
             [Input(shape=size_input, name='input_layer'),
              # Use 256 conv. filters of size 3x3 and shift them in 1-pixel steps
-             Conv2D(256, kernel_size=(3, 3), strides=(1, 1), activation='ReLU', name='conv_1'),
+             Conv2D(183, kernel_size=(3, 3), strides=(1, 1), activation='ReLU', name='conv_1'),
              # Max pooling with a window size of 2x2 pixels. Default stride equals window size, i.e., no window overlap
              MaxPool2D((2, 2), name='maxpool_1'),
              # Deactivate random subset of 30% of neurons in the previous layer in each learning step to avoid overfitting
@@ -151,5 +145,5 @@ def predict_efforts_cnn(x, y):
         print(y_pred_enc)
 
 if __name__ == "__main__":
-    data, labels = osd.load_data(rotations=True, velocities=True)
+    data, labels = osd.load_data(rotations=True, velocities=False)
     predict_efforts_cnn(data, labels)
