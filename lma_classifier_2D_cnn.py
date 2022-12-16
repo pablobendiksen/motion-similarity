@@ -35,20 +35,6 @@ from math import sqrt
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
-def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
-    ds = tf.data.Dataset.from_tensor_slices((x, y))
-    ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
-    train_size = int(train_split * data.shape[0])
-    train_ds = ds.take(train_size)
-    test_ds = ds.skip(train_size)
-    y_train_list = [elem[1] for elem in train_ds.as_numpy_iterator()]
-    y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
-    print(f"train classes #: {len(np.unique(y_train_list))}")
-    print(f"test classes #: {len(np.unique(y_test_list))}")
-    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    return train_data, test_data
-
 def make_classes_from_labels(labels):
     labels_classes = np.empty((labels.shape[0], 1))
     print(f"y shape: {labels_classes.shape}")
@@ -65,6 +51,20 @@ def make_classes_from_labels(labels):
     for idx, label in enumerate(labels.tolist()):
         labels_classes[idx] = labels_map_floats[tuple(label)]
     return labels_classes
+
+def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
+    train_size = int(train_split * x.shape[0])
+    train_ds = ds.take(train_size)
+    test_ds = ds.skip(train_size)
+    y_train_list = [elem[1] for elem in train_ds.as_numpy_iterator()]
+    y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
+    print(f"train classes #: {len(np.unique(y_train_list))}")
+    print(f"test classes #: {len(np.unique(y_test_list))}")
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    return train_data, test_data
 
 def partition_dataset_proportionally(x, y):
     sss = StratifiedShuffleSplit(n_splits=1, train_size=0.8, random_state=0)
@@ -86,20 +86,14 @@ def partition_dataset_proportionally(x, y):
 
 # Classifies personality or LMA efforts
 def predict_efforts_cnn(x, y):
-    onehot_encoder = OneHotEncoder(sparse=False)
     tf.compat.v1.enable_eager_execution()
     y = make_classes_from_labels(y)
-
     # 183 features with velocities, 87 features without velocities
-    feature_size = x.shape[2]
     print(f'x_dim: {x.shape}, y_dim: {y.shape}')
-
     x = np.expand_dims(x, 3)
     train_split = (int)(x.shape[0] * 0.8)
     x_train = x[0:train_split, :, :,:]
     print(f'train size: {x_train.shape}')
-    y_train = y[0:train_split,:]
-
     x_test = x[train_split+1:, :, :]
     print(f'test size: {x_test.shape}')
     y_test = y[train_split+1:,:]
@@ -112,7 +106,7 @@ def predict_efforts_cnn(x, y):
         lma_model = Sequential(
             [Input(shape=size_input, name='input_layer'),
              # Use 256 conv. filters of size 3x3 and shift them in 1-pixel steps
-             Conv2D(183, kernel_size=(3, 3), strides=(1, 1), activation='ReLU', name='conv_1'),
+             Conv2D(87, kernel_size=(3, 3), strides=(1, 1), activation='ReLU', name='conv_1'),
              # Max pooling with a window size of 2x2 pixels. Default stride equals window size, i.e., no window overlap
              MaxPool2D((2, 2), name='maxpool_1'),
              # Deactivate random subset of 30% of neurons in the previous layer in each learning step to avoid overfitting

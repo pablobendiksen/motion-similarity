@@ -51,43 +51,49 @@ def make_classes_from_labels(labels):
         labels_classes[idx] = labels_map_floats[tuple(label)]
     return labels_classes
 
+def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
+    train_size = int(train_split * x.shape[0])
+    train_ds = ds.take(train_size)
+    test_ds = ds.skip(train_size)
+    y_train_list = [elem[1] for elem in train_ds.as_numpy_iterator()]
+    y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
+    print(f"train classes #: {len(np.unique(y_train_list))}")
+    print(f"test classes #: {len(np.unique(y_test_list))}")
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    return train_data, test_data
+
 # Classifies personality or LMA efforts
 def predict_efforts_cnn(x, y):
     onehot_encoder = OneHotEncoder(sparse=False)
     tf.compat.v1.enable_eager_execution()
-
-    # 183 features with velocities, 87 features without velocities
-    feature_size = x.shape[2]
+    y=make_classes_from_labels(y)
     print(f'x_dim: {x.shape}, y_dim: {y.shape}')
-
+    # 183 features with velocities, 87 features without velocities
     train_split = (int)(x.shape[0] * 0.8)
     x_train = x[0:train_split, :, :]
     print(f'train size: {x_train.shape}')
-    y_train = y[0:train_split,:]
-
     x_test = x[train_split+1:, :, :]
     print(f'test size: {x_test.shape}')
     y_test = y[train_split+1:,:]
 
-    p_count = len(np.unique(y_train))
-    y_train = to_categorical(y_train, p_count)
-    y_test = to_categorical(y_test, p_count)
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    output_layer_node_count = len(np.unique(y))
+    train_data, test_data = partition_dataset(x, y, x.shape[0])
     train_mode = True
+    size_input = (x.shape[1], x.shape[2])
     if train_mode:
         model = tf.keras.models.Sequential()
         opt = Adam(learning_rate=0.0001, beta_1=0.5)
         # input for a CNN-based neural network: (Batch_size, Spatial_dimensions, feature_maps/channels)
-        model.add(Conv1D(filters=256, kernel_size=15, activation='relu', input_shape=(conf.time_series_size, feature_size)))
+        model.add(Conv1D(filters=256, kernel_size=15, activation='relu', input_shape=(size_input)))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Dropout(0.5))
         model.add(Flatten())
         # p_count = 4; one per effort
-        model.add(Dense(p_count, activation='softmax'))
-        # model.add(Dense(p_count, activation='tanh'))
-        # model.compile(loss='mse', optimizer=opt, metrics=['accuracy'])
-        model.compile(loss=losses.categorical_crossentropy, optimizer=opt, metrics='accuracy')
+        model.add(Dense(output_layer_node_count, activation='softmax'))
+        model.compile(loss=losses.sparse_categorical_crossentropy, optimizer=opt, metrics='accuracy')
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
@@ -98,7 +104,7 @@ def predict_efforts_cnn(x, y):
         print(y_pred_enc)
 
 if __name__ == "__main__":
-    data, labels = osd.load_data(rotations=False, velocities=True)
+    data, labels = osd.load_data(rotations=True, velocities=True)
     labels_classes = make_classes_from_labels(labels)
 
     print(f"x size: {data.shape}, y size: {labels_classes.shape}")

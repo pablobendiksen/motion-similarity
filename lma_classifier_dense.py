@@ -6,6 +6,20 @@ import numpy as np
 import conf
 import datetime
 
+def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
+    train_size = int(train_split * x.shape[0])
+    train_ds = ds.take(train_size)
+    test_ds = ds.skip(train_size)
+    y_train_list = [elem[1] for elem in train_ds.as_numpy_iterator()]
+    y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
+    print(f"train classes #: {len(np.unique(y_train_list))}")
+    print(f"test classes #: {len(np.unique(y_test_list))}")
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    return train_data, test_data
+
 # load mocap preprocessed data for training and testing
 x, y = np.load('data/organized_synthetic_data_velocities_150.npy'), np.load('data/organized_synthetic_labels_150.npy')
 
