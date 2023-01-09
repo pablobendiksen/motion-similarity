@@ -129,6 +129,8 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 if rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_effort.csv'
                     data_expmaps = _get_standardized_rotations(parsed_data)
+                    # 1st 3 columns: 'Hips_Xposition', 'Hips_Yposition', 'Hips_Zposition'; drop these
+                    data_expmaps = data_expmaps[:, 3:]
                     data_velocities = _get_standardized_velocities(parsed_data)
                     # stack expmap angles for all joints horizontally to data_velocities
                     data = np.hstack((data_velocities, data_expmaps))
@@ -136,8 +138,9 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                     file_name = 'data/all_synthetic_motions_velocities_only_effort.csv'
                     data = _get_standardized_velocities(parsed_data)
                 else:
-                    file_name = 'data/all_synthetic_motions_effort.csv'
                     data = _get_standardized_rotations(parsed_data)
+                    file_name = 'data/all_synthetic_motions_effort.csv'
+
                 # construct column array of extracted efforts themselves repeated
                 # (# of frames for corresponding bvh file, 1) times
                 # will be incorporated as columns to the data
@@ -322,13 +325,14 @@ def prepare_comparison_data():
     concat_all_data_as_np("pointing")
 
 if __name__ == "__main__":
+    load_data(rotations=True, velocities=False)
     # visualize("data/cmu_motions/running_143_101.bvh")
     # to see the features assoicated with any bvh file of our training/testing data, run the following
-    dir = conf.synthetic_data_folder
-    for count, f in enumerate(os.listdir(dir)):
-        if count == 1:
-            f_full_path = dir + f
-            if f.endswith("bvh"):
-                parsed_data = parser.parse(f_full_path)
-                print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
-                break
+    # dir = conf.synthetic_data_folder
+    # for count, f in enumerate(os.listdir(dir)):
+    #     if count == 1:
+    #         f_full_path = dir + f
+    #         if f.endswith("bvh"):
+    #             parsed_data = parser.parse(f_full_path)
+    #             print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
+    #             break

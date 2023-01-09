@@ -4,5 +4,6 @@
 /data/organized_synthetic_data_velocities_100.npy
 /data/organized_synthetic_data_velocities_only_100.npy
 /data/organized_synthetic_labels_100.npy
+/models/synthetic_LMA.h5
 /logs
 /data/cmu_motions/
