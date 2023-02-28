@@ -3,23 +3,24 @@ from pathlib import Path
 import random
 import shutil
 
-INPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/data/effort_extended"
-OUTPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/data/effort_subset"
-PERCENT_FILES_TO_COPY = 0.125 #i.e., 2/12
-# FILE_COUNT = int(len([entry for entry in os.listdir(INPUT_DIR) if os.path.isfile(os.path.join(INPUT_DIR, entry))]))
+# Copy a percentage of input directory files to output directory
+
+INPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended"
+OUTPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_subset"
+PERCENT_FILES_TO_COPY = 12.5
 FILE_COUNT = 0
 NUM_SAMPLES = None
 
 if __name__ == '__main__':
     # stylized jumping + polarized stylized files: count: 14838
-    # num samps at % .0625: 911
+    # num samps at % 6.25: 911
     # after window application num_samps: data shape: (81200, 100, 87)
-    # num samps at % .125: 1830
+    # num samps at % 12.5: 1830
     # after window application num_samps: data shape: (160454, 100, 87)
     for _, _ in enumerate(os.listdir(INPUT_DIR)):
         FILE_COUNT+=1
     print(f"count: {FILE_COUNT}")
-    NUM_SAMPLES = int(PERCENT_FILES_TO_COPY * FILE_COUNT)
+    NUM_SAMPLES = int(PERCENT_FILES_TO_COPY / 100 * FILE_COUNT)
     print(f"num samps: {NUM_SAMPLES}")
 
 
