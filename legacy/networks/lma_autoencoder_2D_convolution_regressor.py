@@ -27,8 +27,8 @@ import organize_synthetic_data as osd
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
 
-def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=11):
-    print(x.shape)
+def partition_dataset(x, y, dataset_sample_count, train_split=0.9, seed=11):
+    print(f"dataset shape: {x.shape}")
     ds = tf.data.Dataset.from_tensor_slices((x, y))
     ds = ds.shuffle(buffer_size=dataset_sample_count, seed=seed)
     train_size = int(train_split * data.shape[0])
@@ -48,20 +48,7 @@ def build_and_run_autoencoder(x, y):
     # add extra dimension so 2D convolutions can be applied to a given exemplar (which will have three dimensions now)
     x = np.expand_dims(x, 3)
     train_data, test_data = partition_dataset(x, y, x.shape[0])
-
-    # No randomization of train / test splitting done here, only within either after splitting, must change approach
-    train_split = (int)(x.shape[0] * 0.8)
-    x_train = x[0:train_split, :, :,:]
-    print(f'train size: {x_train.shape}')
-    y_train = y[0:train_split,:]
-
-    x_test = x[train_split+1:, :, :]
-    print(f'test size: {x_test.shape}')
-    y_test = y[train_split+1:,:]
-
     output_layer_node_count = y.shape[1]
-
-
     n_batches = int(x.shape[0] / conf.batch_size)
     train_mode = True
     size_input = (x.shape[1], x.shape[2], x.shape[3])
@@ -98,10 +85,18 @@ def build_and_run_autoencoder(x, y):
         # validation_data - tuple on which to evaluate the loss and any model metrics at end of each epoch
         # val_loss correesponds to the value of the cost function for this cross-validation data
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
-        # accidental use of steps_per_epoch = 1052, with 1D Convolution,  was leading to val_accuracy of 100% for a couple of epochs earlier in the training sequence
-        lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        lma_model.fit(train_data, epochs=conf.n_epochs, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
     else:
+        train_split = (int)(x.shape[0] * 0.9)
+        x_train = x[0:train_split, :, :, :]
+        print(f'train size: {x_train.shape}')
+        y_train = y[0:train_split, :]
+
+        x_test = x[train_split + 1:, :, :]
+        print(f'test size: {x_test.shape}')
+        y_test = y[train_split + 1:, :]
+
         model = tf.keras.models.load_model(conf.synthetic_model_file)
 
         y_pred_enc = model.predict(x_test)[0]

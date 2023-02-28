@@ -22,6 +22,25 @@ class Utilities:
         self.test_ds = None
         self.classes = None
 
+    def partition_dataset(self, x, y, train_split=0.9, seed=11):
+        print(f"dataset shape: {x.shape}")
+        train_size = int(train_split * x.shape[0])
+        ds = tf.data.Dataset.from_tensor_slices((x, y))
+        train_ds = ds.take(train_size)
+        test_ds = ds.skip(train_size)
+        train_ds = train_ds.shuffle(conf.buffer_size, reshuffle_each_iteration=True)
+        test_ds = test_ds.shuffle(conf.buffer_size, reshuffle_each_iteration=True)
+        # train_ds = tf.data.Dataset.from_tensor_slices((x[:train_size], y[:train_size]))
+        print(type(train_ds))
+        # test_ds = tf.data.Dataset.from_tensor_slices((x[train_size:], y[train_size:]))
+        # ds = ds.shuffle(buffer_size=10000, seed=seed)
+        # train_size = int(train_split * x.shape[0])
+        # train_ds = ds.take(train_size)
+        # test_ds = ds.skip(train_size)
+        # train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+        # test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+        return train_ds, test_ds
+
     def make_classes_from_labels(self, labels):
         """
         Convert array of labels to array of classes denoted by number

@@ -1,0 +1,138 @@
+getwd()
+
+library(FSA)
+library(DescTools)
+library(rcompanion)
+library(multcompView)
+library(tidyverse)
+library(plotrix)
+library(gridExtra)
+library(ggplot2)
+library(reshape2)
+library(purrr)
+library(data.table)
+library(GPArotation)
+library(psych)
+library(car)
+library("Hmisc")
+library("xtable")
+library("writexl")
+library("readxl")
+library("rstatix")
+library('ggpubr')
+library(stringr)
+library(broom)
+library(cowplot)
+library(dplyr)
+
+combineRowPermutations <- function(df) {
+  
+  getEffortsTuplesCountsDF <- function(df) {
+    #generate counts df by efforts_tuples
+    df <- df %>% 
+      count(efforts_tuples, selected0, selected1, name= "count")
+    #create unique string identifier
+    df$id <- row.names(df)
+    print("df one")
+    print(df)
+    return (df)
+  }
+  
+  delete_duplicate_subsequent_row <- function(df) {
+    df = df[order(df[,'duplicate_generator'],-df[,'count']),]
+    df = df[!duplicated(df$duplicate_generator),]
+    return (df)
+  }
+  
+  df <- getEffortsTuplesCountsDF(df)
+  
+  for (i_row in 1:nrow(df)) {
+    for (j_row in i_row:nrow(df)) {
+      if (df[i_row, "efforts_tuples"] == df[j_row, "efforts_tuples"]) {
+        if (df[i_row, "selected0"] == df[j_row, "selected1"] & df[i_row, "selected1"] == df[j_row, "selected0"]) {
+          #of matched rows, give min valued select0 column precedence 
+          if (df[i_row, "selected0"] < df[j_row, "selected0"]) {
+            df[i_row, "count"] <- df[i_row, "count"] + df[j_row, "count"]
+          } else {
+            df[j_row, "count"] <- df[i_row, "count"] + df[j_row, "count"]
+          }
+          df[i_row, "duplicate_generator"] <- paste(as.character(i_row), as.character(j_row))
+          df[j_row, "duplicate_generator"] <- paste(as.character(i_row), as.character(j_row))
+        } 
+        
+        else {
+          # of unmatched row, give min valued select0 column precedence
+          if (df[i_row, "selected0"] > df[i_row, "selected1"]) {
+            df[i_row, c("selected0", "selected1")] <- df[i_row, c("selected1", "selected0")]
+          }
+        }
+        
+      }
+    }
+  }
+  print("df two")
+  print(df)
+  # replace Nas in duplicate_generator with the corresponding id value
+  df <- df %>% 
+    mutate(duplicate_generator = coalesce(duplicate_generator,id))
+  # delete duplicate subsequent permutation's row and eliminate extraneous columns, while sorting & resetting row idx numbers
+  print("df three")
+  print(df)
+  df <- delete_duplicate_subsequent_row(df)
+  df$index <- as.numeric(row.names(df))
+  df <- df[order(df$index), ]
+  rownames(df) <- NULL  
+  print("df four")
+  print(df)
+  df <- df[, !names(df) %in% c("id", "duplicate_generator", "index")]
+  return (df)
+}
+
+lma_pilot <- read.csv(file="lmaPilot.csv", stringsAsFactors=FALSE, header=T)
+lma_pilot <- as.data.frame(lmaPilot)
+#combine effortsLeft and effortsRight into one column
+lma_pilot$efforts_tuples <- paste(lma_pilot$effortsLeft, lma_pilot$effortsRight, sep="_")
+lma_pilot <- lma_pilot[,c(1,2,8,5,6,7,3,4)]
+lma_pilot <- lma_pilot %>% 
+  rename("motion_type" = "motionType")
+
+lma_pilot_0 <- lma_pilot[lma_pilot$motion_type == 0,]
+lma_pilot_1 <- lma_pilot[lma_pilot$motion_type== 1,]
+
+#sanity check: must be 6 (i.e., unique trials)
+length(unique(lma_pilot_1$efforts_tuples))
+
+# get counts by efforts_tuples for whole dataset as well as by motion
+lma_pilot_test <- lma_pilot[, !names(lma_pilot) %in% c("motion_type")]
+lma_pilot_counts <- combineRowPermutations(lma_pilot_test)
+
+lma_pilot_0 <- combineRowPermutations(lma_pilot_0)
+lma_pilot_1 <- combineRowPermutations(lma_pilot_1)
+
+
+#combine selected0 and selected1 into one column for all three dfs (orig and motion 0 and motion1)
+lma_pilot_counts$selected_motions <- paste(lma_pilot_counts$selected0, lma_pilot_counts$selected1, sep="_")
+lma_pilot_0$selected_motions <- paste(lma_pilot_0$selected0, lma_pilot_0$selected1, sep="_")
+lma_pilot_1$selected_motions <- paste(lma_pilot_1$selected0, lma_pilot_1$selected1, sep="_")
+
+plot_motion_0 <- ggplot(lma_pilot_0, aes(x = efforts_tuples,  y = count, label = count, fill = selected_motions)) +
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+  geom_text(position = position_dodge2(width = 0.9, preserve = "single"), angle = 90, vjust=0.25) + 
+  ggtitle("Motion 0 Counts of Selected Motion Pairs by Effort Tuples")
+
+plot_motion_1 <- ggplot(lma_pilot_1, aes(x = efforts_tuples,  y = count, label = count, fill = selected_motions)) +
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+  geom_text(position = position_dodge2(width = 0.9, preserve = "single"), angle = 90, vjust=0.25) +
+  ggtitle("Motion 1 Counts of Selected Motion Pairs by Effort Tuples")
+
+plot_motion <- ggplot(lma_pilot_counts, aes(x = efforts_tuples,  y = count, label = count, fill = selected_motions)) +
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+  geom_text(position = position_dodge2(width = 0.9, preserve = "single"), angle = 90, vjust=0.25) +
+  ggtitle("Counts of Selected Motion Pairs by Effort Tuples")
+
+combined_plot_motions <- plot_grid(plot_motion_0, plot_motion_1, plot_motion)
+
+ggsave(paste0("Selected_Motion_Pairs_Grid_Plot_Pilot",".png"), combined_plot_motions)
+
+
+

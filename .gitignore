@@ -7,3 +7,6 @@
 /models/synthetic_LMA.h5
 /logs
 /data/cmu_motions/
+/data/effort_extended/
+/data/effort_subset
+.Rproj.user
