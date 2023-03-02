@@ -274,10 +274,9 @@ def load_data(rotations=True, velocities=False):
     return partition, labels_dict
 
 
-def _load_ids_and_labels(train_val_split = 0.9):
+def _load_ids_and_labels(train_val_split = 0.8):
     with open(conf.exemplars_folder + '/labels_dict.pickle', 'rb') as handle:
         labels_dict = pickle.load(handle)
-    print(labels_dict)
     ids_list = list(labels_dict.keys())
     random.shuffle(ids_list)
     train_size = int(train_val_split * len(ids_list))

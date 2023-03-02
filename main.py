@@ -11,14 +11,13 @@ params = {'batch_dim': (40, 91),
 
 if __name__ == '__main__':
     partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-    print(partition)
     print(f"number of exemplars: {len(labels_dict.keys())}")
     train_generator = MotionDataGenerator(partition['train'], labels_dict, **params)
-    print(f"num batches is: {train_generator.get_num_batches()}")
     validation_generator = MotionDataGenerator(partition['validation'], labels_dict, **params)
+    print(validation_generator.get_num_batches())
     effort_network = EffortNetwork(two_d_conv=False, model_num=1)
     early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
     effort_network.model.fit(train_generator.generator(), validation_data=validation_generator.generator(),
-                             validation_steps=train_generator.get_num_batches(), epochs=conf.n_epochs,
+                             validation_steps=validation_generator.get_num_batches(), epochs=conf.n_epochs,
                              steps_per_epoch=train_generator.get_num_batches(), callbacks=[early_stopping])
 

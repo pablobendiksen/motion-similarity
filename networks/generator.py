@@ -5,7 +5,6 @@ import numpy as np
 from glob import glob
 import conf
 
-
 class MotionDataGenerator():
     def __init__(self, list_idxs, labels, batch_size=conf.batch_size, batch_dim=(40, 91), shuffle=True):
         self.batch_dim = batch_dim
@@ -19,12 +18,13 @@ class MotionDataGenerator():
             np.random.shuffle(self.list_idxs)
 
     def get_num_batches(self):
-        return int(np.floor(len(self.list_idxs)) / self.batch_size)
+        return int(np.ceil(len(self.list_idxs)) / self.batch_size)
 
     def generator(self):
+        batch_nums = self.get_num_batches()
         while True:
             self.on_epoch_end()
-            for index in (x for x in range(2)):
+            for index in range(batch_nums):
                 # single batch fetching
                 batch_ids = self.list_idxs[index * self.batch_size:(index + 1) * self.batch_size]
                 batch_features = np.empty((self.batch_size, *self.batch_dim))
