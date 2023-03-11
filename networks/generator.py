@@ -18,7 +18,7 @@ class MotionDataGenerator():
             np.random.shuffle(self.list_idxs)
 
     def get_num_batches(self):
-        return int(np.ceil(len(self.list_idxs)) / self.batch_size)
+        return int(np.ceil(float(len(self.list_idxs)) / self.batch_size))
 
     def generator(self):
         batch_nums = self.get_num_batches()
