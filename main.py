@@ -14,10 +14,9 @@ if __name__ == '__main__':
     print(f"number of exemplars: {len(labels_dict.keys())}")
     train_generator = MotionDataGenerator(partition['train'], labels_dict, **params)
     validation_generator = MotionDataGenerator(partition['validation'], labels_dict, **params)
-    print(validation_generator.get_num_batches())
     effort_network = EffortNetwork(two_d_conv=False, model_num=1)
     early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
-    effort_network.model.fit(train_generator.generator(), validation_data=validation_generator.generator(),
-                             validation_steps=validation_generator.get_num_batches(), epochs=conf.n_epochs,
-                             steps_per_epoch=train_generator.get_num_batches(), callbacks=[early_stopping])
+    effort_network.model.fit(train_generator, validation_data=validation_generator,
+                             validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
+                             steps_per_epoch=train_generator.__len__(), callbacks=[early_stopping])
 
