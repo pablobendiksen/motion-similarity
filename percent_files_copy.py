@@ -7,7 +7,7 @@ import shutil
 
 INPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended"
 OUTPUT_DIR = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_subset"
-PERCENT_FILES_TO_COPY = 12.5
+PERCENT_FILES_TO_COPY = 1.0
 FILE_COUNT = 0
 NUM_SAMPLES = None
 

@@ -1,3 +1,5 @@
+import os
+
 from pymo.parsers import BVHParser
 
 from pymo.viz_tools import *
@@ -118,7 +120,8 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
     file_idx_counter = 0  # unique for each file
     labels_dict = {}  # populated across all files
     # dir = conf.synthetic_data_folder
-    dir = "data/effort_tmp/"
+    frames = []
+    dir = conf.all_bvh_dir
     # f represents an element from within the directory
     bvh_counter = 0
     bvh_removal_counter = 0
@@ -181,11 +184,14 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 file_data = np.concatenate((a_rep, data), axis=1)
                 # append efforts (the first 4 column(s) will be the efforts, i.e., the ML label)
                 file_data = np.concatenate((f_rep, file_data), axis=1)
-                file_idx_counter, labels_dict = _apply_moving_window(file_data, anim, file_idx_counter, labels_dict)
 
-    with open(conf.exemplars_folder + '/labels_dict.pickle', 'wb') as handle:
+                # np.save(conf.all_exemplars_folder + anim + '_' + str(bvh_counter) + '.npy',
+                #         file_data)
+
+                file_idx_counter, labels_dict = _apply_moving_window(file_data, anim, file_idx_counter, labels_dict)
+    with open(conf.all_exemplars_folder_3 + '/labels_dict.pickle', 'wb') as handle:
         pickle.dump(labels_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    print(len(labels_dict.keys()))
+    print(f"storing {len(labels_dict.keys())} labels")
 
 def _apply_moving_window(exemplar, anim, idx, labels_dict):
     """helper function for concat_all_data_as_np()
@@ -207,7 +213,7 @@ def _apply_moving_window(exemplar, anim, idx, labels_dict):
             labels_dict.update({idx: exemplar[indices[0]][0:conf.feature_size]})
             #drop labels and anim columns
             exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
-            np.save(conf.exemplars_folder + anim + '_' + str(idx) + '.npy',
+            np.save(conf.all_exemplars_folder_3 + anim + '_' + str(idx) + '.npy',
                     exemplar_tmp)
             print(f'exemplar shape: {exemplar_tmp.shape}')
             idx += 1
@@ -226,7 +232,7 @@ def organize_into_time_series(rotations=True, velocities=False):
     end_index = motions.shape[0]
     data = []
     labels = []
-
+    file_count = 0
     for i in range(start_index, end_index):
         indices = range(i - conf.time_series_size, i)
         # group dataset in chunks of size conf.time_series_size; if the first 5 rows of all elems in chunk equal to same
@@ -237,6 +243,8 @@ def organize_into_time_series(rotations=True, velocities=False):
             # we can now drop the fifth column (anim type) for labels, and the first 5 columns for data
             labels.append(motions[indices[0]][0:conf.feature_size])
             data.append(np.delete(motions[indices], conf.feature_size + 1, axis=1))
+            file_count+=1
+            print(f"count: {file_count}")
 
     if rotations and velocities:
         np.save('data/organized_synthetic_data_velocities_' + str(conf.time_series_size) + '.npy', np.array(data))
@@ -246,36 +254,51 @@ def organize_into_time_series(rotations=True, velocities=False):
         np.save('data/organized_synthetic_data_' + str(conf.time_series_size) + '.npy', np.array(data))
     np.save('data/organized_synthetic_labels_' + str(conf.time_series_size) + '.npy', np.array(labels))
 
+def organize_into_time_series_2(rotations=True, velocities=False):
+    if rotations and velocities:
+        motions = np.genfromtxt(conf.all_concatenated_motions_file_2, delimiter=',')
+    elif not rotations and velocities:
+        motions = np.genfromtxt(conf.all_concatenated_motions_file_3, delimiter=',')
+    else:
+        motions = np.genfromtxt(conf.all_concatenated_motions_file, delimiter=',')
+    file_count = 0
+    for filename in os.listdir(conf.all_exemplars_folder):
+        if filename.endswith(".npy"):
+            exemplar = np.load(os.path.join(conf.all_exemplars_folder, filename))
+            start_index = conf.time_series_size
+            end_index = exemplar.shape[0]
+            for i in range(start_index, end_index + 1):
+                indices = range(i - conf.time_series_size, i)
+                if np.all((exemplar[indices, 0:conf.feature_size + 1] == exemplar[i - conf.time_series_size,
+                                                                         0:conf.feature_size + 1])):
+                    anim = str(exemplar[indices[0]][conf.feature_size])
+                    file_count+=1
+                    print(f"idx: {file_count}")
+                    # print(exemplar[indices, 0:conf.feature_size + 1])
+                    # labels_dict.update({idx: exemplar[indices[0]][0:conf.feature_size]})
+                    # drop labels and anim columns
+                    exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
+                    np.save(conf.all_exemplars_folder_3 + anim + '_' + str(file_count) + '.npy',
+                            exemplar_tmp)
+
 def prepare_data(rotations=True, velocities=False):
-    concat_all_data_as_np(rotations, velocities)
+    concat_all_data_as_np(rotations=rotations, velocities=velocities)
+    # organize_into_time_series_2(rotations, velocities)
 
 
 def load_data(rotations=True, velocities=False):
-    if rotations and velocities:
-        file_data = 'data/organized_synthetic_data_velocities_' + str(conf.time_series_size) + '.npy'
-        file_labels = 'data/organized_synthetic_labels_' + str(conf.time_series_size) + '.npy'
-        if not path.exists(conf.exemplars_folder):
-            os.makedirs(conf.exemplars_folder)
-            prepare_data(velocities=True)
-    elif not rotations and velocities:
-        file_data = 'data/organized_synthetic_data_velocities_only_' + str(conf.time_series_size) + '.npy'
-        file_labels = 'data/organized_synthetic_labels_' + str(conf.time_series_size) + '.npy'
-        if not path.exists(conf.exemplars_folder):
-            os.makedirs(conf.exemplars_folder)
-            prepare_data(rotations=False, velocities=True)
-    else:
-        file_data = 'data/organized_synthetic_data_' + str(conf.time_series_size) + '.npy'
-        file_labels = 'data/organized_synthetic_labels_' + str(conf.time_series_size) + '.npy'
-        if not path.exists(conf.exemplars_folder):
-            os.makedirs(conf.exemplars_folder)
-            prepare_data()
+    if not path.exists(conf.all_exemplars_folder_3):
+        os.makedirs(conf.all_exemplars_folder_3)
+        prepare_data(rotations=rotations, velocities=velocities)
+    elif not os.listdir(conf.all_exemplars_folder_3):
+        prepare_data(rotations=rotations, velocities=velocities)
 
     partition, labels_dict = _load_ids_and_labels()
     return partition, labels_dict
 
 
 def _load_ids_and_labels(train_val_split = 0.8):
-    with open(conf.exemplars_folder + '/labels_dict.pickle', 'rb') as handle:
+    with open(conf.all_exemplars_folder_3 + 'labels_dict.pickle', 'rb') as handle:
         labels_dict = pickle.load(handle)
     ids_list = list(labels_dict.keys())
     random.shuffle(ids_list)
