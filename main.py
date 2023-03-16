@@ -23,8 +23,11 @@ if __name__ == '__main__':
     index = 1
     checkpoint_dir = f'model_checkpoint_{index}'
     partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-    print(f"number of exemplars: {len(labels_dict.keys())}")
+    print(f"number of batches: {len(labels_dict.keys())}")
     print(os.cpu_count())
+    assert False, "END"
+    # make 'list_idxs' param value from flattening partition['train'].values() and obtaining len of elems
+    # [elem for list in partition['train'] for elem in list]
     train_generator = MotionDataGenerator(partition['train'], labels_dict, **params)
     validation_generator = MotionDataGenerator(partition['validation'], labels_dict, **params)
     effort_network = EffortNetwork(two_d_conv=False, model_num=1)
