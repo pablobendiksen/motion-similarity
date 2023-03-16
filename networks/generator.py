@@ -1,58 +1,48 @@
-import keras
-import random
 import concurrent
 import os.path
 import numpy as np
 from glob import glob
 import conf
-#keras.utils.Sequence
-class MotionDataGenerator(keras.utils.Sequence):
-    def __init__(self, list_idxs, labels, batch_size=conf.batch_size, batch_dim=(100, 91), shuffle=True):
+
+
+class MotionDataGenerator:
+    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size, batch_dim=(100, 91), shuffle=True):
         self.batch_dim = batch_dim
         self.batch_size = batch_size
         self.labels = labels
-        self.list_idxs = list_idxs
+        self.list_batch_ids = list_batch_ids
         self.shuffle = shuffle
 
     def on_epoch_end(self):
         if self.shuffle is True:
-            np.random.shuffle(self.list_idxs)
+            np.random.shuffle(self.list_batch_ids)
 
-    def __len__(self):
-        return int(np.ceil(len(self.list_idxs) / self.batch_size))
+    def get_num_batches(self):
+        return len(self.list_batch_ids)
 
-    def __getitem__(self, index):
-        def _load_sample(i, idx):
-            print(f"sample: {i}")
+    def generator(self):
+
+        def _load_batch(i, idx):
+            # single batch fetching
             path = glob(os.path.join(conf.all_exemplars_folder_3, f'*_{idx}.npy'))
             if len(path) != 1:
-                assert False, f"Error for id {idx}, found path for exemplar must be unique — {path}!"
-            batch_features[i] = np.load(path[0])
-            batch_labels[i] = self.labels[idx]
+                assert False, f"Error for id {idx}, found path for batch must be unique — {path}!"
+            return np.load(path[0]), self.labels[idx]
 
-        # single batch fetching
-        batch_ids = self.list_idxs[index * self.batch_size:(index + 1) * self.batch_size]
-        batch_features = np.empty((self.batch_size, *self.batch_dim))
-        batch_labels = np.empty((self.batch_size, 4))
-        # print(f"labels: {batch_labels}")
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(_load_sample, i, idx) for i, idx in enumerate(batch_ids)]
-        f_count = 1
-        for future in concurrent.futures.as_completed(futures):
-            # handle any exceptions that occurred during execution
-            try:
-                future.result()
-                print(f"future cnt: {f_count}")
-                f_count+=1
-            except Exception as e:
-                print(e)
-        # concurrent.futures.wait(futures)
-        # for i, id in enumerate(batch_ids):
-        #     path = glob(os.path.join(conf.all_exemplars_folder_3, f'*_{id}.npy'))
-        #     if len(path) != 1:
-        #         assert False, f"Error for id {id}, found path for exemplar must be unique — {path}!"
-        #     batch_features[i] = np.load(path[0])
-        #     batch_labels[i] = self.labels[id]
-        return batch_features, batch_labels
+        def read_async_batch_files(subset_batch_ids):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                futures = [executor.submit(_load_batch, i, idx) for i, idx in enumerate(subset_batch_ids)]
+                return [fut.result() for fut in futures]
+
+        # read-in batch_group_size batches at a time
+        batch_group_size = 16
+        num_batches = self.get_num_batches()
+        while True:
+            self.on_epoch_end()
+            for batch_group_idx in range(0, num_batches, batch_group_size):
+                group_upper_lim = min(batch_group_idx+batch_group_size, num_batches)
+                grouped_batches = read_async_batch_files(self.list_batch_ids[batch_group_idx:group_upper_lim])
+                for batch in grouped_batches:
+                    yield batch[0], batch[1]
 
 

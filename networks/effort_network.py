@@ -135,22 +135,20 @@ class EffortNetwork(Utilities):
 
     def run_model_training(self, effort_network, train_generator, validation_generator, index, checkpoint_dir):
         try:
-            effort_network.model.fit(train_generator, validation_data=validation_generator,
-                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
-                                     workers=2, use_multiprocessing=True,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
-                                                                                           early_stopping])
+            effort_network.model.fit(train_generator.generator(), validation_data=validation_generator.generator(),
+                                     validation_steps=validation_generator.get_num_batches(), epochs=conf.n_epochs,
+                                     workers=1, use_multiprocessing=False,
+                                     steps_per_epoch=train_generator.get_num_batches(), callbacks=[backup_restore,
+                                                                                                   early_stopping])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
-            # self.checkpoint = tf.train.Checkpoint(effort_network.model)
-            # save_path = self.checkpoint.save(checkpoint_dir)
-            # return save_path
         except RuntimeError as run_err:
             logging.error(f"RuntimeError for job {index}, attempting training restoration - {run_err} ")
-            effort_network.model.fit(train_generator, validation_data=validation_generator,
-                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
-                                                                                           early_stopping])
+            effort_network.model.fit(train_generator.generator(), validation_data=validation_generator.generator(),
+                                     validation_steps=validation_generator.get_num_batches(), epochs=conf.n_epochs,
+                                     workers=1, use_multiprocessing=False,
+                                     steps_per_epoch=train_generator.get_num_batches(), callbacks=[backup_restore,
+                                                                                                   early_stopping])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
 

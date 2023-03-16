@@ -198,7 +198,7 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
     print(f"storing {len(labels_dict.keys())} labels")
 
 
-def _apply_moving_window(exemplar, idx, labels_dict, batch, batch_idx):
+def _apply_moving_window(preprocessed_file, idx, labels_dict, batch, batch_idx):
     """helper function for concat_all_data_as_np()
         exemplar: np.array
         anim: str
@@ -208,23 +208,24 @@ def _apply_moving_window(exemplar, idx, labels_dict, batch, batch_idx):
         labels_dict: dictionary
             Dictionary linking file_idx to label"""
     start_index = conf.time_series_size
-    end_index = exemplar.shape[0]
+    end_index = preprocessed_file.shape[0]
     for i in range(start_index, end_index + 1):
         indices = range(i - conf.time_series_size, i)
-        if np.all((exemplar[indices, 0:conf.feature_size + 1] == exemplar[i - conf.time_series_size,
-                                                                 0:conf.feature_size + 1])):
-            print(f"anim: {str(exemplar[indices[0]][conf.feature_size])}, idx: {idx}, with indices: {indices}")
+        if np.all((preprocessed_file[indices, 0:conf.feature_size + 1] == preprocessed_file[i - conf.time_series_size,
+                                                                          0:conf.feature_size + 1])):
+            print(f"anim: {str(preprocessed_file[indices[0]][conf.feature_size])}, idx: {idx}, with indices: {indices}")
             # print(exemplar[indices, 0:conf.feature_size + 1])
-            labels_dict[batch_idx].append(exemplar[indices[0]][0:conf.feature_size])
+            labels_dict[batch_idx].append(preprocessed_file[indices[0]][0:conf.feature_size])
             # labels_dict.update({idx: exemplar[indices[0]][0:conf.feature_size]})
             # drop labels and anim columns
-            exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
+            exemplar_tmp = np.delete(preprocessed_file[indices], conf.feature_size + 1, axis=1)
             # np.save(conf.all_exemplars_folder_3 + anim + '_' + str(idx) + '.npy',
             #         exemplar_tmp)
             idx += 1
             batch.append(exemplar_tmp)
             print(f"len batch: {len(batch)}")
             if len(batch) == conf.batch_size:
+                labels_dict[batch_idx] = np.array(labels_dict[batch_idx])
                 motions = np.array(batch)
                 np.save(conf.all_exemplars_folder_3 + 'batch_' + str(batch_idx) + '.npy',
                         motions)
@@ -290,9 +291,6 @@ def organize_into_time_series_2(rotations=True, velocities=False):
                     anim = str(exemplar[indices[0]][conf.feature_size])
                     file_count += 1
                     print(f"idx: {file_count}")
-                    # print(exemplar[indices, 0:conf.feature_size + 1])
-                    # labels_dict.update({idx: exemplar[indices[0]][0:conf.feature_size]})
-                    # drop labels and anim columns
                     exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
                     np.save(conf.all_exemplars_folder_3 + anim + '_' + str(file_count) + '.npy',
                             exemplar_tmp)
@@ -317,10 +315,10 @@ def load_data(rotations=True, velocities=False):
 def _load_ids_and_labels(train_val_split=0.8):
     with open(conf.all_exemplars_folder_3 + 'labels_dict.pickle', 'rb') as handle:
         labels_dict = pickle.load(handle)
-    ids_list = list(labels_dict.keys())
-    random.shuffle(ids_list)
-    train_size = int(train_val_split * len(ids_list))
-    partition = {'train': ids_list[:train_size], 'validation': ids_list[train_size:]}
+    batch_ids_list = list(labels_dict.keys())
+    random.shuffle(batch_ids_list)
+    train_size = int(train_val_split * len(batch_ids_list))
+    partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:]}
     return partition, labels_dict
 
 
