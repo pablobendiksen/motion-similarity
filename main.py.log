@@ -117,3 +117,5 @@
 2023-03-15 15:20:12,452 [DEBUG   ] 71827 4374693248 attrs: Creating converter from 3 to 5
 2023-03-15 15:48:29,694 [WARNING ] 73509 4349052288 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
 2023-03-15 15:48:29,779 [INFO    ] 73509 4349052288 builder_impl: Assets written to: model_checkpoint/assets
+2023-03-15 16:30:53,858 [WARNING ] 77055 4377298304 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-15 16:30:53,942 [INFO    ] 77055 4377298304 builder_impl: Assets written to: model_checkpoint_1/assets

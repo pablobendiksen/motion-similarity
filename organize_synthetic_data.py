@@ -140,14 +140,13 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 clear_file(f_full_path)  # remove the : from the file
                 # parsed file of type pymo.data.MocapData
                 parsed_data = parser.parse(f_full_path)
-                if column_names is None:
-                    column_names = parsed_data.values.columns.tolist()
-                    column_names.insert(0, "anim")
-                    column_names.insert(0, "effort_4")
-                    column_names.insert(0, "effort_3")
-                    column_names.insert(0, "effort_2")
-                    column_names.insert(0, "effort_1")
-                    print(column_names)
+                # if column_names is None:
+                #     column_names = parsed_data.values.columns.tolist()
+                #     column_names.insert(0, "anim")
+                #     column_names.insert(0, "effort_4")
+                #     column_names.insert(0, "effort_3")
+                #     column_names.insert(0, "effort_2")
+                #     column_names.insert(0, "effort_1")
                 # print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
                 bvh_frame_rate.add(parsed_data.framerate)
                 if len(bvh_frame_rate) > 1:
@@ -172,8 +171,7 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
                 else:
                     data = _get_standardized_rotations(parsed_data)
                     file_name = 'data/all_synthetic_motions_effort.csv'
-                print(f"parsed bvh file {bvh_counter}: {str.upper(anim_extended)} + {efforts_list}; frame count:"
-                    f" {data.shape[0]}")
+                print(f"parsed bvh file {bvh_counter}: {str.upper(anim_extended)}; frame count: {data.shape[0]}")
                 bvh_counter += 1
                 if data.shape[0] < conf.time_series_size:
                     bvh_removal_counter += 1
@@ -215,7 +213,6 @@ def _apply_moving_window(exemplar, anim, idx, labels_dict):
             exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
             np.save(conf.all_exemplars_folder_3 + anim + '_' + str(idx) + '.npy',
                     exemplar_tmp)
-            print(f'exemplar shape: {exemplar_tmp.shape}')
             idx += 1
     return idx, labels_dict
 

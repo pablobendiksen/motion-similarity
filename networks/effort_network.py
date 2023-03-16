@@ -9,25 +9,38 @@ from keras.layers import Flatten
 from keras.layers import MaxPool2D
 from keras.models import Sequential
 from keras.layers import BatchNormalization
+from keras import models
 from tensorflow.python.ops.numpy_ops import np_config
+from keras.callbacks import EarlyStopping
+from keras.callbacks import BackupAndRestore
 import numpy as np
 import tensorflow as tf
+import logging
 import os
 
 np_config.enable_numpy_behavior()
 
+logging.basicConfig(level=logging.DEBUG,
+                        filename=os.path.basename(__file__) + '.log',
+                        format="{asctime} [{levelname:8}] {process} {thread} {module}: {message}",
+                        style="{")
+
+#callbacks
+early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
+backup_restore = BackupAndRestore(backup_dir="/tmp/backup")
 
 class EffortNetwork(Utilities):
     print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-    class InterruptingCallback(tf.keras.callbacks.Callback):
-        def on_epoch_begin(self, epoch, logs=None):
-            if epoch == 4:
-                raise RuntimeError('Interrupting!')
+    # class InterruptingCallback(tf.keras.callbacks.Callback):
+    #     def on_epoch_begin(self, epoch, logs=None):
+    #         if epoch == 4:
+    #             raise RuntimeError('Interrupting!')
 
     def __init__(self, two_d_conv=False, model_num=1):
         self.model = None
         self.STEPS_PER_EPOCH = None
+        self.checkpoint = None
         self._network = Sequential()
         if os.path.isfile(conf.effort_model_file):
             self.model = tf.keras.models.load_model(conf.effort_model_file)
@@ -46,25 +59,14 @@ class EffortNetwork(Utilities):
                 elif model_num == 4:
                     self.build_model_4(self.data)
             elif not two_d_conv:
-                # train_ds, test_ds = self.partition_dataset(self.data, self.labels)
                 if model_num == 1:
-                    print("enter")
-                    conv_1 = Conv1D(filters=20, kernel_size=15, activation='relu', input_shape=(
-                        100, 91))
-                    pool_1 = MaxPooling1D(pool_size=2)
-                    self.build_model_1(conv_1, pool_1)
+                    self.build_model_1()
             self.compile_model(loss)
 
     def compile_model(self, loss):
         try:
             opt = Adam(learning_rate=0.0001, beta_1=0.5)
             self._network.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
-            # backup_callback = keras.callbacks.BackupAndRestore(
-            #     backup_dir='/tmp/backup')
-            # self._network.fit(train_ds, epochs=1, steps_per_epoch=self.STEPS_PER_EPOCH,
-            #                       validation_data=test_ds, callbacks=[self.tensorboard_callback, self.csv_logger,
-            #                                                           backup_callback])
-            # self._network.save(conf.effort_model_file)
             self.model = self._network
         except RuntimeError:
             self.compile_model(loss)
@@ -81,9 +83,10 @@ class EffortNetwork(Utilities):
 
     # avg 560 sec, 50 epoch, val_accuracy: 0.6668
     ###1D cnn: 2s, .9574
-    def build_model_1(self, conv_1, pool_1):
-        self._network.add(conv_1)
-        self._network.add(pool_1)
+    def build_model_1(self):
+        self._network.add(Conv1D(filters=160, kernel_size=15, activation='relu', input_shape=(
+            100, 91)))
+        self._network.add(MaxPooling1D(pool_size=2))
         self._network.add(BatchNormalization())
         self._network.add(Dropout(0.3))
         # self._network.add(Conv1D(filters=4, kernel_size=2, activation='relu'))
@@ -129,3 +132,39 @@ class EffortNetwork(Utilities):
         self._network.add(Dropout(0.3))
         self._network.add(Flatten())
         self._network.add(Dense(output_layer_size, activation='softmax'))
+
+    def run_model_training(self, effort_network, train_generator, validation_generator, index, checkpoint_dir):
+        try:
+            effort_network.model.fit(train_generator, validation_data=validation_generator,
+                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
+                                     workers=2, use_multiprocessing=True,
+                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
+                                                                                           early_stopping])
+            effort_network.model.save(checkpoint_dir)
+            effort_network.model.save_weights(checkpoint_dir)
+            # self.checkpoint = tf.train.Checkpoint(effort_network.model)
+            # save_path = self.checkpoint.save(checkpoint_dir)
+            # return save_path
+        except RuntimeError as run_err:
+            logging.error(f"RuntimeError for job {index}, attempting training restoration - {run_err} ")
+            effort_network.model.fit(train_generator, validation_data=validation_generator,
+                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
+                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
+                                                                                           early_stopping])
+            effort_network.model.save(checkpoint_dir)
+            effort_network.model.save_weights(checkpoint_dir)
+
+    def write_out_eval_accuracy(self, validation_generator, index, checkpoint_dir):
+        # test stored model use
+        saved_model = models.load_model(checkpoint_dir)
+        saved_model.load_weights(checkpoint_dir)
+        test_loss, test_acc = saved_model.evaluate(validation_generator)
+        print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
+        # status = self.checkpoint.restore(save_path)
+        # status.expect_partial()
+        # Write the final validation loss to text file
+        with open(os.path.join("/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity"
+                               "/job_model_accuracies", f'{index}.txt'), "w") as f:
+            f.write(f'Final validation loss and acc: {test_loss}, {test_acc}')
+        # with open(f'legacy + / + loss_{index}.txt', 'w') as f:
+        #     f.write(f'Final validation loss and acc: {test_loss}, {test_acc}')
