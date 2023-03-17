@@ -24,6 +24,7 @@ if __name__ == '__main__':
     checkpoint_dir = f'model_checkpoint_{index}'
     batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
     print(f"number of batches: {len(labels_dict.keys())}")
+    print(f"type: {type(labels_dict[1])}")
     train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
     print(os.cpu_count())
     validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)

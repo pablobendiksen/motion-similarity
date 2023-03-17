@@ -1,0 +1,42 @@
+2023-03-16 18:22:43,804 [WARNING ] 26350 4375577984 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 18:22:43,896 [INFO    ] 26350 4375577984 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 18:22:44,247 [WARNING ] 26350 4375577984 util: Detecting that an object or model or tf.train.Checkpoint is being deleted with unrestored values. See the following logs for the specific values in question. To silence these warnings, use `status.expect_partial()`. See https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint#restorefor details about the status object returned by the restore function.
+2023-03-16 18:22:44,249 [WARNING ] 26350 4375577984 util: Value in checkpoint could not be found in the restored object: (root).optimizer.iter
+2023-03-16 18:22:44,249 [WARNING ] 26350 4375577984 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_1
+2023-03-16 18:22:44,249 [WARNING ] 26350 4375577984 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_2
+2023-03-16 18:22:44,249 [WARNING ] 26350 4375577984 util: Value in checkpoint could not be found in the restored object: (root).optimizer.decay
+2023-03-16 18:22:44,249 [WARNING ] 26350 4375577984 util: Value in checkpoint could not be found in the restored object: (root).optimizer.learning_rate
+2023-03-16 18:42:22,296 [WARNING ] 27116 4369712512 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 18:42:22,393 [INFO    ] 27116 4369712512 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 18:42:22,857 [WARNING ] 27116 4369712512 util: Detecting that an object or model or tf.train.Checkpoint is being deleted with unrestored values. See the following logs for the specific values in question. To silence these warnings, use `status.expect_partial()`. See https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint#restorefor details about the status object returned by the restore function.
+2023-03-16 18:42:22,859 [WARNING ] 27116 4369712512 util: Value in checkpoint could not be found in the restored object: (root).optimizer.iter
+2023-03-16 18:42:22,859 [WARNING ] 27116 4369712512 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_1
+2023-03-16 18:42:22,859 [WARNING ] 27116 4369712512 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_2
+2023-03-16 18:42:22,859 [WARNING ] 27116 4369712512 util: Value in checkpoint could not be found in the restored object: (root).optimizer.decay
+2023-03-16 18:42:22,859 [WARNING ] 27116 4369712512 util: Value in checkpoint could not be found in the restored object: (root).optimizer.learning_rate
+2023-03-16 19:01:42,758 [WARNING ] 29610 4338451840 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 19:01:42,827 [INFO    ] 29610 4338451840 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 19:09:34,455 [WARNING ] 29660 4382246272 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 19:09:34,561 [INFO    ] 29660 4382246272 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 19:09:34,937 [WARNING ] 29660 4382246272 util: Detecting that an object or model or tf.train.Checkpoint is being deleted with unrestored values. See the following logs for the specific values in question. To silence these warnings, use `status.expect_partial()`. See https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint#restorefor details about the status object returned by the restore function.
+2023-03-16 19:09:34,941 [WARNING ] 29660 4382246272 util: Value in checkpoint could not be found in the restored object: (root).optimizer.iter
+2023-03-16 19:09:34,942 [WARNING ] 29660 4382246272 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_1
+2023-03-16 19:09:34,942 [WARNING ] 29660 4382246272 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_2
+2023-03-16 19:09:34,942 [WARNING ] 29660 4382246272 util: Value in checkpoint could not be found in the restored object: (root).optimizer.decay
+2023-03-16 19:09:34,942 [WARNING ] 29660 4382246272 util: Value in checkpoint could not be found in the restored object: (root).optimizer.learning_rate
+2023-03-16 19:12:46,939 [WARNING ] 29849 4310205824 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 19:12:47,128 [INFO    ] 29849 4310205824 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 19:12:47,375 [WARNING ] 29849 4310205824 util: Detecting that an object or model or tf.train.Checkpoint is being deleted with unrestored values. See the following logs for the specific values in question. To silence these warnings, use `status.expect_partial()`. See https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint#restorefor details about the status object returned by the restore function.
+2023-03-16 19:12:47,375 [WARNING ] 29849 4310205824 util: Value in checkpoint could not be found in the restored object: (root).optimizer.iter
+2023-03-16 19:12:47,375 [WARNING ] 29849 4310205824 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_1
+2023-03-16 19:12:47,375 [WARNING ] 29849 4310205824 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_2
+2023-03-16 19:12:47,376 [WARNING ] 29849 4310205824 util: Value in checkpoint could not be found in the restored object: (root).optimizer.decay
+2023-03-16 19:12:47,376 [WARNING ] 29849 4310205824 util: Value in checkpoint could not be found in the restored object: (root).optimizer.learning_rate
+2023-03-16 20:23:20,700 [WARNING ] 33777 4339189120 save: Found untraced functions such as _jit_compiled_convolution_op while saving (showing 1 of 1). These functions will not be directly callable after loading.
+2023-03-16 20:23:20,794 [INFO    ] 33777 4339189120 builder_impl: Assets written to: model_checkpoint_1/assets
+2023-03-16 20:24:56,030 [WARNING ] 33777 4339189120 util: Detecting that an object or model or tf.train.Checkpoint is being deleted with unrestored values. See the following logs for the specific values in question. To silence these warnings, use `status.expect_partial()`. See https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint#restorefor details about the status object returned by the restore function.
+2023-03-16 20:24:56,033 [WARNING ] 33777 4339189120 util: Value in checkpoint could not be found in the restored object: (root).optimizer.iter
+2023-03-16 20:24:56,033 [WARNING ] 33777 4339189120 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_1
+2023-03-16 20:24:56,033 [WARNING ] 33777 4339189120 util: Value in checkpoint could not be found in the restored object: (root).optimizer.beta_2
+2023-03-16 20:24:56,033 [WARNING ] 33777 4339189120 util: Value in checkpoint could not be found in the restored object: (root).optimizer.decay
+2023-03-16 20:24:56,033 [WARNING ] 33777 4339189120 util: Value in checkpoint could not be found in the restored object: (root).optimizer.learning_rate
