@@ -18,12 +18,12 @@ exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-proj
 
 n_participants = 144
 time_series_size = 100
-window_delta = 2 #int(time_series_size / 10)
+window_delta = 1 #int(time_series_size / 10)
 batch_size = 64
 buffer_size = 60000
 shard_size = buffer_size
 kernel_size = 5
-n_epochs = 2
+n_epochs = 100
 feature_size = 4
 
 # For parallel jobs
