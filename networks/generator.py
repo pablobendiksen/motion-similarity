@@ -7,8 +7,9 @@ import conf
 
 
 class MotionDataGenerator(keras.utils.Sequence):
-    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size, batch_dim=(100, 91), shuffle=True):
-        self.batch_dim = batch_dim
+    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size, exemplar_dim=(100, 91),
+                 exemplars_dir=conf.exemplars_dir, shuffle=True):
+        self.exemplar_dim = exemplar_dim
         self.batch_size = batch_size
         self.batch_group_size = 16
         self.grouped_batches = None
@@ -16,6 +17,7 @@ class MotionDataGenerator(keras.utils.Sequence):
         self.labels = labels
         self.list_batch_ids = list_batch_ids
         self.num_batches = len(self.list_batch_ids)
+        self.exemplars_dir=exemplars_dir
         self.shuffle = shuffle
 
     def on_epoch_end(self):
@@ -30,7 +32,7 @@ class MotionDataGenerator(keras.utils.Sequence):
 
         def _load_batch(i, idx):
             # single batch fetching
-            path = glob(os.path.join(conf.all_exemplars_folder_3, f'*_{idx}.npy'))
+            path = glob(os.path.join(self.exemplars_dir, f'*_{idx}.npy'))
             if len(path) != 1:
                 assert False, f"Error for id {idx}, found path for batch must be unique — {path}!"
             batch_features = np.load(path[0])

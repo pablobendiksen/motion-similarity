@@ -10,4 +10,4 @@ def rename_blender_to_unity_files(dir):
             os.rename(bvh_extended_dir + f, bvh_extended_dir + sub_strings[1])
 
 if __name__ == "__main__":
-    rename_blender_to_unity_files(conf.all_bvh_dir)
+    rename_blender_to_unity_files(conf.bvh_subsets_dir)

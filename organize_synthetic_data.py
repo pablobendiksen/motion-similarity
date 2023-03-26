@@ -62,7 +62,8 @@ def clear_file(file):
 
 
 # all_synthetic_motions_effort (as well as Pipeline sav file) generated and saved, here
-def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
+def concat_all_data_as_np(animName=None, rotations=True, velocities=False, bvh_files_dir=conf.bvh_subsets_dir,
+                          exemplars_dir=conf.exemplars_dir):
     column_names = None
 
     def _get_standardized_rotations(parsed_data):
@@ -125,7 +126,7 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
     batch = []
     batch_idx = 0
     labels_dict[0] = []
-    dir = conf.all_bvh_dir
+    dir = bvh_files_dir
     # f represents an element from within the directory
     bvh_counter = 0
     bvh_removal_counter = 0
@@ -191,14 +192,16 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False):
 
                 labels_dict, sample_idx, batch, batch_idx = _apply_moving_window(file_data, sample_idx,
                                                                                        labels_dict, batch,
-                                                                                       batch_idx)
+                                                                                       batch_idx, exemplars_dir)
     labels_dict.popitem()
-    with open(conf.all_exemplars_folder_3 + '/labels_dict.pickle', 'wb') as handle:
+    conf.bvh_file_num = bvh_counter
+    conf.exemplar_num = sample_idx
+    with open(exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
         pickle.dump(labels_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print(f"storing {len(labels_dict.keys())} labels")
 
 
-def _apply_moving_window(preprocessed_file, idx, labels_dict, batch, batch_idx):
+def _apply_moving_window(preprocessed_file, idx, labels_dict, batch, batch_idx, exemplars_dir):
     """helper function for concat_all_data_as_np()
         exemplar: np.array
         anim: str
@@ -209,7 +212,8 @@ def _apply_moving_window(preprocessed_file, idx, labels_dict, batch, batch_idx):
             Dictionary linking file_idx to label"""
     start_index = conf.time_series_size
     end_index = preprocessed_file.shape[0]
-    for i in range(start_index, end_index + 1):
+    print(f"window is: {conf.window_delta}")
+    for i in range(start_index, end_index + 1, conf.window_delta):
         indices = range(i - conf.time_series_size, i)
         if np.all((preprocessed_file[indices, 0:conf.feature_size + 1] == preprocessed_file[i - conf.time_series_size,
                                                                           0:conf.feature_size + 1])):
@@ -227,7 +231,7 @@ def _apply_moving_window(preprocessed_file, idx, labels_dict, batch, batch_idx):
             if len(batch) == conf.batch_size:
                 labels_dict[batch_idx] = np.array(labels_dict[batch_idx])
                 motions = np.array(batch)
-                np.save(conf.all_exemplars_folder_3 + 'batch_' + str(batch_idx) + '.npy',
+                np.save(exemplars_dir + 'batch_' + str(batch_idx) + '.npy',
                         motions)
                 print(f"stored batch num {batch_idx}. Size: {motions.shape}.  exemplar count: {idx}")
                 batch = []
@@ -292,28 +296,35 @@ def organize_into_time_series_2(rotations=True, velocities=False):
                     file_count += 1
                     print(f"idx: {file_count}")
                     exemplar_tmp = np.delete(exemplar[indices], conf.feature_size + 1, axis=1)
-                    np.save(conf.all_exemplars_folder_3 + anim + '_' + str(file_count) + '.npy',
+                    np.save(conf.exemplars_dir + anim + '_' + str(file_count) + '.npy',
                             exemplar_tmp)
 
 
-def prepare_data(rotations=True, velocities=False):
-    concat_all_data_as_np(rotations=rotations, velocities=velocities)
+def prepare_data(rotations=True, velocities=False, bvh_files_dir=conf.bvh_subsets_dir, exemplars_dir=conf.exemplars_dir):
+    concat_all_data_as_np(rotations=rotations, velocities=velocities, bvh_files_dir=bvh_files_dir, exemplars_dir=exemplars_dir)
     # organize_into_time_series_2(rotations, velocities)
 
 
-def load_data(rotations=True, velocities=False):
-    if not path.exists(conf.all_exemplars_folder_3):
-        os.makedirs(conf.all_exemplars_folder_3)
-        prepare_data(rotations=rotations, velocities=velocities)
-    elif not os.listdir(conf.all_exemplars_folder_3):
-        prepare_data(rotations=rotations, velocities=velocities)
+def load_data(rotations=True, velocities=False, task_num=None):
+    bvh_files_dir = conf.bvh_subsets_dir
+    exemplars_dir = conf.exemplars_dir
+    if task_num:
+        bvh_files_dir = conf.bvh_subsets_dir + task_num + '/'
+        exemplars_dir = conf.exemplars_dir + task_num + '/'
+    if not path.exists(exemplars_dir):
+        os.makedirs(exemplars_dir)
+        prepare_data(rotations=rotations, velocities=velocities, bvh_files_dir=bvh_files_dir,
+                     exemplars_dir=exemplars_dir)
+    elif not os.listdir(exemplars_dir):
+        prepare_data(rotations=rotations, velocities=velocities, bvh_files_dir=bvh_files_dir,
+                     exemplars_dir=exemplars_dir)
 
-    partition, labels_dict = _load_ids_and_labels()
+    partition, labels_dict = _load_ids_and_labels(exemplars_dir=exemplars_dir)
     return partition, labels_dict
 
 
-def _load_ids_and_labels(train_val_split=0.8):
-    with open(conf.all_exemplars_folder_3 + 'labels_dict.pickle', 'rb') as handle:
+def _load_ids_and_labels(train_val_split=0.8, exemplars_dir=conf.exemplars_dir):
+    with open(exemplars_dir + 'labels_dict.pickle', 'rb') as handle:
         labels_dict = pickle.load(handle)
     batch_ids_list = list(labels_dict.keys())
     random.shuffle(batch_ids_list)

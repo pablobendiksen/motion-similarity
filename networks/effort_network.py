@@ -21,13 +21,15 @@ import os
 np_config.enable_numpy_behavior()
 
 logging.basicConfig(level=logging.DEBUG,
-                        filename=os.path.basename(__file__) + '.log',
-                        format="{asctime} [{levelname:8}] {process} {thread} {module}: {message}",
-                        style="{")
+                    filename=os.path.basename(__file__) + '.log',
+                    format="{asctime} [{levelname:8}] {process} {thread} {module}: {message}",
+                    style="{")
+logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
 
-#callbacks
+# callbacks
 early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
 backup_restore = BackupAndRestore(backup_dir="/tmp/backup")
+
 
 class EffortNetwork(Utilities):
     # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
@@ -133,35 +135,37 @@ class EffortNetwork(Utilities):
         self._network.add(Flatten())
         self._network.add(Dense(output_layer_size, activation='softmax'))
 
-    def run_model_training(self, effort_network, train_generator, validation_generator, index, checkpoint_dir):
+    def run_model_training(self, effort_network, train_generator, validation_generator, checkpoint_dir):
         try:
-            effort_network.model.fit(train_generator, validation_data=validation_generator,
+            history = effort_network.model.fit(train_generator, validation_data=validation_generator,
                                      validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                      workers=4, use_multiprocessing=True,
                                      steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
+            return history
         except RuntimeError as run_err:
-            logging.error(f"RuntimeError for job {index}, attempting training restoration - {run_err} ")
-            effort_network.model.fit(train_generator, validation_data=validation_generator,
+            logging.error(f"RuntimeError for job {conf.task_num}, attempting training restoration - {run_err} ")
+            history = effort_network.model.fit(train_generator, validation_data=validation_generator,
                                      validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                      workers=1, use_multiprocessing=False,
                                      steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
                                                                                            early_stopping])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
+            return history
 
-    def write_out_eval_accuracy(self, validation_generator, index, checkpoint_dir):
+    def write_out_eval_accuracy(self, validation_generator, checkpoint_dir, total_time):
         # test stored model use
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
         test_loss, test_acc = saved_model.evaluate(validation_generator)
         print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
-        # status = self.checkpoint.restore(save_path)
-        # status.expect_partial()
-        # Write the final validation loss to text file
+        num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
+        # Write out to text file
         with open(os.path.join("/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity"
-                               "/job_model_accuracies", f'{index}.txt'), "w") as f:
-            f.write(f'Final validation loss and acc: {test_loss}, {test_acc}')
-        # with open(f'legacy + / + loss_{index}.txt', 'w') as f:
-        #     f.write(f'Final validation loss and acc: {test_loss}, {test_acc}')
+                               "/job_model_accuracies", f'{conf.task_num} . {conf.window_delta}.txt'), "w") as f:
+            f.write(
+                f'Percent Copied: {conf.percent_files_copied}, Sliding Window Size: {conf.window_delta}, BVH File Num:'
+                f' {conf.bvh_file_num}, Exemplar Num: {conf.exemplar_num}\nVal Loss: {test_loss}, '
+                f'val accuracy: {test_acc}, training_time: {int(total_time)}, Num GPUs: {num_gpus}')

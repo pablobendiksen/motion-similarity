@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+import conf
 import random
 import shutil
 
@@ -11,18 +11,28 @@ PERCENT_FILES_TO_COPY = 12.5
 FILE_COUNT = 0
 NUM_SAMPLES = None
 
-if __name__ == '__main__':
+def rename_blender_to_unity_files(dir):
+    for f in os.listdir(dir):
+        if "|" in f:
+            sub_strings = f.split("|")
+            os.rename(dir + f, dir + sub_strings[1])
+
+def run_percent_files_copy(task_num):
     # stylized jumping + polarized stylized files: count: 14838
     # num samps at % 6.25: 911
     # after window application num_samps: data shape: (81200, 100, 87)
     # num samps at % 12.5: 1830
     # after window application num_samps: data shape: (160454, 100, 87)
+    percent_copy = 10.0 + int(task_num)*3
+    conf.percent_files_copied = conf.percent_files_copied
+    INPUT_DIR = conf.all_bvh_dir
+    OUTPUT_DIR = conf.bvh_subsets_dir + task_num
+    file_count = 0
     for _, _ in enumerate(os.listdir(INPUT_DIR)):
-        FILE_COUNT+=1
-    print(f"count: {FILE_COUNT}")
-    NUM_SAMPLES = int(PERCENT_FILES_TO_COPY / 100 * FILE_COUNT)
-    print(f"num samps: {NUM_SAMPLES}")
-
+        file_count += 1
+    # print(f"count: {file_count}")
+    NUM_SAMPLES = int(percent_copy / 100 * file_count)
+    # print(f"num samps: {NUM_SAMPLES}")
 
     if not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
