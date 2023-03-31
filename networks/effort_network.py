@@ -11,8 +11,8 @@ from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras import models
 # from tensorflow.python.ops.numpy_ops import np_config
-from keras.callbacks import EarlyStopping
-from keras.callbacks import BackupAndRestore
+# from keras.callbacks import EarlyStopping
+# from keras.callbacks import BackupAndRestore
 import numpy as np
 import tensorflow as tf
 import logging
@@ -139,19 +139,18 @@ class EffortNetwork(Utilities):
     def run_model_training(self, effort_network, train_generator, validation_generator, checkpoint_dir):
         try:
             history = effort_network.model.fit(train_generator, validation_data=validation_generator,
-                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
-                                     workers=4, use_multiprocessing=True,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[early_stopping])
+                                               validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
+                                               workers=4, use_multiprocessing=True,
+                                               steps_per_epoch=train_generator.__len__())
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
             return history
         except RuntimeError as run_err:
             logging.error(f"RuntimeError for job {conf.task_num}, attempting training restoration - {run_err} ")
             history = effort_network.model.fit(train_generator, validation_data=validation_generator,
-                                     validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
-                                     workers=1, use_multiprocessing=False,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[
-                                                                                           early_stopping])
+                                               validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
+                                               workers=1, use_multiprocessing=False,
+                                               steps_per_epoch=train_generator.__len__())
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
             return history
@@ -168,7 +167,7 @@ class EffortNetwork(Utilities):
             with open(csv_file, 'r') as file:
                 reader = csv.reader(file)
                 header_row = next(reader)
-                if header_row == ['Percent Copied', 'Index','Sliding Window Size', 'BVH File Num', 'Exemplar Num',
+                if header_row == ['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
                                   'Val Loss', 'Val Accuracy', 'Training Time']:
                     append_header = False
                 else:
@@ -180,8 +179,8 @@ class EffortNetwork(Utilities):
         with open(csv_file, 'a', newline='') as file:
             writer = csv.writer(file)
             if append_header:
-                writer.writerow(['Percent Copied', 'Index','Sliding Window Size', 'BVH File Num', 'Exemplar Num',
-                                  'Val Loss', 'Val Accuracy', 'Training Time'])
+                writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
+                                 'Val Loss', 'Val Accuracy', 'Training Time'])
             writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
                              conf.exemplar_num,
                              test_loss, test_acc, int(total_time)])

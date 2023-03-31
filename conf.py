@@ -23,7 +23,7 @@ batch_size = 64
 buffer_size = 60000
 shard_size = buffer_size
 kernel_size = 5
-n_epochs = 2
+n_epochs = 50
 feature_size = 4
 
 # For parallel jobs
