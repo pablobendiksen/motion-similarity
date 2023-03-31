@@ -23,8 +23,8 @@ def run_percent_files_copy(task_num):
     # after window application num_samps: data shape: (81200, 100, 87)
     # num samps at % 12.5: 1830
     # after window application num_samps: data shape: (160454, 100, 87)
-    percent_copy = 10.0 + int(task_num)*3
-    conf.percent_files_copied = conf.percent_files_copied
+    percent_copy = 6.0 + int(task_num)*2
+    conf.percent_files_copied = percent_copy
     INPUT_DIR = conf.all_bvh_dir
     OUTPUT_DIR = conf.bvh_subsets_dir + task_num
     file_count = 0

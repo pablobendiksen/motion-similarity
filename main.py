@@ -26,7 +26,7 @@ def delete_exemplars_dir(task_num):
         print(f"Directory does not exist: {directory}")
 
 
-sliding_window_sizes = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # generator params
 params = {'exemplar_dim': (100, 91),
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     checkpoint_dir = f'model_checkpoint_{conf.task_num}'
     percent_files_copy.run_percent_files_copy(conf.task_num)
     for window_size in sliding_window_sizes:
-        delete_exemplars_dir(conf.task_num)
+        # delete_exemplars_dir(conf.task_num)
         conf.window_delta = window_size
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False, task_num=conf.task_num)
         print(f"number of batches: {len(labels_dict.keys())}")
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                                                     checkpoint_dir)
         tot_time = time.time() - start_time
         index_window_size = conf.task_num + '.' + str(window_size)
-        effort_network.write_out_eval_accuracy(validation_generator, checkpoint_dir, tot_time)
+        effort_network.write_out_eval_accuracy(validation_generator, conf.task_num, checkpoint_dir, tot_time)
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
         test_loss, test_acc = saved_model.evaluate(validation_generator)

@@ -10,15 +10,16 @@ from keras.layers import MaxPool2D
 from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras import models
-from tensorflow.python.ops.numpy_ops import np_config
+# from tensorflow.python.ops.numpy_ops import np_config
 from keras.callbacks import EarlyStopping
 from keras.callbacks import BackupAndRestore
 import numpy as np
 import tensorflow as tf
 import logging
+import csv
 import os
 
-np_config.enable_numpy_behavior()
+# np_config.enable_numpy_behavior()
 
 logging.basicConfig(level=logging.DEBUG,
                     filename=os.path.basename(__file__) + '.log',
@@ -140,7 +141,7 @@ class EffortNetwork(Utilities):
             history = effort_network.model.fit(train_generator, validation_data=validation_generator,
                                      validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                      workers=4, use_multiprocessing=True,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore])
+                                     steps_per_epoch=train_generator.__len__(), callbacks=[early_stopping])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
             return history
@@ -149,23 +150,48 @@ class EffortNetwork(Utilities):
             history = effort_network.model.fit(train_generator, validation_data=validation_generator,
                                      validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                      workers=1, use_multiprocessing=False,
-                                     steps_per_epoch=train_generator.__len__(), callbacks=[backup_restore,
+                                     steps_per_epoch=train_generator.__len__(), callbacks=[
                                                                                            early_stopping])
             effort_network.model.save(checkpoint_dir)
             effort_network.model.save_weights(checkpoint_dir)
             return history
 
-    def write_out_eval_accuracy(self, validation_generator, checkpoint_dir, total_time):
+    def write_out_eval_accuracy(self, validation_generator, task_num, checkpoint_dir, total_time):
         # test stored model use
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
         test_loss, test_acc = saved_model.evaluate(validation_generator)
         print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
         num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
-        # Write out to text file
-        with open(os.path.join("/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity"
-                               "/job_model_accuracies", f'{conf.task_num} . {conf.window_delta}.txt'), "w") as f:
-            f.write(
-                f'Percent Copied: {conf.percent_files_copied}, Sliding Window Size: {conf.window_delta}, BVH File Num:'
-                f' {conf.bvh_file_num}, Exemplar Num: {conf.exemplar_num}\nVal Loss: {test_loss}, '
-                f'val accuracy: {test_acc}, training_time: {int(total_time)}, Num GPUs: {num_gpus}')
+        csv_file = os.path.join(conf.metrics_dir, f'{conf.task_num}.csv')
+        if os.path.exists(csv_file):
+            with open(csv_file, 'r') as file:
+                reader = csv.reader(file)
+                header_row = next(reader)
+                if header_row == ['Percent Copied', 'Index','Sliding Window Size', 'BVH File Num', 'Exemplar Num',
+                                  'Val Loss', 'Val Accuracy', 'Training Time']:
+                    append_header = False
+                else:
+                    # incorrect header_row
+                    append_header = True
+        else:
+            append_header = True
+
+        with open(csv_file, 'a', newline='') as file:
+            writer = csv.writer(file)
+            if append_header:
+                writer.writerow(['Percent Copied', 'Index','Sliding Window Size', 'BVH File Num', 'Exemplar Num',
+                                  'Val Loss', 'Val Accuracy', 'Training Time'])
+            writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
+                             conf.exemplar_num,
+                             test_loss, test_acc, int(total_time)])
+
+        # Write out to csv file
+        # with open(os.path.join(conf.metrics_dir, f'{conf.task_num}.csv'), "w", newline='') as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
+        #                      'Val Loss',
+        #                      'Val Accuracy', 'Training Time'])
+        #     writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
+        #                      conf.exemplar_num,
+        #         test_loss, test_acc, int(total_time)])

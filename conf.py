@@ -15,15 +15,15 @@ bvh_subsets_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-pr
 # all_exemplars_folder = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity" \
 #                        "/data_tmp/"
 exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/"
-
+metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/job_model_accuracies"
 n_participants = 144
 time_series_size = 100
-window_delta = 1 #int(time_series_size / 10)
+window_delta = 1 #int(time_series_size /
 batch_size = 64
 buffer_size = 60000
 shard_size = buffer_size
 kernel_size = 5
-n_epochs = 100
+n_epochs = 2
 feature_size = 4
 
 # For parallel jobs

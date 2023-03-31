@@ -6,6 +6,12 @@ from glob import glob
 import conf
 
 
+def unison_shuffling(a, b):
+    assert len(a) == len(b)
+    p = np.random.permutation(len(a))
+    return a[p], b[p]
+
+
 class MotionDataGenerator(keras.utils.Sequence):
     def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size, exemplar_dim=(100, 91),
                  exemplars_dir=conf.exemplars_dir, shuffle=True):
@@ -28,7 +34,7 @@ class MotionDataGenerator(keras.utils.Sequence):
         #num_batches
         return len(self.list_batch_ids)
 
-    def generator(self,index):
+    def generator(self, index):
 
         def _load_batch(i, idx):
             # single batch fetching
@@ -53,6 +59,8 @@ class MotionDataGenerator(keras.utils.Sequence):
         return self.grouped_batches[grouped_batches_idx][0], self.grouped_batches[grouped_batches_idx][1]
 
     def __getitem__(self, index):
+        # (64, 100, 91), (64, 4)
         batch_features, batch_labels = self.generator(index)
+        batch_features, batch_labels = unison_shuffling(batch_features, batch_labels)
         return batch_features, batch_labels
 

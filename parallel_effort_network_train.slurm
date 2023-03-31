@@ -3,7 +3,7 @@
 #SBATCH --mail-type=BEGIN,END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=p.bendiksen001@umb.edu # Where to send mail
 #SBATCH -p haehn -q haehn_unlim
-#SBATCH -w chimera12, chimera13
+#SBATCH -w chimera12,chimera13
 #SBATCH -n 2 # Number of cores
 #SBATCH -N 1 # Ensure that all cores are on one machine
 #SBATCH --gres=gpu:1
