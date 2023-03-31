@@ -28,8 +28,8 @@ logging.basicConfig(level=logging.DEBUG,
 logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
 
 # callbacks
-early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
-backup_restore = BackupAndRestore(backup_dir="/tmp/backup")
+# early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
+# backup_restore = BackupAndRestore(backup_dir="/tmp/backup")
 
 
 class EffortNetwork(Utilities):
