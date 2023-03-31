@@ -1,0 +1,3 @@
+Percent Copied,Index,Sliding Window Size,BVH File Num,Exemplar Num,Val Loss,Val Accuracy,Training Time
+16.0,5,2,,,0.02552475966513157,0.848437488079071,516
+16.0,5,4,,,0.036273542791604996,0.925000011920929,513

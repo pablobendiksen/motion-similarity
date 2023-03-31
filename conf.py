@@ -10,12 +10,12 @@ all_concatenated_motions_file_2 = 'data/all_synthetic_motions_velocities_effort.
 synthetic_model_file = 'models/synthetic_LMA.h5'
 pdist_model_file = 'models/pdist.h5'
 # all_bvh_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/data/effort_tmp/"
-all_bvh_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
-bvh_subsets_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_subset/"
+all_bvh_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_extended/"
+bvh_subsets_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_subset/"
 # all_exemplars_folder = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity" \
 #                        "/data_tmp/"
-exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/"
-metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/job_model_accuracies"
+exemplars_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/"
+metrics_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_model_accuracies"
 n_participants = 144
 time_series_size = 100
 window_delta = 1 #int(time_series_size /
