@@ -25,8 +25,25 @@ def delete_exemplars_dir(task_num):
     else:
         print(f"Directory does not exist: {directory}")
 
+# function used for repeating specific remote compute job instances
+def temp_test_check_run_repeatability(task_num):
+    test_int = int(task_num)
+    if test_int == 1:
+        test_int = 3
+        sliding_size = [8]
+    elif test_int == 2:
+        test_int = 9
+        sliding_size = [8]
+    elif test_int == 3:
+        test_int = 12
+        sliding_size = [10]
+    elif test_int == 4:
+        test_int = 13
+        sliding_size = [6]
+    return test_int, sliding_size
 
-sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+
+# sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
 
 # generator params
 params = {'exemplar_dim': (100, 91),
@@ -37,7 +54,8 @@ if __name__ == '__main__':
     conf.task_num = sys.argv[1]
     params['exemplars_dir'] = conf.exemplars_dir + conf.task_num + '/'
     checkpoint_dir = f'model_checkpoint_{conf.task_num}'
-    percent_files_copy.run_percent_files_copy(conf.task_num)
+    test_int, sliding_window_sizes = temp_test_check_run_repeatability(conf.task_num)
+    percent_files_copy.run_percent_files_copy(test_int)
     for window_size in sliding_window_sizes:
         delete_exemplars_dir(conf.task_num)
         conf.window_delta = window_size
