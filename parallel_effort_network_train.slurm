@@ -2,7 +2,8 @@
 #SBATCH --job-name=array_parallelized_motion
 #SBATCH --mail-type=BEGIN,END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=p.bendiksen001@umb.edu # Where to send mail
-#SBATCH -p Intel6240,Intel6248,DGXA100
+##SBATCH -p Intel6240,Intel6248,DGXA100
+#SBATCH -p DGXA100
 #SBATCH -a pi_daniel.haehn
 ##SBATCH -w chimera12,chimera13
 #SBATCH -n 4 # Number of cores
@@ -13,7 +14,7 @@
 #SBATCH -t 23:59:59
 #SBATCH --output=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/arrays/%A-%a.out
 #SBATCH --error=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/arrays/%A-%a.err
-#SBATCH --array=1-20
+#SBATCH --array=1-4
 
 . /etc/profile
 
@@ -25,5 +26,5 @@ eval "$(conda shell.bash hook)"
 conda activate motion-similarity
 
 python main.py $SLURM_ARRAY_TASK_ID
-
+#python temp.py $SLURM_ARRAY_TASK_ID
 echo "Finish Run"

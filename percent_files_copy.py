@@ -26,7 +26,7 @@ def run_percent_files_copy(task_num):
     percent_copy = 6.0 + int(task_num)*2
     conf.percent_files_copied = percent_copy
     INPUT_DIR = conf.all_bvh_dir
-    OUTPUT_DIR = conf.bvh_subsets_dir + task_num
+    OUTPUT_DIR = conf.bvh_subsets_dir + str(task_num)
     file_count = 0
     for _, _ in enumerate(os.listdir(INPUT_DIR)):
         file_count += 1
