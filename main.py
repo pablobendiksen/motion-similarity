@@ -55,7 +55,8 @@ if __name__ == '__main__':
     params['exemplars_dir'] = conf.exemplars_dir + conf.task_num + '/'
     checkpoint_dir = f'model_checkpoint_{conf.task_num}'
     test_int, sliding_window_sizes = temp_test_check_run_repeatability(conf.task_num)
-    percent_files_copy.run_percent_files_copy(test_int)
+    conf.task_num = str(test_int)
+    percent_files_copy.run_percent_files_copy(conf.task_num)
     for window_size in sliding_window_sizes:
         delete_exemplars_dir(conf.task_num)
         conf.window_delta = window_size
