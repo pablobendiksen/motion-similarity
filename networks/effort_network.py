@@ -162,6 +162,9 @@ class EffortNetwork(Utilities):
         test_loss, test_acc = saved_model.evaluate(validation_generator)
         print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
         num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
+        if not os.path.exists(conf.metrics_dir):
+            os.mkdir(conf.metrics_dir)
+            print(f"created new directory: {conf.metrics_dir}")
         csv_file = os.path.join(conf.metrics_dir, f'{conf.task_num}.csv')
         if os.path.exists(csv_file):
             with open(csv_file, 'r') as file:
