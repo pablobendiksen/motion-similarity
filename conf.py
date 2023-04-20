@@ -16,6 +16,7 @@ bvh_subsets_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_s
 #                        "/data_tmp/"
 exemplars_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/"
 metrics_dir = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_model_accuracies"
+checkpoint_dir = f'model_checkpoint_'
 n_participants = 144
 time_series_size = 100
 window_delta = 1 #int(time_series_size /
