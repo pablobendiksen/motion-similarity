@@ -49,7 +49,7 @@ def run_percent_files_copy(task_num):
     #             file_subset_names[i] = str(path)
     # print(f"file_subset_names {file_subset_names}")
     num_files = len(filenames)
-    for i in NUM_SAMPLES:
+    for i in len(NUM_SAMPLES):
         # j = random.randint(0, num_files)
         # file_subset_names.append(filenames[j])
         file_subset_names.append(filenames[i])
