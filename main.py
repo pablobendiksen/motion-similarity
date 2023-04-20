@@ -70,7 +70,7 @@ if __name__ == '__main__':
         start_time = time.time()
         history = effort_network.run_model_training(effort_network, train_generator, validation_generator,
                                                     checkpoint_dir)
-        tot_time = time.time() - start_time
+        tot_time = (time.time() - start_time) / 60
         index_window_size = conf.task_num + '.' + str(window_size)
         effort_network.write_out_eval_accuracy(validation_generator, conf.task_num, checkpoint_dir, tot_time)
         saved_model = models.load_model(checkpoint_dir)

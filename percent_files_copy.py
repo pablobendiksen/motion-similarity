@@ -38,17 +38,25 @@ def run_percent_files_copy(task_num):
         os.mkdir(OUTPUT_DIR)
         print(f"created new directory: {OUTPUT_DIR}")
 
-    file_name_list = []
-    for k, path in enumerate(os.listdir(INPUT_DIR)):
-        if k < NUM_SAMPLES:
-            file_name_list.append(str(path))  # because path is object not string
-        else:
-            i = random.randint(0, k)
-            if i < NUM_SAMPLES:
-                file_name_list[i] = str(path)
-    print(f"file_name_list {file_name_list}")
+    filenames = os.listdir(INPUT_DIR)
+    file_subset_names = []
+    # for k, path in enumerate(os.listdir(INPUT_DIR)):
+    #     if k < NUM_SAMPLES:
+    #         file_subset_names.append(str(path))  # because path is object not string
+    #     else:
+    #         i = random.randint(0, k)
+    #         if i < NUM_SAMPLES:
+    #             file_subset_names[i] = str(path)
+    # print(f"file_subset_names {file_subset_names}")
+    num_files = len(filenames)
+    for i in NUM_SAMPLES:
+        # j = random.randint(0, num_files)
+        # file_subset_names.append(filenames[j])
+        file_subset_names.append(filenames[i])
 
-    for file_name in file_name_list:
+
+
+    for file_name in file_subset_names:
         print(f"copying: {file_name}")
         shutil.copy(os.path.join(INPUT_DIR, file_name), os.path.join(OUTPUT_DIR))
 

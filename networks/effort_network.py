@@ -186,7 +186,7 @@ class EffortNetwork(Utilities):
                                  'Val Loss', 'Val Accuracy', 'Training Time'])
             writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
                              conf.exemplar_num,
-                             test_loss, test_acc, int(total_time)])
+                             test_loss, test_acc, total_time])
 
         # Write out to csv file
         # with open(os.path.join(conf.metrics_dir, f'{conf.task_num}.csv'), "w", newline='') as f:

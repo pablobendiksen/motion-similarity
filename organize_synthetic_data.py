@@ -30,10 +30,6 @@ def visualize(file_bvh):
         # ('stdscale', ListStandardScaler())
     ])
     data = parsed_data
-    # # #
-    # inv_data = data_pipe._inverse_transform([data])[0]
-
-    # print_skel(parsed_data)
     mp = MocapParameterizer('position')
     positions = mp.transform([data])[0]
 
@@ -145,14 +141,6 @@ def concat_all_data_as_np(animName=None, rotations=True, velocities=False, bvh_f
                 clear_file(f_full_path)  # remove the : from the file
                 # parsed file of type pymo.data.MocapData
                 parsed_data = parser.parse(f_full_path)
-                # if column_names is None:
-                #     column_names = parsed_data.values.columns.tolist()
-                #     column_names.insert(0, "anim")
-                #     column_names.insert(0, "effort_4")
-                #     column_names.insert(0, "effort_3")
-                #     column_names.insert(0, "effort_2")
-                #     column_names.insert(0, "effort_1")
-                # print(f"Parsed data structure columns:\n{parsed_data.values.columns}")
                 bvh_frame_rate.add(parsed_data.framerate)
                 if len(bvh_frame_rate) > 1:
                     fr = bvh_frame_rate.pop()
