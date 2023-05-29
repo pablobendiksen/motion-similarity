@@ -43,7 +43,7 @@ def temp_test_check_run_repeatability(task_num):
     return test_int, sliding_size
 
 
-# sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
 
 # generator params
 params = {'exemplar_dim': (100, 91),
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     conf.task_num = sys.argv[1]
     #indicate if running remotely or not
     conf.remote = sys.argv[2]
-    test_int, sliding_window_sizes = temp_test_check_run_repeatability(conf.task_num)
-    conf.task_num = str(test_int)
+    # test_int, sliding_window_sizes = temp_test_check_run_repeatability(conf.task_num)
+    # conf.task_num = str(test_int)
     params['exemplars_dir'] = conf.exemplars_dir + conf.task_num + '/'
     checkpoint_dir = conf.checkpoint_dir + conf.task_num
     percent_files_copy.run_percent_files_copy(conf.task_num)
