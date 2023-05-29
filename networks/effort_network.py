@@ -10,6 +10,7 @@ from keras.layers import MaxPool2D
 from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras import models
+from keras import callbacks
 # from tensorflow.python.ops.numpy_ops import np_config
 # from keras.callbacks import EarlyStopping
 # from keras.callbacks import BackupAndRestore
@@ -44,6 +45,7 @@ class EffortNetwork(Utilities):
         self.model = None
         self.STEPS_PER_EPOCH = None
         self.checkpoint = None
+        self.callbacks = [callbacks.EarlyStopping(monitor='val_mse', patience=5, mode='min')]
         self._network = Sequential()
         if os.path.isfile(conf.effort_model_file):
             self.model = tf.keras.models.load_model(conf.effort_model_file)
@@ -69,7 +71,7 @@ class EffortNetwork(Utilities):
     def compile_model(self, loss):
         try:
             opt = Adam(learning_rate=0.0001, beta_1=0.5)
-            self._network.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
+            self._network.compile(loss=loss, optimizer=opt, metrics=['mse'])
             self.model = self._network
         except RuntimeError:
             self.compile_model(loss)
@@ -136,32 +138,37 @@ class EffortNetwork(Utilities):
         self._network.add(Flatten())
         self._network.add(Dense(output_layer_size, activation='softmax'))
 
-    def run_model_training(self, effort_network, train_generator, validation_generator, checkpoint_dir):
+    def run_model_training(self, train_generator, validation_generator, checkpoint_dir):
         try:
-            history = effort_network.model.fit(train_generator, validation_data=validation_generator,
+            if not os.path.exists(checkpoint_dir):
+                os.mkdir(checkpoint_dir)
+                print(f"created new directory: {checkpoint_dir}")
+
+            history = self.model.fit(train_generator, validation_data=validation_generator,
                                                validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                                workers=4, use_multiprocessing=True,
-                                               steps_per_epoch=train_generator.__len__())
-            effort_network.model.save(checkpoint_dir)
-            effort_network.model.save_weights(checkpoint_dir)
+                                               steps_per_epoch=train_generator.__len__(), callback=self.callbacks)
+
+            self.model.save(checkpoint_dir)
+            self.model.save_weights(checkpoint_dir)
             return history
         except RuntimeError as run_err:
             logging.error(f"RuntimeError for job {conf.task_num}, attempting training restoration - {run_err} ")
-            history = effort_network.model.fit(train_generator, validation_data=validation_generator,
+            history = self.model.fit(train_generator, validation_data=validation_generator,
                                                validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                                workers=1, use_multiprocessing=False,
                                                steps_per_epoch=train_generator.__len__())
-            effort_network.model.save(checkpoint_dir)
-            effort_network.model.save_weights(checkpoint_dir)
+            self.model.save(checkpoint_dir)
+            self.model.save_weights(checkpoint_dir)
             return history
 
-    def write_out_eval_accuracy(self, validation_generator, task_num, checkpoint_dir, total_time):
+    def write_out_eval_accuracy(self, test_generator, task_num, checkpoint_dir, total_time):
         # test stored model use
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
-        test_loss, test_acc = saved_model.evaluate(validation_generator)
-        print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
-        num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
+        test_loss, metric = self.model.evaluate(test_generator)
+        print(f'Test loss: {test_loss}, Metric (MSE): {metric}')
+        # num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
         if not os.path.exists(conf.metrics_dir):
             os.mkdir(conf.metrics_dir)
             print(f"created new directory: {conf.metrics_dir}")
@@ -171,7 +178,7 @@ class EffortNetwork(Utilities):
                 reader = csv.reader(file)
                 header_row = next(reader)
                 if header_row == ['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
-                                  'Val Loss', 'Val Accuracy', 'Training Time']:
+                                  'Val Loss', 'Metric (MSE)', 'Training Time']:
                     append_header = False
                 else:
                     # incorrect header_row
@@ -183,17 +190,7 @@ class EffortNetwork(Utilities):
             writer = csv.writer(file)
             if append_header:
                 writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
-                                 'Val Loss', 'Val Accuracy', 'Training Time'])
+                                 'Val Loss', 'Metric (MSE)', 'Training Time'])
             writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
                              conf.exemplar_num,
-                             test_loss, test_acc, total_time])
-
-        # Write out to csv file
-        # with open(os.path.join(conf.metrics_dir, f'{conf.task_num}.csv'), "w", newline='') as f:
-        #     writer = csv.writer(f)
-        #     writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
-        #                      'Val Loss',
-        #                      'Val Accuracy', 'Training Time'])
-        #     writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
-        #                      conf.exemplar_num,
-        #         test_loss, test_acc, int(total_time)])
+                             test_loss, metric, total_time])

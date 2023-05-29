@@ -31,7 +31,11 @@ def run_percent_files_copy(task_num):
     NUM_SAMPLES = int(percent_copy / 100 * file_count)
     # print(f"num samps: {NUM_SAMPLES}")
 
-    if not os.path.exists(OUTPUT_DIR):
+    if not os.path.exists(conf.bvh_subsets_dir):
+        os.mkdir(conf.bvh_subsets_dir)
+        os.mkdir(OUTPUT_DIR)
+        print(f"created new directories: {conf.bvh_subsets_dir} , {OUTPUT_DIR}")
+    elif not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
         print(f"created new directory: {OUTPUT_DIR}")
 

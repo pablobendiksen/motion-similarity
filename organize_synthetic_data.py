@@ -317,7 +317,9 @@ def _load_ids_and_labels(train_val_split=0.8, exemplars_dir=conf.exemplars_dir):
     batch_ids_list = list(labels_dict.keys())
     random.shuffle(batch_ids_list)
     train_size = int(train_val_split * len(batch_ids_list))
-    partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:]}
+    test_val_size = int(((1-train_val_split) * len(batch_ids_list))/2)
+    partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:test_val_size],
+                 'test': batch_ids_list[-test_val_size:]}
     return partition, labels_dict
 
 

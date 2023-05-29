@@ -25,6 +25,6 @@ echo `date`
 eval "$(conda shell.bash hook)"
 conda activate motion-similarity
 
-python main.py $SLURM_ARRAY_TASK_ID
+python main.py $SLURM_ARRAY_TASK_ID True
 #python temp.py $SLURM_ARRAY_TASK_ID
 echo "Finish Run"

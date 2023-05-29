@@ -88,22 +88,34 @@ combineRowPermutations <- function(df) {
   return (df)
 }
 
-lma_pilot <- read.csv(file="lmaPilot.csv", stringsAsFactors=FALSE, header=T)
-lma_pilot <- as.data.frame(lmaPilot)
+#lma_pilot <- read.csv(file="lmaPilot.csv", stringsAsFactors=FALSE, header=T)
+lma_pilot <- read.csv(file="walking.csv", stringsAsFactors=FALSE, header=T)
+lma_pilot <- as.data.frame(lma_pilot)
+
+mydf <- lma_pilot %>%
+  rowwise() %>% 
+  mutate(combined = paste(sort(c_across(starts_with("efforts"))),collapse = "_"))
+
+length(unique(mydf$combined))
+View(mydf)
+
 #combine effortsLeft and effortsRight into one column
 lma_pilot$efforts_tuples <- paste(lma_pilot$effortsLeft, lma_pilot$effortsRight, sep="_")
-lma_pilot <- lma_pilot[,c(1,2,8,5,6,7,3,4)]
+#lma_pilot <- lma_pilot[,c(1,2,8,5,6,7,3,4)]
+lma_pilot <- lma_pilot[,c("id", "motionType", "efforts_tuples", "selected0", "selected1", "qInd", "effortsLeft", "effortsRight")]
 lma_pilot <- lma_pilot %>% 
   rename("motion_type" = "motionType")
 
 lma_pilot_0 <- lma_pilot[lma_pilot$motion_type == 0,]
 lma_pilot_1 <- lma_pilot[lma_pilot$motion_type== 1,]
-
+View(lma_pilot)
 #sanity check: must be 6 (i.e., unique trials)
-length(unique(lma_pilot_1$efforts_tuples))
+str(lma_pilot)
+length(unique(lma_pilot$efforts_tuples))
 
 # get counts by efforts_tuples for whole dataset as well as by motion
 lma_pilot_test <- lma_pilot[, !names(lma_pilot) %in% c("motion_type")]
+lma_pilot_test
 lma_pilot_counts <- combineRowPermutations(lma_pilot_test)
 
 lma_pilot_0 <- combineRowPermutations(lma_pilot_0)

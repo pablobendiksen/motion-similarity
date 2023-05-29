@@ -51,7 +51,10 @@ params = {'exemplar_dim': (100, 91),
           'shuffle': True}
 
 if __name__ == '__main__':
+    #pass in index of current task
     conf.task_num = sys.argv[1]
+    #indicate if running remotely or not
+    conf.remote = sys.argv[2]
     test_int, sliding_window_sizes = temp_test_check_run_repeatability(conf.task_num)
     conf.task_num = str(test_int)
     params['exemplars_dir'] = conf.exemplars_dir + conf.task_num + '/'
@@ -64,16 +67,16 @@ if __name__ == '__main__':
         print(f"number of batches: {len(labels_dict.keys())}")
         print(f"type: {type(labels_dict[1])}")
         train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
-        print(os.cpu_count())
         validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
+        test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
         effort_network = EffortNetwork(two_d_conv=False, model_num=1)
         start_time = time.time()
-        history = effort_network.run_model_training(effort_network, train_generator, validation_generator,
+        history = effort_network.run_model_training(train_generator, validation_generator,
                                                     checkpoint_dir)
         tot_time = (time.time() - start_time) / 60
         index_window_size = conf.task_num + '.' + str(window_size)
-        effort_network.write_out_eval_accuracy(validation_generator, conf.task_num, checkpoint_dir, tot_time)
-        saved_model = models.load_model(checkpoint_dir)
-        saved_model.load_weights(checkpoint_dir)
-        test_loss, test_acc = saved_model.evaluate(validation_generator)
-        print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
+        effort_network.write_out_eval_accuracy(test_generator, conf.task_num, checkpoint_dir, tot_time)
+        # saved_model = effort_network.models.load_model(checkpoint_dir)
+        # saved_model.load_weights(checkpoint_dir)
+        # test_loss, test_acc = saved_model.evaluate(validation_generator)
+        # print(f'Test loss: {test_loss}, Test accuracy: {test_acc}')
