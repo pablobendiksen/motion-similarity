@@ -2,7 +2,7 @@ import pandas as pd
 import conf
 import os
 
-path = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/job_model_accuracies"
+path = conf.metrics_dir
 df = pd.DataFrame()
 
 csv_files = [f for f in os.listdir(path) if f.endswith('.csv')]
