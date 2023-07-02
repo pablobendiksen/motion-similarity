@@ -49,12 +49,21 @@ def run_percent_files_copy(task_num):
     #         if i < NUM_SAMPLES:
     #             file_subset_names[i] = str(path)
     # print(f"file_subset_names {file_subset_names}")
-    num_files = len(filenames)
-    for i in range(0, NUM_SAMPLES):
+    # num_files = len(filenames)
+    # for i in range(0, NUM_SAMPLES):
         # j = random.randint(0, num_files)
         # file_subset_names.append(filenames[j])
-        file_subset_names.append(filenames[i])
+        # file_subset_names.append(filenames[i])
 
+    # Manually specify polarized states and drives as they are needed for training the similarity network
+    files_to_copy = ['file1.txt', 'file2.txt', 'file3.txt']
+
+    # Select random files from the remaining files
+    remaining_files = list(set(filenames) - set(files_to_copy))
+    random_files = random.sample(remaining_files, NUM_SAMPLES - len(files_to_copy))
+
+    # Combine the specific files and random files to create the final list
+    file_subset_names = files_to_copy + random_files
 
 
     for file_name in file_subset_names:

@@ -73,11 +73,11 @@ def build_and_run_autoencoder(x, y):
     y_train = to_categorical(y_train, p_count)
     y_test = to_categorical(y_test, p_count)
 
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
 
 
-    n_batches = int(x.shape[0] / conf.batch_size)
+    n_batches = int(x.shape[0] / conf.batch_size_efforts_predictor)
     cnn1d = tf.keras.layers.Conv1D(filters=256, kernel_size=15, padding='same', activation='relu', input_shape=(conf.time_series_size, feature_size))(x_train)
     print(f"cnn1d.shape: {cnn1d.shape}")
     train_mode = True
@@ -117,8 +117,8 @@ def build_and_run_autoencoder(x, y):
         # val_loss corresponds to the value of the cost function for the test data
         # model.fit(x_train, y_train, batch_size = conf.batch_size, epochs=conf.n_epochs, steps_per_epoch=18, validation_data=(x_test, y_test), callbacks=[tensorboard_callback], validation_steps=100)
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
-        print(f"check: {math.ceil(x_train.shape[0] / conf.batch_size)}")
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        print(f"check: {math.ceil(x_train.shape[0] / conf.batch_size_efforts_predictor)}")
+        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_predictor), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)

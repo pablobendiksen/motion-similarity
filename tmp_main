@@ -1,0 +1,48 @@
+import tensorflow as tf
+import numpy as np
+
+def _pairwise_distances(embeddings, mask, squared=False):
+    """Compute the 2D matrix of distances between valid embeddings.
+
+    Args:
+        embeddings: tensor of shape (batch_size, embed_dim)
+        mask: tensor of shape (batch_size, batch_size) indicating valid pairs
+        squared: Boolean. If true, output is the pairwise squared euclidean distance matrix.
+                 If false, output is the pairwise euclidean distance matrix.
+
+    Returns:
+        pairwise_distances: tensor of shape (batch_size, batch_size)
+    """
+    mask_expanded = tf.expand_dims(mask, axis=1)  # Expand mask along the second dimension
+    masked_embeddings = embeddings * mask_expanded  # Element-wise multiplication
+    dot_product = tf.matmul(masked_embeddings, tf.transpose(embeddings))
+    square_norm = tf.linalg.diag_part(dot_product)
+
+    distances = tf.expand_dims(square_norm, 1) - 2.0 * dot_product + tf.expand_dims(square_norm, 0)
+    distances = tf.maximum(distances, 0.0)
+
+    if not squared:
+        mask_float = tf.cast(mask, tf.float32)
+        distances = distances * mask_float
+
+        distances = distances + mask_float * 1e-16
+        distances = tf.sqrt(distances)
+        distances = distances * (1.0 - mask_float)
+
+    return distances
+
+if __name__ == '__main__':
+    # Generate random input tensors
+    batch_size = 32
+    embed_dim = 4
+
+    embeddings = tf.random.normal(shape=(batch_size, embed_dim))
+    mask = tf.random.uniform(shape=(batch_size, batch_size))
+
+    # Compute pairwise distances
+    pairwise_dist = _pairwise_distances(embeddings, mask)
+
+    # Print the result
+    with tf.compat.v1.Session() as sess:
+        result = sess.run(pairwise_dist)
+        print(result)

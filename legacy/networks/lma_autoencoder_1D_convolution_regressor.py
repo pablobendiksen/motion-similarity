@@ -54,11 +54,11 @@ def build_and_run_autoencoder(x, y):
 
     p_count = y_train.shape[1]
 
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
+    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
 
 
-    n_batches = int(x.shape[0] / conf.batch_size)
+    n_batches = int(x.shape[0] / conf.batch_size_efforts_predictor)
     train_mode = True
     size_input = (conf.time_series_size, feature_size)  # Shape of an individual input
     if train_mode:
@@ -94,7 +94,7 @@ def build_and_run_autoencoder(x, y):
         # val_loss correesponds to the value of the cost function for this cross-validation data
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
         # accidental use of steps_per_epoch = 1052, with 1D Convolution,  was leading to val_accuracy of 100% for a couple of epochs earlier in the training sequence
-        lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_predictor), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)

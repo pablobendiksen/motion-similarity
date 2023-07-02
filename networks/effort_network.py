@@ -153,7 +153,7 @@ class EffortNetwork(Utilities):
             self.model.save_weights(checkpoint_dir)
             return history
         except RuntimeError as run_err:
-            logging.error(f"RuntimeError for job {conf.task_num}, attempting training restoration - {run_err} ")
+            logging.error(f"RuntimeError for job {conf.num_task}, attempting training restoration - {run_err} ")
             history = self.model.fit(train_generator, validation_data=validation_generator,
                                                validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                                workers=1, use_multiprocessing=False,
@@ -166,13 +166,13 @@ class EffortNetwork(Utilities):
         # test stored model use
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
-        test_loss, metric = self.model.evaluate(test_generator)
+        test_loss, metric = saved_model.evaluate(test_generator)
         print(f'Test loss: {test_loss}, Metric (MSE): {metric}')
         # num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
         if not os.path.exists(conf.metrics_dir):
             os.mkdir(conf.metrics_dir)
             print(f"created new directory: {conf.metrics_dir}")
-        csv_file = os.path.join(conf.metrics_dir, f'{conf.task_num}.csv')
+        csv_file = os.path.join(conf.metrics_dir, f'{conf.num_task}.csv')
         if os.path.exists(csv_file):
             with open(csv_file, 'r') as file:
                 reader = csv.reader(file)
