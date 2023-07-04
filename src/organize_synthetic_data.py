@@ -225,6 +225,8 @@ def prep_all_data_for_training(rotations=True, velocities=False):
     bvh_counter = 0
     bvh_frame_rate = set()
     filenames = os.listdir(conf.bvh_files_dir)
+    print(conf.bvh_files_dir)
+    print(filenames)
     batches = Batches()
     for f in filenames:
         if f.endswith("bvh"):

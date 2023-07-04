@@ -26,7 +26,7 @@ output_metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity
 
 REMOTE_MACHINE_DIR_VALUES = {
     'all_bvh_dir': "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_extended/",
-    "bv_subsets_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_subset/",
+    "bv_subsets_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_walking_105_34_552_tmp/",
     "exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/",
     "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_model_accuracies",
     "checkpoint_root_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/"

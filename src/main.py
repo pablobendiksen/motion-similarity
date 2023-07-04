@@ -1,12 +1,15 @@
 import shutil
+import os
+import sys
+curr_path = os.getcwd()
+sys.path.append(curr_path)
+sys.path.append(curr_path + '\..\networks')
 from networks.effort_network import EffortNetwork
 from networks.generator import MotionDataGenerator
 import organize_synthetic_data as osd
 import aux.percent_files_copy as percent_files_copy
 import time
 import conf
-import sys
-import os
 
 
 def delete_exemplars_dir(task_num):
@@ -41,7 +44,7 @@ if __name__ == '__main__':
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_subsets_dir']
         conf.exemplars_dir = params['exemplars_dir'] = conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] + \
             conf.num_task + '/'
-        conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['metrics_dir']
+        conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']
         conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
         sliding_window_sizes = remote_sliding_window_sizes
 
@@ -49,7 +52,7 @@ if __name__ == '__main__':
         os.makedirs(conf.checkpoint_root_dir)
 
     for window_size in sliding_window_sizes:
-        checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, conf.num_task, str(window_size)]))
+        checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, str(window_size)]))
         conf.window_delta = window_size
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
         print(f"number of batches: {len(labels_dict.keys())}")
