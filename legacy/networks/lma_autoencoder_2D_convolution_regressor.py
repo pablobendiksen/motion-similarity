@@ -34,8 +34,8 @@ def partition_dataset(x, y, dataset_sample_count, train_split=0.9, seed=11):
     train_size = int(train_split * data.shape[0])
     train_ds = ds.take(train_size)
     test_ds = ds.skip(train_size)
-    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
     print(f"len train: {len(list(train_data))}, len test: {len(list(test_data))}")
     print(tf.data.experimental.cardinality(train_ds))
     return train_data, test_data
@@ -49,7 +49,7 @@ def build_and_run_autoencoder(x, y):
     x = np.expand_dims(x, 3)
     train_data, test_data = partition_dataset(x, y, x.shape[0])
     output_layer_node_count = y.shape[1]
-    n_batches = int(x.shape[0] / conf.batch_size_efforts_predictor)
+    n_batches = int(x.shape[0] / conf.batch_size_efforts_network)
     train_mode = True
     size_input = (x.shape[1], x.shape[2], x.shape[3])
     # size_input = (conf.time_series_size, feature_size, 1)  # Shape of an individual input

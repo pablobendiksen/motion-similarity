@@ -19,8 +19,8 @@ def organize_train_test():
     x: space, weight, time, flow, dtw
     y: psm
     """
-    dfs = pd.read_csv('../../data/synthetic_comparisons_dtw.csv')
-    dfm = pd.read_csv('../../data/mturk_comparisons.csv')
+    dfs = pd.read_csv('../csv_files/synthetic_comparisons_dtw.csv')
+    dfm = pd.read_csv('../csv_files/mturk_comparisons.csv')
 
 
     # map everything bw 0 and 1
@@ -68,8 +68,8 @@ def organize_train_test_by_action(train_actions, test_action):
     :param test_action: Animation reserved for testing
     :return:
     """
-    dfs = pd.read_csv('../../data/synthetic_comparisons_dtw.csv')
-    dfm = pd.read_csv('../../data/mturk_comparisons.csv')
+    dfs = pd.read_csv('../csv_files/synthetic_comparisons_dtw.csv')
+    dfm = pd.read_csv('../csv_files/mturk_comparisons.csv')
 
     # map differences to 0 and 1
     diffs = dfs['diff']

@@ -66,8 +66,8 @@ class Utilities:
         y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
         print(f"train classes #: {len(np.unique(y_train_list))}")
         print(f"test classes #: {len(np.unique(y_test_list))}")
-        self.train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-        self.test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+        self.train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+        self.test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
 
     @staticmethod
     def visualize_class_distribution(train_ds, test_ds, train_title, test_title):

@@ -311,8 +311,8 @@ def analyze_correlations(dfs, dfm):
 
 # # Linear regression fit
 # dfs = pd.read_csv('data/synthetic_comparisons_dtw.csv')
-dfs = pd.read_csv('data/synthetic_comparisons_lcss.csv')
-dfm = pd.read_csv('data/mturk_comparisons.csv')
+dfs = pd.read_csv('legacy/csv_files/synthetic_comparisons_lcss.csv')
+dfm = pd.read_csv('legacy/csv_files/mturk_comparisons.csv')
 analyze_correlations(dfs, dfm)
 
 # df = read_csv('data/results.csv')

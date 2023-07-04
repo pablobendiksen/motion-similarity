@@ -1,5 +1,5 @@
 import conf
-from utilities import Utilities
+from networks.utilities import Utilities
 from keras.optimizers import Adam
 from keras.layers import Input, Conv1D, MaxPooling1D
 from keras.layers import Dense
@@ -28,21 +28,13 @@ logging.basicConfig(level=logging.DEBUG,
                     style="{")
 logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
 
-# callbacks
-# early_stopping = EarlyStopping(monitor='val_loss', patience=4, mode='auto')
-# backup_restore = BackupAndRestore(backup_dir="/tmp/backup")
-
 
 class EffortNetwork(Utilities):
     # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-    # class InterruptingCallback(tf.keras.callbacks.Callback):
-    #     def on_epoch_begin(self, epoch, logs=None):
-    #         if epoch == 4:
-    #             raise RuntimeError('Interrupting!')
-
-    def __init__(self, two_d_conv=False, model_num=1):
+    def __init__(self, exemplar_shape=(100,87), two_d_conv=False, model_num=1):
         self.model = None
+        self.exemplar_shape = exemplar_shape
         self.STEPS_PER_EPOCH = None
         self.checkpoint = None
         self.callbacks = [callbacks.EarlyStopping(monitor='val_mse', patience=5, mode='min')]
@@ -56,7 +48,7 @@ class EffortNetwork(Utilities):
                 self.data = np.expand_dims(self.data, 3)
                 if model_num == 2:
                     conv_1 = Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), activation='ReLU',
-                                    input_shape=(100, 91, 1))
+                                    input_shape=np.expand_dims(self.exemplar_shape, 2))
                     pool_1 = MaxPool2D(2, 2)
                     self.build_model_2(conv_1, pool_1)
                 elif model_num == 3:
@@ -86,11 +78,8 @@ class EffortNetwork(Utilities):
         self._network.add(Flatten())
         self._network.add(Dense(output_layer_size, activation='softmax'))
 
-    # avg 560 sec, 50 epoch, val_accuracy: 0.6668
-    ###1D cnn: 2s, .9574
     def build_model_1(self):
-        self._network.add(Conv1D(filters=160, kernel_size=15, activation='relu', input_shape=(
-            100, 91)))
+        self._network.add(Conv1D(filters=160, kernel_size=15, activation='relu', input_shape=self.exemplar_shape))
         self._network.add(MaxPooling1D(pool_size=2))
         self._network.add(BatchNormalization())
         self._network.add(Dropout(0.3))
@@ -99,7 +88,6 @@ class EffortNetwork(Utilities):
         self._network.add(Dense(4, activation='tanh'))
         self._network.summary()
 
-    # avg 220 sec, 50 epoch, val_accuracy: 0.7256
     def build_model_2(self, data, filter_num=150, kernel_size=(3, 3), strides=(1, 1)):
         input_shape = (data.shape[1], data.shape[2], 1)
         output_layer_size = self.labels.shape[1]
@@ -147,7 +135,7 @@ class EffortNetwork(Utilities):
             history = self.model.fit(train_generator, validation_data=validation_generator,
                                                validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                                workers=4, use_multiprocessing=True,
-                                               steps_per_epoch=train_generator.__len__(), callback=self.callbacks)
+                                               steps_per_epoch=train_generator.__len__(), callbacks=self.callbacks)
 
             self.model.save(checkpoint_dir)
             self.model.save_weights(checkpoint_dir)
@@ -169,10 +157,10 @@ class EffortNetwork(Utilities):
         test_loss, metric = saved_model.evaluate(test_generator)
         print(f'Test loss: {test_loss}, Metric (MSE): {metric}')
         # num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
-        if not os.path.exists(conf.metrics_dir):
-            os.mkdir(conf.metrics_dir)
-            print(f"created new directory: {conf.metrics_dir}")
-        csv_file = os.path.join(conf.metrics_dir, f'{conf.num_task}.csv')
+        if not os.path.exists(conf.output_metrics_dir):
+            os.mkdir(conf.output_metrics_dir)
+            print(f"created new directory: {conf.output_metrics_dir}")
+        csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}.csv')
         if os.path.exists(csv_file):
             with open(csv_file, 'r') as file:
                 reader = csv.reader(file)

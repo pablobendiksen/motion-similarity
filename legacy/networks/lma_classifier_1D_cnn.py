@@ -1,35 +1,17 @@
 import datetime
 from collections import Counter
-
-from keras.utils import to_categorical
-
 import conf
 import numpy as np
 from keras.optimizers import Adam
-from keras.models import Model
-from keras.layers import Input
 from keras.layers import Dense
-from keras.layers import Reshape
-from keras.layers import BatchNormalization
-from keras.layers import LeakyReLU
 from keras.layers import Dropout
-from keras.layers import Lambda
 from keras.layers import Conv1D
-from keras.layers import Conv1DTranspose
-from keras.layers import Conv2DTranspose
 from keras.layers import Flatten
 from keras.layers import MaxPooling1D
-from keras.layers import MaxPooling2D
-from keras.layers import Conv2D
-from keras.layers import UpSampling1D
-from keras.layers import Concatenate
-from keras.losses import BinaryCrossentropy
-from keras.callbacks import ModelCheckpoint
 import tensorflow as tf
 from keras import losses
-import organize_synthetic_data as osd
+import src.organize_synthetic_data as osd
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
 import math
 from tensorflow.python.ops.numpy_ops import np_config
 np_config.enable_numpy_behavior()
@@ -61,8 +43,8 @@ def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
     y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
     print(f"train classes #: {len(np.unique(y_train_list))}")
     print(f"test classes #: {len(np.unique(y_test_list))}")
-    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
     return train_data, test_data
 
 # Classifies personality or LMA efforts
@@ -96,7 +78,7 @@ def predict_efforts_cnn(x, y):
         model.compile(loss=losses.sparse_categorical_crossentropy, optimizer=opt, metrics='accuracy')
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_predictor), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)
         y_pred_enc = model.predict(x_test)[0]

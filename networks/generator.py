@@ -13,7 +13,7 @@ def unison_shuffling(a, b):
 
 
 class MotionDataGenerator(keras.utils.Sequence):
-    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size_efforts_predictor, exemplar_dim=(100, 91),
+    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size_efforts_network, exemplar_dim=(100, 91),
                  exemplars_dir=conf.exemplars_dir, shuffle=True):
         self.exemplar_dim = exemplar_dim
         self.batch_size = batch_size

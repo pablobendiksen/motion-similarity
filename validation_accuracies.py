@@ -2,7 +2,7 @@ import pandas as pd
 import conf
 import os
 
-path = conf.metrics_dir
+path = conf.output_metrics_dir
 df = pd.DataFrame()
 
 csv_files = [f for f in os.listdir(path) if f.endswith('.csv')]

@@ -16,8 +16,8 @@ def partition_dataset(x, y, dataset_sample_count, train_split=0.8, seed=0):
     y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
     print(f"train classes #: {len(np.unique(y_train_list))}")
     print(f"test classes #: {len(np.unique(y_test_list))}")
-    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    train_data = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+    test_data = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
     return train_data, test_data
 
 # load mocap preprocessed data for training and testing
@@ -64,6 +64,6 @@ lma_model.compile(loss='mse', optimizer=optimizer_adam, metrics=['accuracy'])
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
 lma_model.fit(train_data, epochs=num_epochs, steps_per_epoch=200, validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=50)

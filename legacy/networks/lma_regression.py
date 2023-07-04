@@ -53,8 +53,8 @@ def predict_efforts_cnn(x, y):
     print(f'test size: {x_test.shape}')
     y_test = y[train_split+1:,:]
 
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+    test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
 
     p_count = y_train.shape[1]
     train_mode = True
@@ -72,7 +72,7 @@ def predict_efforts_cnn(x, y):
 
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_predictor), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
 
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)

@@ -91,9 +91,9 @@ def partition_dataset_sklearn_np(x, y, train_split=0.8, seed=0):
     x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=train_split, random_state=seed,
                                                         shuffle=True)
     train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(
-        conf.batch_size_efforts_predictor).repeat()
+        conf.batch_size_efforts_network).repeat()
     test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(
-        conf.batch_size_efforts_predictor).repeat()
+        conf.batch_size_efforts_network).repeat()
     return train_data, test_data
 
 
@@ -108,8 +108,8 @@ def partition_dataset_tf_ds(x, y, train_split=0.8, seed=0):
     y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
     print(f"train classes #: {len(np.unique(y_train_list))}")
     print(f"test classes #: {len(np.unique(y_test_list))}")
-    train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
-    test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_predictor).repeat()
+    train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+    test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
     return train_ds, test_ds
 
 # does not achieve 1.0 val accuracy in 50 epochs
@@ -128,9 +128,9 @@ def train_model_stratified_shuffle_split(x, y, train_split=0.8, n_splits=1, seed
         x_test = x[test_index, :, :]
         y_test = y[test_index, :]
         train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(conf.buffer_size).batch(
-            conf.batch_size_efforts_predictor).repeat()
+            conf.batch_size_efforts_network).repeat()
         test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).shuffle(conf.buffer_size).batch(
-            conf.batch_size_efforts_predictor).repeat()
+            conf.batch_size_efforts_network).repeat()
         # _visualize_class_distribution(train_ds, test_ds, "Train Data tf.ds.shuffle", "Test Data tf.ds.shuffle")
         network_model = build_model(size_input, 150, (3, 3), (1, 1), output_layer_node_count)
         train_model(network_model, train_ds, test_ds, x_train.shape[0], False)
@@ -161,7 +161,7 @@ def train_model(network_model, train_data, test_data, exemplar_count, fold_no=Fa
     # csv_logger = CSVLogger('log.csv', append=True, separator=';')
     # lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size),
     #               validation_data=test_data, callbacks=[csv_logger], validation_steps=100)
-    lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size_efforts_predictor),
+    lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size_efforts_network),
                   validation_data=test_data, callbacks=[timetaken], validation_steps=100)
     # model.save(conf.synthetic_model_file)
 
