@@ -100,7 +100,7 @@ class Batches:
                     if remainder == 1:
                         zeroes_counter += 1
                     effort_tuple.append(effort_vals[remainder])
-                if zeroes_counter == 2 or zeroes_counter == 1:
+                if zeroes_counter == 2 or zeroes_counter == 1 or zeroes_counter == 4:
                     states_and_drives.append(effort_tuple)
 
             states_and_drives = []
