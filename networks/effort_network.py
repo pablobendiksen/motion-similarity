@@ -11,9 +11,6 @@ from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras import models
 from keras import callbacks
-# from tensorflow.python.ops.numpy_ops import np_config
-# from keras.callbacks import EarlyStopping
-# from keras.callbacks import BackupAndRestore
 import numpy as np
 import tensorflow as tf
 import logging
@@ -128,8 +125,9 @@ class EffortNetwork(Utilities):
 
     def run_model_training(self, train_generator, validation_generator, checkpoint_dir):
         try:
+
             if not os.path.exists(checkpoint_dir):
-                os.mkdir(checkpoint_dir)
+                os.makedirs(checkpoint_dir)
                 print(f"created new directory: {checkpoint_dir}")
 
             history = self.model.fit(train_generator, validation_data=validation_generator,

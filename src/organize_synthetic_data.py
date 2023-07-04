@@ -52,8 +52,6 @@ class Batches:
         repeats = conf.time_series_size
         while len(self.current_batch) < conf.batch_size_efforts_network:
             new_exemplar = np.tile(last_row, (repeats, 1))
-            print(f"new_exemplar shape: {new_exemplar.shape}")
-            print(f"type new_exemplar: {type(new_exemplar)}")
             self.sample_idx += 1
             self.current_batch.append(new_exemplar)
         self.store_batch()

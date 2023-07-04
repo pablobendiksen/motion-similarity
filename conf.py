@@ -29,6 +29,6 @@ REMOTE_MACHINE_DIR_VALUES = {
     "bv_subsets_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_subset/",
     "exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/",
     "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_model_accuracies",
-    "checkpoint_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/"
+    "checkpoint_root_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/"
 }
 

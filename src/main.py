@@ -42,13 +42,14 @@ if __name__ == '__main__':
         conf.exemplars_dir = params['exemplars_dir'] = conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] + \
             conf.num_task + '/'
         conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['metrics_dir']
+        conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
         sliding_window_sizes = remote_sliding_window_sizes
 
     if not os.path.exists(conf.checkpoint_root_dir):
         os.makedirs(conf.checkpoint_root_dir)
 
     for window_size in sliding_window_sizes:
-        checkpoint_dir = '.'.join(filter(None, [conf.checkpoint_root_dir, conf.num_task, str(window_size)]))
+        checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, conf.num_task, str(window_size)]))
         conf.window_delta = window_size
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
         print(f"number of batches: {len(labels_dict.keys())}")
