@@ -57,73 +57,23 @@ def _pairwise_distances_2(embeddings, mask, squared=False):
 
 if __name__ == '__main__':
 
-    # np.random.seed(42)
-    # tf.random.set_seed(42)
-    # # Generate random input tensors
-    # batch_size = 32
-    # embed_dim = 4
-    #
-    # embeddings = tf.constant(np.random.normal(size=(batch_size, embed_dim)), dtype=tf.float32)
-    # mask = tf.constant(np.random.uniform(size=(batch_size, batch_size)), dtype=tf.float32)
-    #
-    # # embeddings = tf.random.normal(shape=(batch_size, embed_dim))
-    # # mask = tf.random.uniform(shape=(batch_size, batch_size))
-    #
-    # # Compute pairwise distances
-    # pairwise_dist = _pairwise_distances_2(embeddings, mask)
-    #
-    # # Print the result
-    # print(pairwise_dist)
+    np.random.seed(42)
+    tf.random.set_seed(42)
+    # Generate random input tensors
+    batch_size = 32
+    embed_dim = 4
+
+    embeddings = tf.constant(np.random.normal(size=(batch_size, embed_dim)), dtype=tf.float32)
+    mask = tf.constant(np.random.uniform(size=(batch_size, batch_size)), dtype=tf.float32)
+
+    # embeddings = tf.random.normal(shape=(batch_size, embed_dim))
+    # mask = tf.random.uniform(shape=(batch_size, batch_size))
+
+    # Compute pairwise distances
+    pairwise_dist = _pairwise_distances(embeddings, mask)
+
+    # Print the result
+    print(pairwise_dist)
 
     import itertools
     from collections import deque
-
-
-    def exhaust(generator):
-        generator = list(generator)
-        print([x for x in generator])
-
-    # exhaust(itertools.combinations(range(4), 2))
-    elements = (-1, 0, 1)
-    two_tuples = []
-    three_tuples = []
-
-
-    def generate_states_and_drives():
-
-        def convertToNary(tuple_index, values_per_effort, efforts_per_tuple):
-            effort_tuple = []
-            zeroes_counter = 0
-            for _ in range(efforts_per_tuple):
-                tuple_index, remainder = divmod(tuple_index, values_per_effort)
-                if remainder == 1:
-                    zeroes_counter+=1
-                effort_tuple.append(effort_vals[remainder])
-            if zeroes_counter == 2 or zeroes_counter == 1:
-                states_and_drives.append(effort_tuple)
-
-        states_and_drives = []
-        effort_vals = [-1,0,1]
-        values_per_effort = 3
-        efforts_per_tuple = 4
-        tuple_index = 0
-        while (tuple_index < math.pow(values_per_effort, 4)):
-            tuple_index += 1
-            convertToNary(tuple_index, values_per_effort, efforts_per_tuple)
-        print(f"states_and_drives len: {len(states_and_drives)} \n{states_and_drives}")
-
-
-    for i in range(10, 35+1, 3):
-        indices = range(i - 10, i)
-        print(indices)
-
-
-    # # Remove duplicates and sort the tuples
-    # tuples_ = sorted(set(tuples))
-    #
-    # # Print the generated tuples
-    # cnt = 0
-    # for tpl in tuples:
-    #     cnt+=1
-    #     print(tpl)
-    # print(cnt)
