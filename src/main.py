@@ -24,7 +24,7 @@ def delete_exemplars_dir(task_num):
         print(f"Directory does not exist: {directory}")
 
 
-remote_sliding_window_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+remote_sliding_window_sizes = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
 
 # effort network generator params
 params = {'exemplar_dim': (100, 87),

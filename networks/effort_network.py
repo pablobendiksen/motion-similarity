@@ -177,6 +177,7 @@ class EffortNetwork(Utilities):
             if append_header:
                 writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
                                  'Val Loss', 'Metric (MSE)', 'Training Time'])
+            print(f"Writing out to: {csv_file}")
             writer.writerow([conf.percent_files_copied, task_num, conf.window_delta, conf.bvh_file_num,
                              conf.exemplar_num,
                              test_loss, metric, total_time])

@@ -8,7 +8,7 @@ exemplar_dim_effort_network = (100, 87)
 time_series_size = 100
 window_delta = 10 # int(time_series_size /
 batch_size_efforts_network = 64
-n_epochs = 100
+n_epochs = 200
 
 # PARALLEL PROCESSING
 num_task = None
@@ -28,7 +28,7 @@ REMOTE_MACHINE_DIR_VALUES = {
     'all_bvh_dir': "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_extended/",
     "bv_subsets_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_walking_105_34_552_tmp/",
     "exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/",
-    "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_model_accuracies",
+    "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/job_metrics/",
     "checkpoint_root_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/"
 }
 
