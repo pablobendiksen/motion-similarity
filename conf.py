@@ -8,7 +8,7 @@ exemplar_dim_effort_network = (100, 87)
 time_series_size = 100
 window_delta = 10 # int(time_series_size /
 batch_size_efforts_network = 64
-n_epochs = 200
+n_epochs = 10
 
 # PARALLEL PROCESSING
 num_task = None

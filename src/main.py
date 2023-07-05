@@ -48,6 +48,9 @@ if __name__ == '__main__':
         conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
         sliding_window_sizes = remote_sliding_window_sizes
 
+    if not os.path.exists(conf.exemplars_dir):
+        os.makedirs(conf.exemplars_dir)
+
     if not os.path.exists(conf.checkpoint_root_dir):
         os.makedirs(conf.checkpoint_root_dir)
 

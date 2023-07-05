@@ -158,7 +158,7 @@ class EffortNetwork(Utilities):
         if not os.path.exists(conf.output_metrics_dir):
             os.mkdir(conf.output_metrics_dir)
             print(f"created new directory: {conf.output_metrics_dir}")
-        csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}.csv')
+        csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
         if os.path.exists(csv_file):
             with open(csv_file, 'r') as file:
                 reader = csv.reader(file)

@@ -278,12 +278,8 @@ def prepare_data(rotations=True, velocities=False):
 
 
 def load_data(rotations=True, velocities=False):
-    if not path.exists(conf.exemplars_dir):
-        os.makedirs(conf.exemplars_dir)
+    if not path.exists(os.path.join(conf.output_metrics_dir, f'{conf.num_task}', "_", f'{conf.window_delta}.csv')):
         prepare_data(rotations=rotations, velocities=velocities)
-    elif not os.listdir(conf.exemplars_dir):
-        prepare_data(rotations=rotations, velocities=velocities)
-
     partition, labels_dict = _load_ids_and_labels()
     return partition, labels_dict
 
