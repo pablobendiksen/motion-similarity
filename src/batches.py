@@ -50,14 +50,14 @@ class Batches:
         extended_rows = np.tile(last_row, (repeats, 1))
         return np.concatenate((exemplar, extended_rows), axis=0)
 
-    def extend_final_batch(self, end_directory_exemplar):
-        exemplar = np.delete(end_directory_exemplar, slice(5), axis=1)
+    def extend_final_batch(self, exemplar):
+        # exemplar = np.delete(end_directory_exemplar, slice(5), axis=1)
         last_row = exemplar[-1]
         repeats = conf.time_series_size
         while len(self.current_batch) < conf.batch_size_efforts_network:
             new_exemplar = np.tile(last_row, (repeats, 1))
             self.sample_idx += 1
-            self.current_batch.append(new_exemplar)
+            self.append_batch_and_labels(new_exemplar)
         self.store_batch()
 
     def store_effort_labels_dict(self):
