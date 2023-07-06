@@ -61,8 +61,8 @@ class Batches:
         self.store_batch()
 
     def store_effort_labels_dict(self):
-        self.dict_efforts_labels.pop(self.batch_idx)
         self.batch_idx -= 1
+        self.dict_efforts_labels.pop(self.batch_idx)
         print(f"LEN OF LABELS DICT: {len(self.dict_efforts_labels)}")
         with open(conf.exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
             pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
