@@ -38,6 +38,7 @@ if __name__ == '__main__':
     else:
         conf.num_task = None
     print(f"task number: {conf.num_task}")
+    sliding_window_sizes = remote_sliding_window_sizes
     sliding_window_sizes = [10]
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']

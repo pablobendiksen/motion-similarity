@@ -7,7 +7,8 @@ import conf
 
 
 def unison_shuffling(a, b):
-    assert len(a) == len(b)
+    print(f"a:{len(a)}, b:{len(b)}")
+    assert len(a) == len(b), f"len features: {len(a)}, len labels: {len(b)}"
     p = np.random.permutation(len(a))
     return a[p], b[p]
 
@@ -42,6 +43,7 @@ class MotionDataGenerator(keras.utils.Sequence):
             if len(path) != 1:
                 assert False, f"Error for id {idx}, found path for batch must be unique — {path}!"
             batch_features = np.load(path[0])
+            assert self.labels[idx] is not None, f"missing label at idx: {idx}"
             return batch_features, np.array(self.labels[idx])
 
         def read_async_batch_files(subset_batch_ids):

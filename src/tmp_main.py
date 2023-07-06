@@ -2,6 +2,8 @@ import math
 
 import tensorflow as tf
 import numpy as np
+import pickle
+
 
 def _pairwise_distances(embeddings, mask, squared=False):
     """Compute the 2D matrix of distances between valid embeddings.
@@ -34,6 +36,7 @@ def _pairwise_distances(embeddings, mask, squared=False):
 
     return distances
 
+
 def _pairwise_distances_2(embeddings, mask, squared=False):
     mask = tf.cast(mask > 0.5, tf.float32)  # Convert the mask to binary (0 or 1)
     mask_sparse = tf.sparse.from_dense(mask)
@@ -55,8 +58,8 @@ def _pairwise_distances_2(embeddings, mask, squared=False):
 
     return distances
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     np.random.seed(42)
     tf.random.set_seed(42)
     # Generate random input tensors
@@ -70,10 +73,12 @@ if __name__ == '__main__':
     # mask = tf.random.uniform(shape=(batch_size, batch_size))
 
     # Compute pairwise distances
-    pairwise_dist = _pairwise_distances(embeddings, mask)
+    # pairwise_dist = _pairwise_distances(embeddings, mask)
 
     # Print the result
-    print(pairwise_dist)
+    # print(pairwise_dist)
 
-    import itertools
-    from collections import deque
+    check_ = pickle.load(open("/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/tmp" \
+                          "/labels_dict.pickle", "rb"))
+    print(len(check_))
+    # print(check_)

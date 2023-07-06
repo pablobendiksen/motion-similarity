@@ -58,10 +58,25 @@ class Batches:
     def store_effort_labels_dict(self):
         self.dict_efforts_labels.pop(self.batch_idx)
         self.batch_idx -= 1
+        print(f"LEN OF LABELS DICT: {len(self.dict_efforts_labels)}")
         with open(conf.exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
             pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
         conf.exemplar_num = self.sample_idx
+
+    def check_array_sizes(self, arr_list):
+        if len(arr_list) == 0:
+            return True
+
+        # Get the shape of the first array
+        first_shape = arr_list[0].shape
+
+        # Check the shape of each array in the list
+        for arr in arr_list:
+            if arr.shape != first_shape:
+                return False
+
+        return True
 
     def append_similarity_class_exemplar(self, state_drive, exemplar):
         # include efforts but not anim

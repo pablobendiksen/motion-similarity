@@ -50,7 +50,6 @@ def clear_file(file):
 
 
 def prep_all_data_for_training(rotations=True, velocities=False):
-
     def _preprocess_pipeline(parsed_data):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -169,8 +168,11 @@ def prep_all_data_for_training(rotations=True, velocities=False):
 
     conf.bvh_file_num = bvh_counter
     batches.store_effort_labels_dict()
-    batches.balance_similarity_classes()
-    print(f"{batches.print_len_dict_similarity_exemplars()}")
+    assert batches.batch_idx == len(batches.dict_efforts_labels.values()) - 1, f"batch_idx: {batches.batch_idx}, " \
+                                                                               f"num lab" \
+                                                                               f"labels: {len(batches.dict_efforts_labels.values())}"
+    # batches.balance_similarity_classes()
+    # print(f"{batches.print_len_dict_similarity_exemplars()}")
 
 
 def prepare_data(rotations=True, velocities=False):
