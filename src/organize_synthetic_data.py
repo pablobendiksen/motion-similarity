@@ -172,7 +172,7 @@ def prep_all_data_for_training(rotations=True, velocities=False):
     conf.bvh_file_num = bvh_counter
     batches.store_effort_labels_dict()
     assert batches.batch_idx == len(batches.dict_efforts_labels.values()) - 1, f"batch_idx: {batches.batch_idx}, " \
-                                                                               f"num lab" \
+                                                                               f"num" \
                                                                                f"labels: {len(batches.dict_efforts_labels.values())}"
     # batches.balance_similarity_classes()
     # print(f"{batches.print_len_dict_similarity_exemplars()}")
