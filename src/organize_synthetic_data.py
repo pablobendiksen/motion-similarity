@@ -113,14 +113,15 @@ def prep_all_data_for_training(rotations=True, velocities=False):
                 indices = range(i - conf.time_series_size, end_index)
                 exemplar = file_data[indices]
                 exemplar = batches.append_to_end_file_exemplar(exemplar)
+                batches.append_batch_and_labels(exemplar)
                 if f == filenames[-1]:
                     batches.extend_final_batch(exemplar)
             else:
                 exemplar = file_data[indices]
-            batches.append_batch_and_labels(exemplar)
+                batches.append_batch_and_labels(exemplar)
             if tuple_effort_list in batches.dict_similarity_exemplars.keys():
                 batches.append_similarity_class_exemplar(tuple_effort_list, file_data[indices])
-            if len(batches.current_batch) == conf.batch_size_efforts_network:
+            if len(batches.current_batch[batches.batch_idx]) == conf.batch_size_efforts_network:
                 batches.store_batch()
 
     bvh_counter = 0

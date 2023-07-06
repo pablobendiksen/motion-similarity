@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import math
 
+
 class Batches:
     # organize batch related aliases and functionality here
     def __init__(self):
@@ -11,33 +12,35 @@ class Batches:
         self.sample_idx = 0
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
-        self.current_batch = []
-        self.dict_efforts_labels_list = {self.batch_idx: []}
-        self.dict_efforts_labels = {}
+        self.current_batch = {0: []}
+        self.list_batch_efforts = []
+        self.dict_efforts_labels = {0: np.zeros((self.batch_size, conf.num_efforts))}
         self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
         self.sliding_window_start_index = conf.time_series_size
 
     def append_batch_and_labels(self, exemplar):
-        self.dict_efforts_labels_list[self.batch_idx].append(exemplar[0][0:conf.num_efforts])
+        self.list_batch_efforts.append(exemplar[0][0:conf.num_efforts])
         # drop labels and anim columns
         exemplar = np.delete(exemplar, slice(5), axis=1)
         # print(f"EXEMPLAR SHAPE WHEN STORING: {exemplar.shape}")
-        self.current_batch.append(exemplar)
+        self.current_batch[self.batch_idx].append(exemplar)
         self.sample_idx += 1
 
     def store_batch(self):
-        self.dict_efforts_labels[self.batch_idx] = np.array(self.dict_efforts_labels_list[self.batch_idx])
+        self.dict_efforts_labels[self.batch_idx] = np.array(self.list_batch_efforts)
         assert len(self.dict_efforts_labels[self.batch_idx]) == 64, f"Len of efforts dict at batch idx " \
                                                                     f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
 
-
-        motions = np.array(self.current_batch)
+        motions = np.array(self.current_batch[self.batch_idx])
         np.save(conf.exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
                 motions)
-        print(f"stored batch num {self.batch_idx}. Size: {motions.shape}.  exemplar count: {self.sample_idx}")
-        self.current_batch = []
+        print(
+            f"Stored batch num {self.batch_idx}. Size: {motions.shape}.  exemplar count:"
+            f" {self.sample_idx}")
         self.batch_idx += 1
-        self.dict_efforts_labels_list[self.batch_idx] = []
+        self.current_batch[self.batch_idx] = []
+        self.list_batch_efforts = []
+        self.dict_efforts_labels[self.batch_idx] = np.zeros((self.batch_size, conf.num_efforts))
 
     @staticmethod
     def append_to_end_file_exemplar(exemplar, make_whole_exemplar=False):
@@ -54,7 +57,7 @@ class Batches:
         # exemplar = np.delete(end_directory_exemplar, slice(5), axis=1)
         last_row = exemplar[-1]
         repeats = conf.time_series_size
-        while len(self.current_batch) < conf.batch_size_efforts_network:
+        while len(self.current_batch[self.batch_idx]) < conf.batch_size_efforts_network:
             new_exemplar = np.tile(last_row, (repeats, 1))
             self.sample_idx += 1
             self.append_batch_and_labels(new_exemplar)
@@ -62,8 +65,10 @@ class Batches:
 
     def store_effort_labels_dict(self):
         self.dict_efforts_labels.pop(self.batch_idx)
+        self.current_batch.pop(self.batch_idx)
         self.batch_idx -= 1
-        print(f"LEN OF LABELS DICT: {len(self.dict_efforts_labels)}")
+        print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
+              f" {len(self.current_batch)}")
         with open(conf.exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
             pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
@@ -111,6 +116,7 @@ class Batches:
         Returns:
             dict_similarity_exemplars: Dictionary. {similarity_class: {}}
         """
+
         def generate_states_and_drives():
             def convert_to_nary(tuple_index, values_per_effort, efforts_per_tuple):
                 effort_tuple = []
