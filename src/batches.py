@@ -12,17 +12,32 @@ class Batches:
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
         self.current_batch = []
-        self.dict_efforts_labels = {self.batch_idx: []}
+        self.dict_efforts_labels_list = {self.batch_idx: []}
+        self.dict_efforts_labels = {}
         self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
         self.sliding_window_start_index = conf.time_series_size
 
     def append_batch_and_labels(self, exemplar):
-        self.dict_efforts_labels[self.batch_idx].append(exemplar[0][0:conf.num_efforts])
+        self.dict_efforts_labels_list[self.batch_idx].append(exemplar[0][0:conf.num_efforts])
         # drop labels and anim columns
         exemplar = np.delete(exemplar, slice(5), axis=1)
         # print(f"EXEMPLAR SHAPE WHEN STORING: {exemplar.shape}")
         self.current_batch.append(exemplar)
         self.sample_idx += 1
+
+    def store_batch(self):
+        self.dict_efforts_labels[self.batch_idx] = np.array(self.dict_efforts_labels_list[self.batch_idx])
+        assert len(self.dict_efforts_labels[self.batch_idx]) == 64, f"Len of efforts dict at batch idx " \
+                                                                    f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
+
+
+        motions = np.array(self.current_batch)
+        np.save(conf.exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
+                motions)
+        print(f"stored batch num {self.batch_idx}. Size: {motions.shape}.  exemplar count: {self.sample_idx}")
+        self.current_batch = []
+        self.batch_idx += 1
+        self.dict_efforts_labels_list[self.batch_idx] = []
 
     @staticmethod
     def append_to_end_file_exemplar(exemplar, make_whole_exemplar=False):
@@ -44,16 +59,6 @@ class Batches:
             self.sample_idx += 1
             self.current_batch.append(new_exemplar)
         self.store_batch()
-
-    def store_batch(self):
-        self.dict_efforts_labels[self.batch_idx] = np.array(self.dict_efforts_labels[self.batch_idx])
-        motions = np.array(self.current_batch)
-        np.save(conf.exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
-                motions)
-        print(f"stored batch num {self.batch_idx}. Size: {motions.shape}.  exemplar count: {self.sample_idx}")
-        self.current_batch = []
-        self.batch_idx += 1
-        self.dict_efforts_labels[self.batch_idx] = []
 
     def store_effort_labels_dict(self):
         self.dict_efforts_labels.pop(self.batch_idx)

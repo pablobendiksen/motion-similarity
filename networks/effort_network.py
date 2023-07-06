@@ -154,10 +154,6 @@ class EffortNetwork(Utilities):
         saved_model.load_weights(checkpoint_dir)
         test_loss, metric = saved_model.evaluate(test_generator)
         print(f'Test loss: {test_loss}, Metric (MSE): {metric}')
-        # num_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
-        if not os.path.exists(conf.output_metrics_dir):
-            os.mkdir(conf.output_metrics_dir)
-            print(f"created new directory: {conf.output_metrics_dir}")
         csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
         if os.path.exists(csv_file):
             with open(csv_file, 'r') as file:

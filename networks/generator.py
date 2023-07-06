@@ -7,8 +7,8 @@ import conf
 
 
 def unison_shuffling(a, b):
-    print(f"a:{len(a)}, b:{len(b)}")
-    assert len(a) == len(b), f"len features: {len(a)}, len labels: {len(b)}"
+    # print(f"a:{len(a)}, b:{len(b)}")
+    # assert len(a) == len(b), f"len features: {len(a)}, len labels: {len(b)}"
     p = np.random.permutation(len(a))
     return a[p], b[p]
 

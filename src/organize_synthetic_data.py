@@ -1,3 +1,5 @@
+import os
+
 from src.batches import Batches
 from pymo.parsers import BVHParser
 from pymo.viz_tools import *
@@ -181,10 +183,13 @@ def prepare_data(rotations=True, velocities=False):
 
 def load_data(rotations=True, velocities=False):
     if not path.exists(conf.output_metrics_dir):
+        if path.exists(conf.exemplars_dir):
+            os.remove(conf.exemplars_dir)
+            os.makedirs(conf.exemplars_dir)
+        else:
+            os.makedirs(conf.exemplars_dir)
         os.makedirs(conf.output_metrics_dir)
-        prepare_data(rotations=rotations, velocities=velocities)
-
-    elif not path.exists(os.path.join(conf.output_metrics_dir, f'{conf.num_task}', "_", f'{conf.window_delta}.csv')):
+        print(f"created new directory: {conf.output_metrics_dir}")
         prepare_data(rotations=rotations, velocities=velocities)
     partition, labels_dict = _load_ids_and_labels()
     return partition, labels_dict
