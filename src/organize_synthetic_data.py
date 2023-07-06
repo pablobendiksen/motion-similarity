@@ -6,6 +6,7 @@ from pymo.viz_tools import *
 from sklearn.preprocessing import StandardScaler
 from pymo.preprocessing import *
 from os import path
+import shutil
 import conf
 from sklearn.pipeline import Pipeline
 import numpy as np
@@ -184,7 +185,7 @@ def prepare_data(rotations=True, velocities=False):
 def load_data(rotations=True, velocities=False):
     csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
     if path.exists(conf.exemplars_dir) and not path.exists(csv_file):
-        os.remove(conf.exemplars_dir)
+        shutil.rmtree(conf.exemplars_dir)
         os.makedirs(conf.exemplars_dir)
         prepare_data(rotations=rotations, velocities=velocities)
     elif not path.exists(csv_file):
