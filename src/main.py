@@ -38,8 +38,8 @@ if __name__ == '__main__':
     else:
         conf.num_task = None
     print(f"task number: {conf.num_task}")
-    sliding_window_sizes = remote_sliding_window_sizes
     sliding_window_sizes = [10]
+
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_subsets_dir']
@@ -52,8 +52,13 @@ if __name__ == '__main__':
     if not os.path.exists(conf.checkpoint_root_dir):
         os.makedirs(conf.checkpoint_root_dir)
 
+    if not os.path.exists(conf.exemplars_dir):
+        os.makedirs(conf.exemplars_dir)
+
     for window_size in sliding_window_sizes:
         checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, str(window_size)]))
+        os.makedirs(checkpoint_dir)
+        print(f"created new directory: {checkpoint_dir}")
         conf.window_delta = window_size
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
         print(f"number of batches: {len(labels_dict.keys())}")

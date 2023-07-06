@@ -182,14 +182,12 @@ def prepare_data(rotations=True, velocities=False):
 
 
 def load_data(rotations=True, velocities=False):
-    if not path.exists(conf.output_metrics_dir):
-        if path.exists(conf.exemplars_dir):
-            os.remove(conf.exemplars_dir)
-            os.makedirs(conf.exemplars_dir)
-        else:
-            os.makedirs(conf.exemplars_dir)
-        os.makedirs(conf.output_metrics_dir)
-        print(f"created new directory: {conf.output_metrics_dir}")
+    csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
+    if os.list_dir(conf.exemplars_dir) and not path.exists(csv_file):
+        os.remove(conf.exemplars_dir)
+        os.makedirs(conf.exemplars_dir)
+        prepare_data(rotations=rotations, velocities=velocities)
+    elif not path.exists(csv_file):
         prepare_data(rotations=rotations, velocities=velocities)
     partition, labels_dict = _load_ids_and_labels()
     return partition, labels_dict

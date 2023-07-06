@@ -126,10 +126,6 @@ class EffortNetwork(Utilities):
     def run_model_training(self, train_generator, validation_generator, checkpoint_dir):
         try:
 
-            if not os.path.exists(checkpoint_dir):
-                os.makedirs(checkpoint_dir)
-                print(f"created new directory: {checkpoint_dir}")
-
             history = self.model.fit(train_generator, validation_data=validation_generator,
                                                validation_steps=validation_generator.__len__(), epochs=conf.n_epochs,
                                                workers=4, use_multiprocessing=True,
