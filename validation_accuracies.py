@@ -3,6 +3,7 @@ import conf
 import os
 
 path = conf.output_metrics_dir
+path = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/job_metrics/"
 df = pd.DataFrame()
 
 csv_files = [f for f in os.listdir(path) if f.endswith('.csv')]
