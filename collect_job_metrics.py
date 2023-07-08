@@ -16,4 +16,4 @@ def collect_job_metrics():
 
     df = df.sort_values('Metric (MSE)', ascending=True)
 
-    df.to_csv(os.path.join(path, 'validation_accuracies.csv'), index=False)
+    df.to_csv(os.path.join(path, 'job_train_metrics.csv'), index=False)

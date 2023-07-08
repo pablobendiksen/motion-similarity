@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print(f"task number: {conf.num_task}")
     sliding_window_sizes = [10]
 
-    if not conf.num_task:
+    if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_subsets_dir']
         conf.exemplars_dir = params['exemplars_dir'] = conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] + \
@@ -61,5 +61,5 @@ if __name__ == '__main__':
                                                     checkpoint_dir)
         tot_time = (time.time() - start_time) / 60
         index_window_size = conf.num_task + '.' + str(window_size)
-        effort_network.write_out_eval_accuracy(test_generator, conf.num_task, checkpoint_dir, tot_time)
+        effort_network.write_out_training_results(test_generator, conf.num_task, checkpoint_dir, tot_time)
         cjm.collect_job_metrics()

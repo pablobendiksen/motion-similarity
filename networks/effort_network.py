@@ -144,7 +144,7 @@ class EffortNetwork(Utilities):
             self.model.save_weights(checkpoint_dir)
             return history
 
-    def write_out_eval_accuracy(self, test_generator, task_num, checkpoint_dir, total_time):
+    def write_out_training_results(self, test_generator, task_num, checkpoint_dir, total_time):
         # test stored model use
         saved_model = models.load_model(checkpoint_dir)
         saved_model.load_weights(checkpoint_dir)
