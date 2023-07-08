@@ -12,19 +12,7 @@ import time
 import conf
 
 
-def delete_exemplars_dir(task_num):
-    directory = conf.exemplars_dir + task_num + '/'
-    if os.path.exists(directory):
-        if not os.listdir(directory):
-            print(f"Directory is empty: {directory}")
-        else:
-            shutil.rmtree(directory)
-            print(f"Deleted directory: {directory}")
-    else:
-        print(f"Directory does not exist: {directory}")
-
-
-remote_sliding_window_sizes = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+remote_sliding_window_sizes = [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
 
 # effort network generator params
 params = {'exemplar_dim': (100, 87),
@@ -40,11 +28,11 @@ if __name__ == '__main__':
     print(f"task number: {conf.num_task}")
     sliding_window_sizes = [10]
 
-    if conf.num_task:
+    if not conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_subsets_dir']
         conf.exemplars_dir = params['exemplars_dir'] = conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] + \
-            conf.num_task + '/'
+                                                       conf.num_task + '/'
         conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']
         conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
         sliding_window_sizes = remote_sliding_window_sizes

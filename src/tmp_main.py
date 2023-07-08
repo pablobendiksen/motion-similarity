@@ -69,16 +69,16 @@ if __name__ == '__main__':
     embeddings = tf.constant(np.random.normal(size=(batch_size, embed_dim)), dtype=tf.float32)
     mask = tf.constant(np.random.uniform(size=(batch_size, batch_size)), dtype=tf.float32)
 
-    # embeddings = tf.random.normal(shape=(batch_size, embed_dim))
-    # mask = tf.random.uniform(shape=(batch_size, batch_size))
+    embeddings = tf.random.normal(shape=(batch_size, embed_dim))
+    mask = tf.random.uniform(shape=(batch_size, batch_size))
 
-    # Compute pairwise distances
+    # # Compute pairwise distances
     # pairwise_dist = _pairwise_distances(embeddings, mask)
-
-    # Print the result
+    #
+    # # Print the result
     # print(pairwise_dist)
 
     check_ = pickle.load(open("/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/tmp" \
-                          "/labels_dict.pickle", "rb"))
+                          "//similarity_labels_exemplars_dict.pickle", "rb"))
     print(len(check_))
-    # print(check_)
+    print([len(value) for key, value in check_.items()])

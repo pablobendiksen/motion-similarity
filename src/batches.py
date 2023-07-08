@@ -11,6 +11,7 @@ class Batches:
         self.exemplar_efforts_dim = conf.exemplar_dim_effort_network
         self.sample_idx = 0
         self.batch_idx = 0
+        self.tmp_exemplar = np.zeros(conf.exemplar_dim_effort_network)
         self.state_drive_exemplar_idx = None
         self.current_batch = {0: []}
         self.list_batch_efforts = []
@@ -31,12 +32,13 @@ class Batches:
         assert len(self.dict_efforts_labels[self.batch_idx]) == 64, f"Len of efforts dict at batch idx " \
                                                                     f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
 
-        motions = np.array(self.current_batch[self.batch_idx])
+        batch_array = np.array(self.current_batch[self.batch_idx])
         np.save(conf.exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
-                motions)
+                batch_array)
         print(
-            f"Stored batch num {self.batch_idx}. Size: {motions.shape}.  exemplar count:"
+            f"Stored batch num {self.batch_idx}. Size: {batch_array.shape}.  exemplar count:"
             f" {self.sample_idx}")
+        self.tmp_exemplar = batch_array[0]
         self.batch_idx += 1
         self.current_batch[self.batch_idx] = []
         self.list_batch_efforts = []
@@ -74,19 +76,10 @@ class Batches:
         print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
         conf.exemplar_num = self.sample_idx
 
-    def check_array_sizes(self, arr_list):
-        if len(arr_list) == 0:
-            return True
-
-        # Get the shape of the first array
-        first_shape = arr_list[0].shape
-
-        # Check the shape of each array in the list
-        for arr in arr_list:
-            if arr.shape != first_shape:
-                return False
-
-        return True
+    def store_similarity_labels_exemplars_dict(self):
+        with open(conf.exemplars_dir + '/similarity_labels_exemplars_dict.pickle', 'wb') as handle:
+            pickle.dump(self.dict_similarity_exemplars, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity exemplars")
 
     def append_similarity_class_exemplar(self, state_drive, exemplar):
         # include efforts but not anim
@@ -102,13 +95,20 @@ class Batches:
     def balance_similarity_classes(self):
         max_inner_keys = max(len(inner_dict) for inner_dict in self.dict_similarity_exemplars.values())
         for state_drive, inner_dict in self.dict_similarity_exemplars.items():
-            num_inner_keys = len(inner_dict)
+            length_inner_key = len(inner_dict)
+            num_inner_keys = length_inner_key
+            # for toy data lacking exemplars to multiple classes
+            if length_inner_key == 0:
+                num_inner_keys = 1
+                inner_dict[0] = self.tmp_exemplar
             if num_inner_keys < max_inner_keys:
-                print(f"{inner_dict=}")
                 last_exemplar = inner_dict[num_inner_keys - 1]
                 for i in range(num_inner_keys, max_inner_keys):
                     new_exemplar = self.append_to_end_file_exemplar(last_exemplar, make_whole_exemplar=True)
                     inner_dict[i] = new_exemplar
+        list_dict_lens = [len(inner_dict) for inner_dict in self.dict_similarity_exemplars.values()]
+        assert all(dict_len == list_dict_lens[0] for dict_len in list_dict_lens), "Classes have different exemplar " \
+                                                                                  "counts"
 
     @staticmethod
     def _generate_similarity_classes_exemplars_dict():
