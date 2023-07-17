@@ -7,7 +7,7 @@ sys.path.append(curr_path + '\..\networks')
 from networks.effort_network import EffortNetwork
 from networks.generator import MotionDataGenerator
 import organize_synthetic_data as osd
-import collect_job_metrics as cjm
+import collect_job_metrics
 import time
 import conf
 
@@ -62,4 +62,4 @@ if __name__ == '__main__':
         tot_time = (time.time() - start_time) / 60
         index_window_size = conf.num_task + '.' + str(window_size)
         effort_network.write_out_training_results(test_generator, conf.num_task, checkpoint_dir, tot_time)
-        cjm.collect_job_metrics()
+        collect_job_metrics.collect_job_metrics()

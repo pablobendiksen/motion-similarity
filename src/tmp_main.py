@@ -21,7 +21,7 @@ def _pairwise_distances(embeddings, mask, squared=False):
     embeddings_expanded = tf.expand_dims(embeddings, axis=1)
     masked_embeddings = embeddings_expanded * mask_expanded  # Element-wise multiplication
     dot_product = tf.matmul(masked_embeddings, tf.transpose(embeddings))
-    square_norm = tf.linalg.diag_part(dot_product)
+    square_norm = tf.diag_part(dot_product)
 
     distances = tf.expand_dims(square_norm, 1) - 2.0 * dot_product + tf.expand_dims(square_norm, 0)
     distances = tf.maximum(distances, 0.0)
