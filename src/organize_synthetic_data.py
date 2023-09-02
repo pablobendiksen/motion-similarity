@@ -19,6 +19,8 @@ anim_ind = {'WALKING': 0, 'POINTING': 1, 'PICKING': 2, 'WAVING': 3, 'THROWING': 
             'RUNNING': 7}
 parser = BVHParser()
 
+singleton_batches = Batches()
+
 
 def visualize(file_bvh):
     parsed_data = parser.parse(file_bvh)
@@ -102,7 +104,7 @@ def prep_all_data_for_training(rotations=True, velocities=False):
         """helper function for concat_all_data_as_np()
             batches: instance of Batches class
             file_data: np.array comprising exemplar
-                animation name"""
+        """
 
         start_index = conf.time_series_size
         end_index = file_data.shape[0]
@@ -113,23 +115,22 @@ def prep_all_data_for_training(rotations=True, velocities=False):
                 indices = range(i - conf.time_series_size, end_index)
                 exemplar = file_data[indices]
                 exemplar = batches.append_to_end_file_exemplar(exemplar)
-                batches.append_batch_and_labels(exemplar)
+                batches.append_efforts_batch_and_labels(exemplar)
                 if f == filenames[-1]:
                     batches.extend_final_batch(exemplar)
             else:
                 exemplar = file_data[indices]
-                batches.append_batch_and_labels(exemplar)
+                batches.append_efforts_batch_and_labels(exemplar)
             if tuple_effort_list in batches.dict_similarity_exemplars.keys():
                 batches.append_similarity_class_exemplar(tuple_effort_list, file_data[indices])
             if len(batches.current_batch[batches.batch_idx]) == conf.batch_size_efforts_network:
-                batches.store_batch()
+                batches.store_efforts_batch()
 
     bvh_counter = 0
     bvh_frame_rate = set()
     filenames = os.listdir(conf.bvh_files_dir)
     print(conf.bvh_files_dir)
     print(filenames)
-    batches = Batches()
     for f in filenames:
         if f.endswith("bvh"):
             name = path.splitext(f)[0]  # exclude extension bvh by returning the root
@@ -138,7 +139,7 @@ def prep_all_data_for_training(rotations=True, velocities=False):
             f_full_path = conf.bvh_files_dir + f
             efforts_list = [float(p) for p in name.split('_')[-4:]]
             tuple_effort_list = tuple(efforts_list)
-            batches.state_drive_exemplar_idx = 0
+            singleton_batches.state_drive_exemplar_idx = 0
             clear_file(f_full_path)  # remove the : from the file
             parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
             bvh_frame_rate.add(parsed_data.framerate)
@@ -168,15 +169,21 @@ def prep_all_data_for_training(rotations=True, velocities=False):
             file_data = np.concatenate((a_rep, data), axis=1)
             # append efforts (the first 4 column(s) will be the efforts)
             file_data = np.concatenate((f_rep, file_data), axis=1)
-            apply_moving_window(batches, file_data)
+            apply_moving_window(singleton_batches, file_data)
 
     conf.bvh_file_num = bvh_counter
-    batches.store_effort_labels_dict()
-    batches.balance_similarity_classes()
-    batches.store_similarity_labels_exemplars_dict()
-    assert batches.batch_idx == len(batches.dict_efforts_labels.values()) - 1, f"batch_idx: {batches.batch_idx}, " \
-                                                                               f"num" \
-                                                                               f"labels: {len(batches.dict_efforts_labels.values())}"
+    singleton_batches.store_effort_labels_dict()
+    singleton_batches.balance_similarity_classes()
+    if conf.bool_fixed_neutral_embedding:
+        singleton_batches.dict_similarity_exemplars.pop((0, 0, 0, 0))
+    else:
+        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
+    singleton_batches.convert_exemplar_np_arrays_to_tensors()
+    singleton_batches.store_similarity_labels_exemplars_dict()
+    assert singleton_batches.batch_idx == len(
+        singleton_batches.dict_efforts_labels.values()) - 1, f"batch_idx: {singleton_batches.batch_idx}, " \
+                                                             f"num" \
+                                                             f"labels: {len(singleton_batches.dict_efforts_labels.values())}"
     # batches.balance_similarity_classes()
     # print(f"{batches.print_len_dict_similarity_exemplars()}")
 
@@ -193,12 +200,12 @@ def load_data(rotations=True, velocities=False):
         prepare_data(rotations=rotations, velocities=velocities)
     elif not path.exists(csv_file):
         prepare_data(rotations=rotations, velocities=velocities)
-    partition, labels_dict = _load_ids_and_labels()
+    partition, labels_dict = _partition_effort_ids_and_labels()
     return partition, labels_dict
 
 
-def _load_ids_and_labels(train_val_split=0.8):
-    with open(conf.exemplars_dir + 'labels_dict.pickle', 'rb') as handle:
+def _partition_effort_ids_and_labels(train_val_split=0.8):
+    with open(conf.exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
         labels_dict = pickle.load(handle)
     batch_ids_list = list(labels_dict.keys())
     random.shuffle(batch_ids_list)
@@ -207,6 +214,19 @@ def _load_ids_and_labels(train_val_split=0.8):
     partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:test_val_size],
                  'test': batch_ids_list[-test_val_size:]}
     return partition, labels_dict
+
+
+def load_similarity_data(train_val_split=0.8):
+    dict_similarity_classes_exemplars = pickle.load(open(
+        conf.exemplars_dir + conf.similarity_dict_file_name, "rb"))
+    num_exemplars = len(list(dict_similarity_classes_exemplars.values())[0])
+    p = np.random.permutation(num_exemplars-1)
+    train_size = int(train_val_split * num_exemplars)
+    test_val_size = int(((1 - train_val_split) * num_exemplars) / 2)
+    return {
+        {'train': {k: v[p[:train_size]] for k, v in dict_similarity_classes_exemplars.items()},
+         'validation': {k: v[p[train_size:test_val_size]] for k, v in dict_similarity_classes_exemplars.items()},
+         'test': {k: v[p[-test_val_size:]] for k, v in dict_similarity_classes_exemplars.items()}}}
 
 
 def load_data_for_prediction():

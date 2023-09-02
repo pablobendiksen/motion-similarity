@@ -6,15 +6,16 @@ from glob import glob
 import conf
 
 
-def unison_shuffling(a, b):
+def unison_shuffling(batch_features, batch_labels):
     # print(f"a:{len(a)}, b:{len(b)}")
     # assert len(a) == len(b), f"len features: {len(a)}, len labels: {len(b)}"
-    p = np.random.permutation(len(a))
-    return a[p], b[p]
+    # return: np arrays a, b indexed with list of randomized indices spanning len(a), len(b)
+    p = np.random.permutation(len(batch_features))
+    return batch_features[p], batch_labels[p]
 
 
 class MotionDataGenerator(keras.utils.Sequence):
-    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size_efforts_network, exemplar_dim=(100, 91),
+    def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size_efforts_network, exemplar_dim=(100, 87),
                  exemplars_dir=conf.exemplars_dir, shuffle=True):
         self.exemplar_dim = exemplar_dim
         self.batch_size = batch_size
@@ -24,7 +25,7 @@ class MotionDataGenerator(keras.utils.Sequence):
         self.labels = labels
         self.list_batch_ids = list_batch_ids
         self.num_batches = len(self.list_batch_ids)
-        self.exemplars_dir=exemplars_dir
+        self.exemplars_dir = exemplars_dir
         self.shuffle = shuffle
 
     def on_epoch_end(self):
@@ -38,7 +39,7 @@ class MotionDataGenerator(keras.utils.Sequence):
     def generator(self, index):
 
         def _load_batch(i, idx):
-            # single batch fetching
+            # single batch fetching w
             path = glob(os.path.join(self.exemplars_dir, f'*_{idx}.npy'))
             if len(path) != 1:
                 assert False, f"Error for id {idx}, found path for batch must be unique — {path}!"
@@ -54,14 +55,16 @@ class MotionDataGenerator(keras.utils.Sequence):
         modulo = index % self.batch_group_size
         if modulo == 0:
             for batch_group_idx in range(0, self.num_batches, self.batch_group_size):
+                # truncate group upper limit if it exceeds num_batches
                 group_upper_lim = min(batch_group_idx+self.batch_group_size, self.num_batches)
                 self.grouped_batches = read_async_batch_files(self.list_batch_ids[batch_group_idx:group_upper_lim])
+                # correct for end fetching corner case where fetched grouped_batches is less than batch_group_size
                 self.max_grouped_batches_idx = len(self.grouped_batches) - 1
         grouped_batches_idx = min(modulo, self.max_grouped_batches_idx)
         return self.grouped_batches[grouped_batches_idx][0], self.grouped_batches[grouped_batches_idx][1]
 
     def __getitem__(self, index):
-        # (64, 100, 91), (64, 4)
+        # (64, 100, 87), (64, 4)
         batch_features, batch_labels = self.generator(index)
         batch_features, batch_labels = unison_shuffling(batch_features, batch_labels)
         return batch_features, batch_labels

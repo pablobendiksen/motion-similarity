@@ -24,13 +24,9 @@ def parse_bvh_file(file_path):
         frames_data_start_index = frames_number_index + 2
 
         for i in range(new_num_frames):
+            # assumes 120 fps (downsamples to 30 fps)
             frame_index = frames_data_start_index + (i * 4)
-            # print(i)
-            # frame_data = lines[frame_index].strip()
             frame_data = lines[frame_index]
-            # if i == 0 or i == 1:
-            #     print(f"frame_data: {frame_data}")
-            # print(f"frame_data: {len(frame_data)}")
             frames.append(frame_data)
 
     return frames, frames_number_index
