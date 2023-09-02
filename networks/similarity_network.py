@@ -6,7 +6,7 @@ import networks.triplet_mining as triplet_mining
 from keras.models import Sequential
 import numpy as np
 import tensorflow as tf
-from keras.layers import Conv2D, MaxPool2D, BatchNormalization, Flatten, Dense, Dropout
+from keras.layers import Conv2D, MaxPool2D, BatchNormalization, Flatten, Dense, Lambda, Dropout
 import logging
 import os
 
@@ -46,6 +46,7 @@ class SimilarityNetwork(Utilities):
         self._network.add(Flatten())
         self._network.add(Dense(self.embedding_size))
         self._network.add(Dropout(0.2))
+        self._network.add(Lambda(lambda x: tf.math.l2_normalize(x, axis=1, epsilon=1e-13)))
 
     def compile_model(self):
         opt = Adam(learning_rate=0.0001, beta_1=0.5)

@@ -8,6 +8,12 @@ import tensorflow as tf
 # Set the display options to show all columns
 pd.set_option('display.max_columns', None)
 
+# consider alternative loss function based on cosine similarity:
+# self.margin = 1
+# self.loss = tf.keras.losses.CosineSimilarity(axis=1)
+# ap_distance = self.loss(anchor, positive)
+# an_distance = self.loss(anchor, negative)
+# loss = tf.maximum(ap_distance - an_distance + self.margin, 0.0)
 
 #  user-defined loss function that computes a triplet loss for a batch of embeddings
 def batch_all_triplet_loss(y_true, y_pred):
@@ -16,12 +22,17 @@ def batch_all_triplet_loss(y_true, y_pred):
         We calculate triplet losses for all anchor-positive possibilities, and mask for semi-hard cases only.
 
         Args:
-            y_true: 'labels' of the batch (class indexes), tensor of size (batch_size,)
+            y_true: supposed 'labels' of the batch (i.e., class indexes), tensor of size (batch_size,)
             y_pred: embeddings, tensor of shape (batch_size, embed_dim)
 
         Returns:
             triplet_loss: scalar tensor containing the triplet loss
         """
+    pairs_embeddings_idxs = list(zip(y_pred, y_true))
+    # sort the pairs based on the indexes
+    pairs_embeddings_idxs.sort(key=lambda x: x[1])
+    # separate the embeddings from the indexes
+    y_pred, y_true = zip(*pairs_embeddings_idxs)
     triplet_mining = TripletMining()
     classes_distances = triplet_mining.calculate_left_right_distances(y_pred)
     triplet_mining.calculate_class_neut_distances()
@@ -61,7 +72,7 @@ def batch_all_triplet_loss(y_true, y_pred):
     # Remove negative losses (i.e. the easy triplets)
     triplet_loss = tf.maximum(losses, 0.0)
 
-    # Count number of positive triplets (where triplet_loss > 0)
+    # Count number of positive err triplets (where triplet_loss > 0)
     valid_triplets = tf.cast(tf.greater(triplet_loss, 1e-16), float)
     num_positive_triplets = tf.reduce_sum(valid_triplets)
 
@@ -146,8 +157,12 @@ class TripletMining:
             distances = distances * (1.0 - mask)
 
         # self.tensor_dists_left_right_right_left.assign(distances)
-        tf.debugging.assert_shapes([(distances, (tf.TensorShape([conf.similarity_batch_size - 1,
-                                                                 conf.similarity_batch_size - 1]),))])
+        if not conf.bool_fixed_neutral_embedding:
+            tf.debugging.assert_shapes([(distances, (tf.TensorShape([conf.similarity_batch_size - 1,
+                                                                     conf.similarity_batch_size - 1]),))])
+        else:
+            tf.debugging.assert_shapes([(distances, (tf.TensorShape([conf.similarity_batch_size,
+                                                                     conf.similarity_batch_size]),))])
         return distances
 
     def calculate_class_neut_distances(self, embeddings):

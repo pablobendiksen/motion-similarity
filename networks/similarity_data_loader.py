@@ -25,7 +25,7 @@ class SimilarityDataLoader(keras.utils.Sequence):
 
     def unison_shuffling(self):
         # generate random batch num index, to be applied to all dict class lists, and shuffle
-        # class + class_idx order (within batch shuffling)
+        # class + class_idx order (i.e., within batch shuffling)
         self.exemplar_idx = random.randint(1, self.num_batches)
         p = np.random.permutation(self.num_classes)
         self.class_indexes = self.class_indexes[p]
