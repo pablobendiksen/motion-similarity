@@ -94,7 +94,7 @@ def build_and_run_autoencoder(x, y):
         # val_loss correesponds to the value of the cost function for this cross-validation data
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
         # accidental use of steps_per_epoch = 1052, with 1D Convolution,  was leading to val_accuracy of 100% for a couple of epochs earlier in the training sequence
-        lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        lma_model.fit(train_data, epochs=conf.n_effort_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)

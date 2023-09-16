@@ -35,10 +35,8 @@ class EffortNetwork(Utilities):
         self.test_generator = test_generator
         self.checkpoint_dir = checkpoint_dir
         self.exemplar_dim = train_generator.exemplar_dim
-        self.output_layer_size = self.train_generator.labels.shape[1]
+        self.output_layer_size = self.train_generator.labels[0].shape[1]
         self.model = None
-        self.STEPS_PER_EPOCH = None
-        self.checkpoint = None
         self.callbacks = [callbacks.EarlyStopping(monitor='val_mse', patience=5, mode='min')]
         self._network = Sequential()
         if os.path.isfile(conf.effort_model_file):
@@ -86,7 +84,7 @@ class EffortNetwork(Utilities):
         try:
 
             history = self.model.fit(self.train_generator, validation_data=self.validation_generator,
-                                     validation_steps=self.validation_generator.__len__(), epochs=conf.n_epochs,
+                                     validation_steps=self.validation_generator.__len__(), epochs=conf.n_effort_epochs,
                                      workers=4, use_multiprocessing=True,
                                      steps_per_epoch=self.train_generator.__len__(), callbacks=self.callbacks)
 
@@ -96,7 +94,7 @@ class EffortNetwork(Utilities):
         except RuntimeError as run_err:
             logging.error(f"RuntimeError for job {conf.num_task}, attempting training restoration - {run_err} ")
             history = self.model.fit(self.train_generator, validation_data=self.validation_generator,
-                                     validation_steps=self.validation_generator.__len__(), epochs=conf.n_epochs,
+                                     validation_steps=self.validation_generator.__len__(), epochs=conf.n_effort_epochs,
                                      workers=1, use_multiprocessing=False,
                                      steps_per_epoch=self.train_generator.__len__())
             self.model.save(self.checkpoint_dir)
@@ -129,6 +127,6 @@ class EffortNetwork(Utilities):
                 writer.writerow(['Percent Copied', 'Index', 'Sliding Window Size', 'BVH File Num', 'Exemplar Num',
                                  'Val Loss', 'Metric (MSE)', 'Training Time'])
             print(f"Writing out to: {csv_file}")
-            writer.writerow([conf.percent_files_copied, conf.task_num, conf.window_delta, conf.bvh_file_num,
+            writer.writerow([conf.percent_files_copied, conf.num_task, conf.window_delta, conf.bvh_file_num,
                              conf.exemplar_num,
                              test_loss, metric, total_time])

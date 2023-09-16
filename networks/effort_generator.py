@@ -45,7 +45,8 @@ class MotionDataGenerator(keras.utils.Sequence):
                 assert False, f"Error for id {idx}, found path for batch must be unique — {path}!"
             batch_features = np.load(path[0])
             assert self.labels[idx] is not None, f"missing label at idx: {idx}"
-            return batch_features, np.array(self.labels[idx])
+            # return batch_features, np.array(self.labels[idx])
+            return batch_features, self.labels[idx]
 
         def read_async_batch_files(subset_batch_ids):
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

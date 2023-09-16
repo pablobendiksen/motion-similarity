@@ -30,6 +30,8 @@ if __name__ == '__main__':
     print(f"task number: {conf.num_task}")
     sliding_window_sizes = [10]
 
+    conf.num_task = None
+
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_files_dir']
@@ -53,19 +55,19 @@ if __name__ == '__main__':
         conf.window_delta = window_size
 
         # load effort data and train effort network
-        batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-        print(f"number of batches: {len(labels_dict.keys())}")
-        print(f"type: {type(labels_dict[1])}")
-        effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
-        effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
-        effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
-        effort_network = EffortNetwork(train_generator=effort_train_generator, validation_generator=effort_validation_generator,
-                                       test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
-        start_time = time.time()
-        history = effort_network.run_model_training()
-        tot_time = (time.time() - start_time) / 60
-        effort_network.write_out_training_results(tot_time)
-        collect_job_metrics.collect_job_metrics()
+        # batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
+        # print(f"number of batches: {len(labels_dict.keys())}")
+        # print(f"type: {type(labels_dict[1])}")
+        # effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
+        # effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
+        # effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
+        # effort_network = EffortNetwork(train_generator=effort_train_generator, validation_generator=effort_validation_generator,
+        #                                test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
+        # start_time = time.time()
+        # history = effort_network.run_model_training()
+        # tot_time = (time.time() - start_time) / 60
+        # effort_network.write_out_training_results(tot_time)
+        # collect_job_metrics.collect_job_metrics()
 
         # load similarity data and train similarity network
         similarity_dict_partition = osd.load_similarity_data()
@@ -74,5 +76,7 @@ if __name__ == '__main__':
         similarity_test_loader = SimilarityDataLoader(similarity_dict_partition['test'])
         similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
                                                validation_loader=similarity_validation_loader,
+                                               test_loader=similarity_test_loader,
                                                checkpoint_dir=checkpoint_dir)
         similarity_network.run_model_training()
+        # similarity_network.evaluate()

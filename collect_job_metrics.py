@@ -5,7 +5,7 @@ import os
 
 def collect_job_metrics():
     print("collecting job metrics")
-    path = "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_metrics/"
+    path = conf.output_metrics_dir
     df = pd.DataFrame()
 
     csv_files = [f for f in os.listdir(path) if f.endswith('.csv')]

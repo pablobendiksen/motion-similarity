@@ -78,7 +78,7 @@ def predict_efforts_cnn(x, y):
         model.compile(loss=losses.sparse_categorical_crossentropy, optimizer=opt, metrics='accuracy')
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        model.fit(train_data, epochs=conf.n_effort_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)
         y_pred_enc = model.predict(x_test)[0]

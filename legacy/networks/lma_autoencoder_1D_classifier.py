@@ -118,7 +118,7 @@ def build_and_run_autoencoder(x, y):
         # model.fit(x_train, y_train, batch_size = conf.batch_size, epochs=conf.n_epochs, steps_per_epoch=18, validation_data=(x_test, y_test), callbacks=[tensorboard_callback], validation_steps=100)
         # steps_per_epoch is usually: ceil(num_samples / batch_size)
         print(f"check: {math.ceil(x_train.shape[0] / conf.batch_size_efforts_network)}")
-        model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
+        model.fit(train_data, epochs=conf.n_effort_epochs, steps_per_epoch=math.ceil(x_train.shape[0] / conf.batch_size_efforts_network), validation_data=test_data, callbacks=[tensorboard_callback], validation_steps=100)
         # model.save(conf.synthetic_model_file)
     else:
         model = tf.keras.models.load_model(conf.synthetic_model_file)

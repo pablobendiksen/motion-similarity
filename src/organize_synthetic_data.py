@@ -175,7 +175,7 @@ def prep_all_data_for_training(rotations=True, velocities=False):
     singleton_batches.store_effort_labels_dict()
     singleton_batches.balance_similarity_classes()
     if conf.bool_fixed_neutral_embedding:
-        singleton_batches.dict_similarity_exemplars.pop((0, 0, 0, 0))
+        singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
     else:
         singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
     singleton_batches.convert_exemplar_np_arrays_to_tensors()
@@ -184,8 +184,7 @@ def prep_all_data_for_training(rotations=True, velocities=False):
         singleton_batches.dict_efforts_labels.values()) - 1, f"batch_idx: {singleton_batches.batch_idx}, " \
                                                              f"num" \
                                                              f"labels: {len(singleton_batches.dict_efforts_labels.values())}"
-    # batches.balance_similarity_classes()
-    # print(f"{batches.print_len_dict_similarity_exemplars()}")
+    singleton_batches.verify_dict_similarity_exemplars()
 
 
 def prepare_data(rotations=True, velocities=False):
@@ -216,17 +215,64 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
     return partition, labels_dict
 
 
-def load_similarity_data(train_val_split=0.8):
+def load_similarity_data(train_val_split=0.4):
+    """Load similarity dict of all class exemplars and split across train, validation, and test sets.
+
+                        Args:
+                            train_val_split: float: percentage of data to be used for training versus validation and
+                            test sets
+
+                        Returns:
+                            similarity_dict: dict: partitioned similarity dict of all class exemplars
+    """
     dict_similarity_classes_exemplars = pickle.load(open(
         conf.exemplars_dir + conf.similarity_dict_file_name, "rb"))
-    num_exemplars = len(list(dict_similarity_classes_exemplars.values())[0])
+    singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
+    singleton_batches.verify_dict_similarity_exemplars()
+    num_exemplars = len(dict_similarity_classes_exemplars[next(iter(dict_similarity_classes_exemplars.keys()))])
+    print(f"Number of total exemplars per class: {num_exemplars}")
     p = np.random.permutation(num_exemplars-1)
     train_size = int(train_val_split * num_exemplars)
-    test_val_size = int(((1 - train_val_split) * num_exemplars) / 2)
+    val_and_test_size = int(((1 - train_val_split) * num_exemplars) / 2)
+    print(f"train size: {train_size}, val and test size: {val_and_test_size}")
+
+    train_data = {}
+    validation_data = {}
+    test_data = {}
+    for k, v in dict_similarity_classes_exemplars.items():
+        train_data[k] = v[:train_size]
+        validation_data[k] = v[train_size:train_size + val_and_test_size]
+        test_data[k] = v[-val_and_test_size:]
+
+    print(f"len dict_train_class_value: {len(train_data[(0, -1, -1, -1)])}")
+    print(f"dict_train_class_value element shape: {train_data[(0, -1, -1, -1)][0].shape}")
+    print(f"dict_train_class_value_element_type: {type(train_data[(0, 1, 1, 0)][0])}")
+
+    print(f"len dict_val_class_value: {len(validation_data[(0, -1, -1, -1)])}")
+    print(f"dict_val_class_value element shape: {validation_data[(0, -1, -1, -1)][0].shape}")
+    print(f"dict_val_class_value_element_type: {type(validation_data[(0, 1, 1, 0)][0])}")
+
+    print(f"len dict_test_class_value: {len(test_data[(0, -1, -1, -1)])}")
+    print(f"dict_test_class_value element shape: {test_data[(0, -1, -1, -1)][0].shape}")
+    print(f"dict_test_class_value_element_type: {type(test_data[(0, 1, 1, 0)][0])}")
+
     return {
-        {'train': {k: v[p[:train_size]] for k, v in dict_similarity_classes_exemplars.items()},
-         'validation': {k: v[p[train_size:test_val_size]] for k, v in dict_similarity_classes_exemplars.items()},
-         'test': {k: v[p[-test_val_size:]] for k, v in dict_similarity_classes_exemplars.items()}}}
+        'train': train_data,
+        'validation': validation_data,
+        'test': test_data
+    }
+    # return {
+    #     'train': {k: [v[i][p[:train_size]] for i in range(len(v))] for (k,
+    #       v) in dict_similarity_classes_exemplars.items()},
+    #     'validation': {k: [v[i][p[train_size:val_and_test_size]] for i in range(len(v))] for k,
+    #       v in dict_similarity_classes_exemplars.items()},
+    #     'test': {k: [v[i][p[-val_and_test_size:]] for i in range(len(v))] for k,
+    #       v in dict_similarity_classes_exemplars.items()}
+    # }
+    # return {
+    #     {'train': {k: [v[p[:train_size]]] for k, v in dict_similarity_classes_exemplars.items()},
+    #      'validation': {k: [v[p[train_size:val_and_test_size]]] for k, v in dict_similarity_classes_exemplars.items()},
+    #      'test': {k: [v[p[-val_and_test_size:]]] for k, v in dict_similarity_classes_exemplars.items()}}}
 
 
 def load_data_for_prediction():

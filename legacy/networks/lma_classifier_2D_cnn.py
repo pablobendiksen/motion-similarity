@@ -161,7 +161,7 @@ def train_model(network_model, train_data, test_data, exemplar_count, fold_no=Fa
     # csv_logger = CSVLogger('log.csv', append=True, separator=';')
     # lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size),
     #               validation_data=test_data, callbacks=[csv_logger], validation_steps=100)
-    lma_model.fit(train_data, epochs=conf.n_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size_efforts_network),
+    lma_model.fit(train_data, epochs=conf.n_effort_epochs, steps_per_epoch=math.ceil(exemplar_count / conf.batch_size_efforts_network),
                   validation_data=test_data, callbacks=[timetaken], validation_steps=100)
     # model.save(conf.synthetic_model_file)
 
