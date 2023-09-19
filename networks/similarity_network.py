@@ -2,7 +2,7 @@ from keras.optimizers import Adam
 
 import conf
 from networks.utilities import Utilities
-import networks.triplet_mining as triplet_mining
+import networks.custom_losses as custom_losses
 from keras import callbacks
 from keras.models import Sequential
 import numpy as np
@@ -55,11 +55,11 @@ class SimilarityNetwork(Utilities):
     def compile_model(self):
         opt = Adam(learning_rate=0.0001, beta_1=0.5)
         try:
-            self._network.compile(optimizer=opt, loss=triplet_mining.batch_triplet_loss,
-                                  metrics=[triplet_mining.batch_triplet_loss], run_eagerly=True)
+            self._network.compile(optimizer=opt, loss=custom_losses.batch_triplet_loss,
+                                  metrics=[custom_losses.batch_triplet_loss], run_eagerly=False)
         except RuntimeError:
-            self._network.compile(optimizer=opt, loss=triplet_mining.batch_triplet_loss, metrics=[
-                triplet_mining.batch_triplet_loss])
+            self._network.compile(optimizer=opt, loss=custom_losses.batch_triplet_loss, metrics=[
+                custom_losses.batch_triplet_loss])
         finally:
             self._network.summary()
 

@@ -9,6 +9,7 @@ from networks.effort_network import EffortNetwork
 from networks.effort_generator import MotionDataGenerator
 from networks.similarity_network import SimilarityNetwork
 from networks.similarity_data_loader import SimilarityDataLoader
+import networks.triplet_mining as triplet_mining
 import organize_synthetic_data as osd
 import collect_job_metrics
 import time
@@ -70,6 +71,7 @@ if __name__ == '__main__':
         # collect_job_metrics.collect_job_metrics()
 
         # load similarity data and train similarity network
+        triplet_mining.initialize_triplet_mining()
         similarity_dict_partition = osd.load_similarity_data()
         similarity_train_loader = SimilarityDataLoader(similarity_dict_partition['train'])
         similarity_validation_loader = SimilarityDataLoader(similarity_dict_partition['validation'])
