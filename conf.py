@@ -22,6 +22,15 @@ if not bool_fixed_neutral_embedding:
     similarity_batch_size = 57
 n_similarity_epochs = 500
 
+class BatchStrategy(Enum):
+    SEMI_HARD = 1
+    HARD = 2
+    ALL = 3
+
+
+# initialize batch strategy constant
+BATCH_STRATEGY = BatchStrategy.SEMI_HARD
+
 # PARALLEL PROCESSING
 num_task = None
 percent_files_copied = None
@@ -57,7 +66,3 @@ BATCH_SEMI_HARD_PARAMS = {
 }
 
 
-class BatchStrategy(Enum):
-    SEMI_HARD = 1
-    HARD = 2
-    ALL = 3

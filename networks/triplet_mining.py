@@ -86,7 +86,6 @@ def calculate_left_right_distances(embeddings, squared=True):
         pairwise_distances: tensor of shape (batch_size, batch_size)
     """
 
-    print(f"embeddings shape: {tf.shape(embeddings)}")
     if not conf.bool_fixed_neutral_embedding:
         embeddings = extract_neutral_embedding(embeddings)
     # shape (batch_size, batch_size)

@@ -26,14 +26,10 @@ class SimilarityDataLoader(keras.utils.Sequence):
         self.exemplar_idx = random.randint(0, self.num_batches-1)
 
     def unison_shuffling(self):
-        # generate random batch num index, to be applied to all dict class lists, and shuffle
-        # class + class_idx order (i.e., within batch shuffling)
+        # generate random batch num index, to be applied to all dict class lists, and unison shuffle
+        # class and class_idx order (a within batch shuffling)
         self.exemplar_idx = random.randint(1, self.num_batches-1)
         p = list(np.random.permutation(self.num_classes))
-        print(type(self.class_indexes))
-        print(type(self.list_class_tuples))
-        print(type(p))
-        print(f"p: {p}")
         self.list_class_tuples = [self.list_class_tuples[i] for i in p]
         self.class_indexes = [self.class_indexes[i] for i in p]
 
@@ -46,19 +42,11 @@ class SimilarityDataLoader(keras.utils.Sequence):
         return self.num_batches
 
     def __getitem__(self, index):
-        # tensor: (56, 100, 91), tensor (56, 1)
+        # batch features shape: tensor: [ 56 100  91],  batch labels shape: tensor: [56]
         batch_features = tf.stack([self.dict_similarity_exemplars[class_tuple][self.exemplar_idx] for class_tuple in
                                    self.list_class_tuples])
         batch_labels = tf.constant(self.class_indexes)
         tf.debugging.assert_shapes([(batch_features, (conf.similarity_batch_size, conf.similarity_exemplar_dim[0],
                                                       conf.similarity_exemplar_dim[1]))],
                                    message="Similarity batch feature erroneous shape}")
-        shape = tf.shape(batch_features)
-        shape_labels = tf.shape(batch_labels)
-        print(f"batch features shape 1: {shape}")
-        print(f"batch get shape: {batch_features.get_shape()}")
-        batch_features = tf.reshape(batch_features, [conf.similarity_batch_size, conf.similarity_exemplar_dim[0],
-                                    conf.similarity_exemplar_dim[1]])
-        print(f"batch features shape 2: {tf.shape(batch_features)}")
-        print(f"batch get shape: {batch_features.get_shape()}")
         return batch_features, batch_labels

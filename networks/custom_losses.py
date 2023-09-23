@@ -1,4 +1,5 @@
 import networks.triplet_mining as triplet_mining
+from conf import BATCH_STRATEGY
 from conf import BatchStrategy
 import tensorflow as tf
 
@@ -8,7 +9,7 @@ import tensorflow as tf
 # ap_distance = self.loss(anchor, positive)
 # an_distance = self.loss(anchor, negative)
 # loss = tf.maximum(ap_distance - an_distance + self.margin, 0.0)
-def calculate_triplet_loss(y_true, y_pred, triplet_mining_instance, batch_strategy=BatchStrategy.ALL):
+def calculate_triplet_loss(y_true, y_pred, triplet_mining_instance, batch_strategy=BATCH_STRATEGY):
     """Calculate 1D tensor of either squared L2 norm or L2 norm of differences between class embeddings and the
             neutral embedding of shape (embedding_size,), resulting in tensor of shape (batch_size,).
 
@@ -161,6 +162,7 @@ def calculate_triplet_loss(y_true, y_pred, triplet_mining_instance, batch_strate
         [(diff_nr_nl, (triplet_mining_instance.num_states_drives, triplet_mining_instance.num_states_drives))],
         message="Tensor diff_nr_nl has incorrect shape")
     if batch_strategy == BatchStrategy.HARD:
+        diff_nr_nl = tf.where(diff_nr_nl > 0, diff_nr_nl, 0)
         diff_nr_nl_alpha = diff_nr_nl + triplet_mining_instance.matrix_alpha_right_neut_neut_right
         diff_nr_nl_alpha = tf.multiply(diff_nr_nl_alpha, triplet_mining_instance.matrix_bool_neut_right)
         triplet_loss_N_R = diff_nr_nl_alpha
@@ -198,12 +200,6 @@ def batch_triplet_loss(y_true, y_pred):
         Returns:
             triplet_loss: scalar tensor containing the triplet loss
         """
-    # print(f"y_true numpy shape: {y_true.numpy().shape}")
-    # print(f"y_pred numpy shape: {y_pred.numpy().shape}")
-    print(f"type of y_true: {type(y_true)}")
-    print(f"type of y_pred: {type(y_pred)}")
-    # tf.print(f"y_true: {y_true}")
-    print(f"y_pred shape: {tf.shape(y_pred)}")
 
     triplet_loss = calculate_triplet_loss(y_true, y_pred, triplet_mining)
     # Count number of positive err triplets (where triplet_loss > 0)
