@@ -27,9 +27,47 @@ logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
 
 
 class EffortNetwork(Utilities):
+    """
+    The EffortNetwork class defines a neural network for effort tuples prediction and training.
+
+    This class inherits from the `Utilities` class and is used to build, compile, and train an efforts predictor model.
+
+    Args:
+        train_generator: The data generator for the training dataset.
+        validation_generator: The data generator for the validation dataset.
+        test_generator: The data generator for the test dataset.
+        checkpoint_dir: The directory where model checkpoints will be saved.
+        two_d_conv (bool): Flag indicating whether to use 2D convolution (default is False).
+
+    Attributes:
+        train_generator: The training data generator.
+        validation_generator: The validation data generator.
+        test_generator: The test data generator.
+        checkpoint_dir: The directory for saving model checkpoints.
+        exemplar_dim: The dimensions of the exemplar data.
+        output_layer_size: The size of the output layer.
+        model: The Keras model for effort estimation.
+        callbacks: List of Keras callbacks for training.
+
+    Note:
+        If a pre-trained model file exists, it is loaded. Otherwise, a new model is built and compiled.
+    """
     # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
     def __init__(self, train_generator, validation_generator, test_generator, checkpoint_dir, two_d_conv=False):
+        """
+        Initialize the EffortNetwork with data generators and model configuration.
+
+        Args:
+            train_generator: The data generator for the training dataset.
+            validation_generator: The data generator for the validation dataset.
+            test_generator: The data generator for the test dataset.
+            checkpoint_dir: The directory where model checkpoints will be saved.
+            two_d_conv (bool): Flag indicating whether to use 2D convolution (default is False).
+
+        Returns:
+            None
+        """
         self.train_generator = train_generator
         self.validation_generator = validation_generator
         self.test_generator = test_generator
@@ -51,6 +89,17 @@ class EffortNetwork(Utilities):
             self.compile_model(loss)
 
     def build_model(self, filters=160, kernel_size=15, strides=1):
+        """
+        Build the architecture of the 1D convolutional neural network.
+
+        Args:
+            filters: Number of filters in the convolutional layers.
+            kernel_size: Size of the convolutional kernels.
+            strides: Stride for convolution.
+
+        Returns:
+            None
+        """
         self._network.add(Conv1D(filters=filters, kernel_size=kernel_size, strides=strides, activation='relu',
                                  input_shape=self.exemplar_dim))
         self._network.add(MaxPooling1D(pool_size=2))
@@ -62,6 +111,17 @@ class EffortNetwork(Utilities):
         self._network.summary()
 
     def build_model_2d_conv(self, filters=120, kernel_size=(3, 3), strides=(1, 1)):
+        """
+        Build the architecture as a 2D convolutional neural network.
+
+        Args:
+            filters: Number of filters in the convolutional layer.
+            kernel_size: Size of the convolutional kernel.
+            strides: Stride for convolution.
+
+        Returns:
+            None
+        """
         input_shape = np.expand_dims(self.exemplar_dim, 2)
         self._network.add(Conv2D(filters=filters, kernel_size=kernel_size, strides=strides, activation='relu',
                                  input_shape=input_shape))
@@ -73,6 +133,15 @@ class EffortNetwork(Utilities):
         self._network.add(Dense(self.output_layer_size, activation='tanh'))
 
     def compile_model(self, loss):
+        """
+        Compile the neural network with a specified loss function.
+
+        Args:
+            loss: The loss function to use for model training.
+
+        Returns:
+            None
+        """
         try:
             opt = Adam(learning_rate=0.0001, beta_1=0.5)
             self._network.compile(loss=loss, optimizer=opt, metrics=['mse'])
@@ -81,6 +150,15 @@ class EffortNetwork(Utilities):
             self.compile_model(loss)
 
     def run_model_training(self):
+        """
+        Train the neural network on the training dataset and include fault tolerance.
+
+        Args:
+            None
+
+        Returns:
+            history: Training history containing loss and metric values.
+        """
         try:
 
             history = self.model.fit(self.train_generator, validation_data=self.validation_generator,
@@ -102,6 +180,15 @@ class EffortNetwork(Utilities):
             return history
 
     def write_out_training_results(self, total_time):
+        """
+        Write training results to a CSV file.
+
+        Args:
+            total_time: running timer to clock train time.
+
+        Returns:
+            None
+        """
         # run test data through trained model
         saved_model = models.load_model(self.checkpoint_dir)
         saved_model.load_weights(self.checkpoint_dir)

@@ -1,3 +1,7 @@
+"""
+static module for organizing triplet mining data as well as performing online triplet mining
+"""
+
 import conf
 import tensorflow as tf
 import numpy as np
@@ -24,6 +28,17 @@ neutral_embedding = None
 
 
 def initialize_triplet_mining():
+    """
+    Initialize the triplet mining module's state variables.
+
+    This function loads necessary data, sets up state variables, and performs preprocessing.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     global dict_similarity_classes_exemplars
     global matrix_alpha_left_right_right_left
     global matrix_alpha_left_neut_neut_left
@@ -54,6 +69,15 @@ def initialize_triplet_mining():
     pre_process_comparisons_data()
 
 def subset_global_dict():
+    """
+    Subsets the global dictionary of similarity classes based on data in the comparisons DataFrame.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     global dict_similarity_classes_exemplars
     dict_label_to_id = {class_label: idx for idx, class_label in
                         enumerate(dict_similarity_classes_exemplars.keys())}
@@ -62,7 +86,8 @@ def subset_global_dict():
 
 
 def extract_neutral_embedding(embeddings):
-    """Assigns the neutral embedding from the network output, shape (embedding_size,), to instance attribute
+    """
+    Assigns the neutral embedding from the network output, shape (embedding_size,), to instance attribute
 
     Args:
         embeddings: tensor of shape (batch_size, embed_dim)
@@ -124,8 +149,16 @@ def calculate_left_right_distances(embeddings, squared=True):
 
 
 def calculate_class_neut_distances(embeddings, squared=True):
-    """Calculate 1D tensor of either squared L2 norm or L2 norm of differences between class embeddings and the
-    neutral embedding of shape (embedding_size,), resulting in tensor of shape (batch_size,).
+    """
+    Calculate 1D tensor of either squared L2 norm or L2 norm of differences between class embeddings and the
+    neutral embedding.
+
+    Args:
+        embeddings: Tensor of shape (batch_size, embed_dim)
+        squared: Boolean. If true, calculate squared L2 norm; if false, calculate L2 norm.
+
+    Returns:
+        None
     """
     if squared:
         # Compute squared Euclidean distance between each class embedding and the neutral embedding
@@ -136,6 +169,15 @@ def calculate_class_neut_distances(embeddings, squared=True):
 
 
 def pre_process_comparisons_data():
+    """
+    Preprocess user comparison data and populate alpha matrices and masks based on the data.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     global dict_similarity_classes_exemplars
 
     def verify_comparison_data():
@@ -158,10 +200,18 @@ def pre_process_comparisons_data():
         assert len(seen_tuples) == num_states_drives, (f"incomplete similarity class count in comparisons "
                                                             f"data: {len(seen_tuples)}")
 
-    # generate alpha_dataframes where each row is a comparison between two similarity classes (and the neutral) and
-    # contains the corresponding two out of six alpha values (each comparison has two alpha values, one for each
-    # of the positives
     def _generate_df_alphas():
+        """
+        generate alpha_dataframes where each row is a comparison between two similarity classes (and the neutral) and
+        contains the corresponding two out of six alpha values (each comparison has two alpha values, one for each
+        of the positives.
+
+       Args:
+           None
+
+       Returns:
+           None
+        """
         comparisons_list = []
         selection_values = [0, 1, 2]
         # Initialize new columns for per-comparison alpha values (two values created per comparison)
@@ -245,6 +295,15 @@ def pre_process_comparisons_data():
         return alpha_dataframes
 
     def _populate_alpha_matrices_and_masks():
+        """
+        Populate the alpha matrices and masks based on the data in the comparisons DataFrame.
+
+        Args:
+           None
+
+       Returns:
+           None
+        """
         # Iterate over the rows of the comparisons DataFrame
         repeat_class_comparison_counter = 0
         equal_comparison_counter = 0
@@ -355,36 +414,6 @@ def pre_process_comparisons_data():
             else:
                 equal_comparison_counter += 1
             bool_swap_left_right = False
-
-        # print(f'{self.matrix_alpha_right_neut_neut_right[16]}')
-        # print(f'{len(self.matrix_alpha_right_neut_neut_right[16])}')
-        # print(f'{self.matrix_bool_right_neut[16]}')
-        # print(f'{len(self.matrix_bool_right_neut[16])}')
-        # print(f'{repeat_class_comparison_counter=}')
-        # print(f'{equal_comparison_counter=}')
-
-    def _convert_np_matrices_to_tensors():
-        global matrix_alpha_left_right_right_left
-        global matrix_alpha_left_neut_neut_left
-        global matrix_alpha_right_neut_neut_right
-        global matrix_bool_left_right
-        global matrix_bool_right_left
-        global matrix_bool_left_neut
-        global matrix_bool_neut_left
-        global matrix_bool_right_neut
-        global matrix_bool_neut_right
-
-        matrices_list = [matrix_alpha_left_right_right_left, matrix_alpha_left_neut_neut_left,
-                         matrix_alpha_right_neut_neut_right]
-        (matrix_alpha_left_right_right_left, matrix_alpha_left_neut_neut_left,
-         matrix_alpha_right_neut_neut_right) \
-            = (tf.convert_to_tensor(matrix, dtype=tf.float32) for matrix in matrices_list)
-
-        matrices_bool_list = [matrix_bool_left_right, matrix_bool_right_left, matrix_bool_left_neut,
-                              matrix_bool_neut_left, matrix_bool_right_neut, matrix_bool_neut_right]
-        (matrix_bool_left_right, matrix_bool_right_left, matrix_bool_left_neut,
-         matrix_bool_neut_left, matrix_bool_right_neut, matrix_bool_neut_right) \
-            = (tf.convert_to_tensor(matrix, dtype=tf.float32) for matrix in matrices_bool_list)
 
     # read_in R generated similarity comparisons ratios csv
     df_comparisons = pd.read_csv('../aux/similarity_comparisons_ratios.csv')

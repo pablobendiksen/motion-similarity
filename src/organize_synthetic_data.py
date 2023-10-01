@@ -1,4 +1,6 @@
-import os
+"""
+static module for organizing synthetic motion data in the context of both efforts and similarity networks
+"""
 
 from src.batches import Batches
 from pymo.parsers import BVHParser
@@ -23,6 +25,15 @@ singleton_batches = Batches()
 
 
 def visualize(file_bvh):
+    """
+    Visualize motion data from a BVH file.
+
+    Args:
+        file_bvh (str): The path to the BVH file to visualize.
+
+    Returns:
+        None
+    """
     parsed_data = parser.parse(file_bvh)
     data_pipe = Pipeline([
         ('param1', MocapParameterizer('expmap')),
@@ -37,6 +48,15 @@ def visualize(file_bvh):
 
 
 def clear_file(file):
+    """
+    Remove character name from a text file.
+
+    Args:
+        file (str): The path to the text file.
+
+    Returns:
+        None
+    """
     # removes character name from the file
     # read input file
     fin = open(file, "rt")
@@ -55,6 +75,16 @@ def clear_file(file):
 
 
 def prep_all_data_for_training(rotations=True, velocities=False):
+    """
+    Prepare motion data for training.
+
+    Args:
+        rotations (bool): Whether to include rotation values in exemplars.
+        velocities (bool): Whether to include velocities in exemplars.
+
+    Returns:
+        None
+    """
     def _preprocess_pipeline(parsed_data):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -98,12 +128,16 @@ def prep_all_data_for_training(rotations=True, velocities=False):
         )
         plt.title(name)
         plt.show()
-        # ------------
 
     def apply_moving_window(batches, file_data):
-        """helper function for concat_all_data_as_np()
+        """
+        helper function for concat_all_data_as_np()
+        Args:
             batches: instance of Batches class
             file_data: np.array comprising exemplar
+
+        Returns:
+            None
         """
 
         start_index = conf.time_series_size
@@ -188,10 +222,31 @@ def prep_all_data_for_training(rotations=True, velocities=False):
 
 
 def prepare_data(rotations=True, velocities=False):
+    """
+    Invoke data preprocessing for both efforts and similarity networks.
+
+    Args:
+        rotations (bool): Whether to include rotations in the data preprocessing.
+        velocities (bool): Whether to include velocities in the data preprocessing.
+
+    Returns:
+        None
+    """
     prep_all_data_for_training(rotations=rotations, velocities=velocities)
 
 
 def load_data(rotations=True, velocities=False):
+    """
+    Load motion data for training if available, otherwise prepare it first.
+
+    Args:
+        rotations (bool): Whether to include rotations in the loaded data.
+        velocities (bool): Whether to include velocities in the loaded data.
+
+    Returns:
+        partition (dict): A dictionary containing the partitioned efforts network data.
+        labels_dict (dict): A dictionary containing labels (efforts values).
+    """
     csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
     if path.exists(conf.exemplars_dir) and not path.exists(csv_file):
         shutil.rmtree(conf.exemplars_dir)
@@ -204,6 +259,16 @@ def load_data(rotations=True, velocities=False):
 
 
 def _partition_effort_ids_and_labels(train_val_split=0.8):
+    """
+    Partition effort IDs and labels for training, validation, and testing.
+
+    Args:
+        train_val_split (float): The percentage of data to be used for training.
+
+    Returns:
+        partition (dict): A dictionary containing the partitioned data.
+        labels_dict (dict): A dictionary containing labels for the data.
+    """
     with open(conf.exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
         labels_dict = pickle.load(handle)
     batch_ids_list = list(labels_dict.keys())
@@ -216,14 +281,15 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
 
 
 def load_similarity_data(train_val_split=0.4):
-    """Load similarity dict of all class exemplars and split across train, validation, and test sets.
+    """
+    Load similarity dict of all class exemplars and split across train, validation, and test sets.
 
-                        Args:
-                            train_val_split: float: percentage of data to be used for training versus validation and
-                            test sets
+    Args:
+        train_val_split: float: percentage of data to be used for training versus validation and
+        test sets
 
-                        Returns:
-                            similarity_dict: dict: partitioned similarity dict of all class exemplars
+    Returns:
+        similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
     dict_similarity_classes_exemplars = pickle.load(open(
         conf.exemplars_dir + conf.similarity_dict_file_name, "rb"))
@@ -261,40 +327,6 @@ def load_similarity_data(train_val_split=0.4):
         'validation': validation_data,
         'test': test_data
     }
-    # return {
-    #     'train': {k: [v[i][p[:train_size]] for i in range(len(v))] for (k,
-    #       v) in dict_similarity_classes_exemplars.items()},
-    #     'validation': {k: [v[i][p[train_size:val_and_test_size]] for i in range(len(v))] for k,
-    #       v in dict_similarity_classes_exemplars.items()},
-    #     'test': {k: [v[i][p[-val_and_test_size:]] for i in range(len(v))] for k,
-    #       v in dict_similarity_classes_exemplars.items()}
-    # }
-    # return {
-    #     {'train': {k: [v[p[:train_size]]] for k, v in dict_similarity_classes_exemplars.items()},
-    #      'validation': {k: [v[p[train_size:val_and_test_size]]] for k, v in dict_similarity_classes_exemplars.items()},
-    #      'test': {k: [v[p[-val_and_test_size:]]] for k, v in dict_similarity_classes_exemplars.items()}}}
-
-
-def load_data_for_prediction():
-    file = 'data/organized_synthetic_data_' + str(conf.time_series_size) + '.npy'
-    if path.exists(file):
-        data = np.load(file)
-
-    else:
-        for i in range(12):
-            print(f"this is a test of a for loop: {i}")
-        prepare_data()
-        data = np.load(file)
-
-    labels = np.ndarray(data.shape)
-
-    new_data_len = data.shape[0] - 1
-    for i in range(new_data_len):
-        # make labels equal to the original data
-        labels[i] = data[i]
-        # TODO: prediction
-        # labels[i] = data[i+1]
-    return data[0:new_data_len, :, :], labels[0:new_data_len, :, :]
 
 
 # param efforts matched against synthetic_motion array indices and efforts removed from resulting array
@@ -311,12 +343,3 @@ def load_effort_animation(animName, efforts):
     data = np.delete(motions[indices], range(0, conf.num_efforts), axis=1)
 
     return data
-
-
-def prepare_comparison_data():
-    prep_all_data_for_training("pointing")
-
-
-if __name__ == "__main__":
-    # load_data(rotations=True, velocities=False)
-    prepare_data()
