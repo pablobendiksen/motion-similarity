@@ -1,7 +1,7 @@
 """
 static module for organizing triplet mining data as well as performing online triplet mining
 """
-
+from pathlib import Path
 import conf
 import tensorflow as tf
 import numpy as np
@@ -416,7 +416,9 @@ def pre_process_comparisons_data():
             bool_swap_left_right = False
 
     # read_in R generated similarity comparisons ratios csv
-    df_comparisons = pd.read_csv('../aux/similarity_comparisons_ratios.csv')
+    aux_folder_path = (Path(__file__) / '../../aux').resolve()
+    csv_similarity_ratios_path = aux_folder_path / 'similarity_comparisons_ratios.csv'
+    df_comparisons = pd.read_csv(csv_similarity_ratios_path)
     # Split the efforts_tuples values at the delimiter '_' and convert tokens to tuples
     df_comparisons['efforts_tuples'] = df_comparisons['efforts_tuples'].apply(
         lambda x: [tuple(ast.literal_eval(token)) for token in x.split('_')])

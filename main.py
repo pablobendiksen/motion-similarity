@@ -4,13 +4,13 @@ import sys
 
 curr_path = os.getcwd()
 sys.path.append(curr_path)
-sys.path.append(curr_path + '\..\networks')
+sys.path.append(curr_path + '\networks')
 from networks.effort_network import EffortNetwork
 from networks.effort_generator import MotionDataGenerator
 from networks.similarity_network import SimilarityNetwork
 from networks.similarity_data_loader import SimilarityDataLoader
 import networks.triplet_mining as triplet_mining
-import organize_synthetic_data as osd
+import src.organize_synthetic_data as osd
 import collect_job_metrics
 import time
 import conf
