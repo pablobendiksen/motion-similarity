@@ -1,5 +1,5 @@
 # motion-similarity
-Python code to analyze existing user experiment data and motion distance.
+A Python project for learned human motion similarity based on Laban Motion Analysis.
 
 See the paper [here](https://drive.google.com/file/d/1x_s68q_QcSxHmW7XdQGjGIGRS34B5cop/view).
 
