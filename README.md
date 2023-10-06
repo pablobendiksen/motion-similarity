@@ -63,9 +63,7 @@ $ conda activate motion-similarity
 ```
 
 ### Execute
-```
-$ python main.py
-```
+run the project from the root directory with `python main.py`.
 
 
 
