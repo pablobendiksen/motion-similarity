@@ -1,7 +1,9 @@
 # motion-similarity
 A Python project for learning a perceptually-accurate motion space for motion synthesis. This project defines a perceptual motion similarity metric and currently employs both a simple convolutional neural network, as well as an adaption of the triplet similarity network, to the end of capturing user study perception-based similarity differences within an embedding space.  
 
-Final proposed network architecture is as follows: [![Model Architecture](./images/final_architecture.png)](./images/final_architecture.png)
+Final proposed network architecture is as follows: 
+
+[![Model Architecture](./images/final_architecture.png)](./images/final_architecture.png)
 
 See the original motivating paper [here](https://drive.google.com/file/d/1x_s68q_QcSxHmW7XdQGjGIGRS34B5cop/view).
 
