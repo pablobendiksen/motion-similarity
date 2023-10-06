@@ -31,6 +31,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("running on remote machine")
         conf.num_task = sys.argv[1]
+        sliding_window_sizes = remote_sliding_window_sizes
     else:
         conf.num_task = None
         sliding_window_sizes = [10]
@@ -42,7 +43,6 @@ if __name__ == '__main__':
                                                         conf.num_task + '/')
         conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']
         conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
-        sliding_window_sizes = remote_sliding_window_sizes
 
     if not os.path.exists(conf.output_metrics_dir):
         os.makedirs(conf.output_metrics_dir)
@@ -59,8 +59,6 @@ if __name__ == '__main__':
 
         # load effort data and train effort network
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-        print(f"number of batches: {len(labels_dict.keys())}")
-        print(f"type: {type(labels_dict[1])}")
         effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
         effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
         effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
@@ -68,8 +66,8 @@ if __name__ == '__main__':
                                        test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
         start_time = time.time()
         history = effort_network.run_model_training()
-        tot_time = (time.time() - start_time) / 60
-        effort_network.write_out_training_results(tot_time)
+        minutes_tot_time = (time.time() - start_time) / 60
+        effort_network.write_out_training_results(minutes_tot_time)
         collect_job_metrics.collect_job_metrics()
 
         # load similarity data and train similarity network
