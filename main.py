@@ -1,7 +1,11 @@
-import shutil
+"""
+Program entry point. Loads data, trains effort network, trains similarity network, and evaluates. If command line
+argument is provided, the program assumes value represents a parallel job index and therefore assumes a remote
+machine run. Otherwise, the program is assumed to run locally.
+"""
+
 import os
 import sys
-
 curr_path = os.getcwd()
 sys.path.append(curr_path)
 sys.path.append(curr_path + '\networks')
@@ -25,13 +29,11 @@ params = {'exemplar_dim': (100, 87),
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
+        print("running on remote machine")
         conf.num_task = sys.argv[1]
     else:
         conf.num_task = None
-    print(f"task number: {conf.num_task}")
-    sliding_window_sizes = [10]
-
-    conf.num_task = None
+        sliding_window_sizes = [10]
 
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
@@ -52,23 +54,23 @@ if __name__ == '__main__':
         checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, str(window_size)]))
         if not os.path.exists(conf.checkpoint_root_dir):
             os.makedirs(conf.checkpoint_root_dir)
-            print(f"created new directory: {checkpoint_dir}")
+            print(f"created new effort network checkpoint directory: {checkpoint_dir}")
         conf.window_delta = window_size
 
         # load effort data and train effort network
-        # batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-        # print(f"number of batches: {len(labels_dict.keys())}")
-        # print(f"type: {type(labels_dict[1])}")
-        # effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
-        # effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
-        # effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
-        # effort_network = EffortNetwork(train_generator=effort_train_generator, validation_generator=effort_validation_generator,
-        #                                test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
-        # start_time = time.time()
-        # history = effort_network.run_model_training()
-        # tot_time = (time.time() - start_time) / 60
-        # effort_network.write_out_training_results(tot_time)
-        # collect_job_metrics.collect_job_metrics()
+        batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
+        print(f"number of batches: {len(labels_dict.keys())}")
+        print(f"type: {type(labels_dict[1])}")
+        effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
+        effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
+        effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
+        effort_network = EffortNetwork(train_generator=effort_train_generator, validation_generator=effort_validation_generator,
+                                       test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
+        start_time = time.time()
+        history = effort_network.run_model_training()
+        tot_time = (time.time() - start_time) / 60
+        effort_network.write_out_training_results(tot_time)
+        collect_job_metrics.collect_job_metrics()
 
         # load similarity data and train similarity network
         triplet_mining.initialize_triplet_mining()
