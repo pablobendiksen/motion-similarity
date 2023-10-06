@@ -50,12 +50,17 @@ Single Effort elements and combinations of all four Efforts are highly unlikely,
 ### Conda Environment
 To install dependencies, cd into the root directory of motion-similarity and create a conda environment from the provided yaml file:
 ```
-conda env create -f motion_similarity_env.yml
+$ conda env create -f motion_similarity_env.yml
 ```
 The first line of the yml file sets the new environment's name.
 Activate your conda environment by name:
 ```
-conda activate motion-similarity
+$ conda activate motion-similarity
+```
+
+## Execute
+```
+$ python main.py
 ```
 
 
