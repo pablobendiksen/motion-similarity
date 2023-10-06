@@ -1,7 +1,7 @@
 # motion-similarity
-A Python project for learned human motion similarity based on Laban Motion Analysis.
+A Python project for learning a perceptually-accurate motion space for motion synthesis. This project defines a perceptual motion similarity metric by employing both a simple convolutional neural network, as well as an adaption of the triplet similarity network, to the end of capturing user study perception-based similarity differences within an embedding space.  
 
-See the paper [here](https://drive.google.com/file/d/1x_s68q_QcSxHmW7XdQGjGIGRS34B5cop/view).
+See the original motivating paper [here](https://drive.google.com/file/d/1x_s68q_QcSxHmW7XdQGjGIGRS34B5cop/view).
 
 All sample videos, regarding the stylized motion comparisons enacted in the aforementioned paper, found [here](https://www.cs.umb.edu/~fundad/drives/); each sample, with the exception of the neutral-neutral sample, compares the neutral action animation (left) to the same action animation stylized by one of the 32 drives (right); read on to learn about Drives.
 
