@@ -58,7 +58,7 @@ Activate your conda environment by name:
 $ conda activate motion-similarity
 ```
 
-## Execute
+### Execute
 ```
 $ python main.py
 ```
