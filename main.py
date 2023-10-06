@@ -81,4 +81,4 @@ if __name__ == '__main__':
                                                test_loader=similarity_test_loader,
                                                checkpoint_dir=checkpoint_dir)
         similarity_network.run_model_training()
-        # similarity_network.evaluate()
+        similarity_network.evaluate()
