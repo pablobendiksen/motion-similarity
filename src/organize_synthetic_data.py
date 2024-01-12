@@ -131,10 +131,14 @@ def prep_all_data_for_training(rotations=True, velocities=False):
 
     def apply_moving_window(batches, file_data):
         """
-        helper function for concat_all_data_as_np()
+        nested function of prep_all_data_for_training()
+
+        handles both construction of effort network batches (with rotations only, each batch has
+         dim = batch_size x time_series_size x 87) and similarity network class to exemplar dict.
+
         Args:
             batches: instance of Batches class
-            file_data: np.array comprising exemplar
+            file_data: np.array comprised of preprocessed motion data + effort values + anim name
 
         Returns:
             None
@@ -280,7 +284,7 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
     return partition, labels_dict
 
 
-def load_similarity_data(train_val_split=0.4):
+def load_similarity_data(train_val_split=0.8):
     """
     Load similarity dict of all class exemplars and split across train, validation, and test sets.
 
@@ -292,7 +296,7 @@ def load_similarity_data(train_val_split=0.4):
         similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
     dict_similarity_classes_exemplars = pickle.load(open(
-        conf.exemplars_dir + conf.similarity_dict_file_name, "rb"))
+        conf.similarity_exemplars_dir + conf.similarity_dict_file_name, "rb"))
     singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
     singleton_batches.verify_dict_similarity_exemplars()
     num_exemplars = len(dict_similarity_classes_exemplars[next(iter(dict_similarity_classes_exemplars.keys()))])

@@ -56,9 +56,10 @@ def initialize_triplet_mining():
 
     print("Initializing Triplet Mining module state variables")
     dict_similarity_classes_exemplars = pickle.load(open(
-        conf.exemplars_dir + conf.similarity_dict_file_name, "rb"))
+        conf.similarity_exemplars_dir + conf.similarity_dict_file_name, "rb"))
     print(f"classes: {dict_similarity_classes_exemplars.keys()}")
     num_states_drives = len(dict_similarity_classes_exemplars.keys())
+    print(f"triplet_mining:init: loaded: {num_states_drives} states + drives")
     (matrix_alpha_left_right_right_left, matrix_alpha_left_neut_neut_left, matrix_alpha_right_neut_neut_right,
      matrix_bool_left_right, matrix_bool_right_left, matrix_bool_left_neut, matrix_bool_neut_left,
      matrix_bool_right_neut, matrix_bool_neut_right) = [tf.Variable(
@@ -67,6 +68,7 @@ def initialize_triplet_mining():
     neutral_embedding = tf.Variable(initial_value=tf.zeros((conf.embedding_size,)))
     subset_global_dict()
     pre_process_comparisons_data()
+
 
 def subset_global_dict():
     """
@@ -82,7 +84,6 @@ def subset_global_dict():
     dict_label_to_id = {class_label: idx for idx, class_label in
                         enumerate(dict_similarity_classes_exemplars.keys())}
     print(dict_label_to_id)
-
 
 
 def extract_neutral_embedding(embeddings):
@@ -113,6 +114,7 @@ def calculate_left_right_distances(embeddings, squared=True):
 
     if not conf.bool_fixed_neutral_embedding:
         embeddings = extract_neutral_embedding(embeddings)
+
     # shape (batch_size, batch_size)
     dot_product = tf.matmul(embeddings, tf.transpose(embeddings))
 
@@ -134,23 +136,30 @@ def calculate_left_right_distances(embeddings, squared=True):
         mask = tf.cast(tf.equal(distances, 0.0), float)
         distances = distances + mask * 1e-16
 
+        distances = tf.clip_by_value(distances, 1e-16, tf.reduce_max(distances))
+
         distances = tf.sqrt(distances)
 
         # Correct the epsilon added: set the distances of the mask to be exactly 0.0
         distances = distances * (1.0 - mask)
 
-    if not conf.bool_fixed_neutral_embedding:
-        tf.debugging.assert_shapes([(tf.shape(distances), (tf.TensorShape([conf.similarity_batch_size - 1,
-                                                                           conf.similarity_batch_size - 1]),))])
-    else:
+        tf.debugging.check_numerics(distances, "NaN or Inf values found in distances")
+
         tf.debugging.assert_shapes([(tf.shape(distances), (tf.TensorShape([conf.similarity_batch_size,
                                                                            conf.similarity_batch_size]),))])
+
+    # if not conf.bool_fixed_neutral_embedding:
+    #     tf.debugging.assert_shapes([(tf.shape(distances), (tf.TensorShape([conf.similarity_batch_size - 1,
+    #                                                                        conf.similarity_batch_size - 1]),))])
+    # else:
+    #     tf.debugging.assert_shapes([(tf.shape(distances), (tf.TensorShape([conf.similarity_batch_size,
+    #                                                                        conf.similarity_batch_size]),))])
     return distances
 
 
-def calculate_class_neut_distances(embeddings, squared=True):
+def calculate_class_neut_distances(embeddings, squared=False):
     """
-    Calculate 1D tensor of either squared L2 norm or L2 norm of differences between class embeddings and the
+    Calculate 1D tensor of either squared L2 norm, or L2 norm, of differences between class embeddings and the
     neutral embedding.
 
     Args:
@@ -162,7 +171,8 @@ def calculate_class_neut_distances(embeddings, squared=True):
     """
     if squared:
         # Compute squared Euclidean distance between each class embedding and the neutral embedding
-        tensor_dists_class_neut.assign(tf.reduce_sum(tf.square(embeddings - neutral_embedding), axis=1))
+        # tensor_dists_class_neut.assign(tf.reduce_sum(tf.square(embeddings - neutral_embedding), axis=1))
+        tensor_dists_class_neut.assign(tf.square(tf.norm(embeddings - neutral_embedding, ord="euclidean", axis=1)))
     else:
         # Compute Euclidean distance between each class embedding and the neutral embedding
         tensor_dists_class_neut.assign(tf.norm(embeddings - neutral_embedding, ord="euclidean", axis=1))
@@ -417,7 +427,7 @@ def pre_process_comparisons_data():
 
     # read_in R generated similarity comparisons ratios csv
     aux_folder_path = (Path(__file__) / '../../aux').resolve()
-    csv_similarity_ratios_path = aux_folder_path / 'similarity_comparisons_ratios.csv'
+    csv_similarity_ratios_path = aux_folder_path / 'similarity_comparisons_ratios_11_17_23.csv'
     df_comparisons = pd.read_csv(csv_similarity_ratios_path)
     # Split the efforts_tuples values at the delimiter '_' and convert tokens to tuples
     df_comparisons['efforts_tuples'] = df_comparisons['efforts_tuples'].apply(

@@ -71,14 +71,14 @@ if __name__ == '__main__':
         collect_job_metrics.collect_job_metrics()
 
         # load similarity data and train similarity network
-        triplet_mining.initialize_triplet_mining()
-        similarity_dict_partition = osd.load_similarity_data()
-        similarity_train_loader = SimilarityDataLoader(similarity_dict_partition['train'])
-        similarity_validation_loader = SimilarityDataLoader(similarity_dict_partition['validation'])
-        similarity_test_loader = SimilarityDataLoader(similarity_dict_partition['test'])
-        similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
-                                               validation_loader=similarity_validation_loader,
-                                               test_loader=similarity_test_loader,
-                                               checkpoint_dir=checkpoint_dir)
-        similarity_network.run_model_training()
-        similarity_network.evaluate()
+        # similarity_dict_partition = osd.load_similarity_data()
+        # triplet_mining.initialize_triplet_mining()
+        # similarity_train_loader = SimilarityDataLoader(similarity_dict_partition['train'])
+        # similarity_validation_loader = SimilarityDataLoader(similarity_dict_partition['validation'])
+        # similarity_test_loader = SimilarityDataLoader(similarity_dict_partition['test'])
+        # similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
+        #                                        validation_loader=similarity_validation_loader,
+        #                                        test_loader=similarity_test_loader,
+        #                                        checkpoint_dir=checkpoint_dir)
+        # similarity_network.run_model_training()
+        # similarity_network.evaluate()

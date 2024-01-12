@@ -106,7 +106,7 @@ class SimilarityNetwork(Utilities):
         finally:
             self._network.summary()
 
-    def run_model_training(self):
+    def run_model_training(self, callbacks=None):
         """
        Train the neural network on the training dataset.
 
@@ -118,6 +118,8 @@ class SimilarityNetwork(Utilities):
        Returns:
            None
        """
+        if callbacks is None:
+            self.callbacks = []
         self._network.fit(self.train_set, validation_data=self.validation_set, epochs=conf.n_similarity_epochs,
                           steps_per_epoch=self.train_set.__len__(),
                           validation_steps=self.validation_set.__len__(), callbacks=self.callbacks)

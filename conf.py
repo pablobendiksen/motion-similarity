@@ -4,14 +4,14 @@ from enum import Enum
 time_series_size = 100
 window_delta = 10  # int(time_series_size /
 batch_size_efforts_network = 64
-n_effort_epochs = 2
+n_effort_epochs = 100
 # n_effort_epochs = 200
 
 # DEFAULT
 effort_model_file = 'models/effort_model.h5'
 buffer_size = 60000
 num_efforts = 4
-exemplar_dim_effort_network = (time_series_size, 87)
+effort_network_exemplar_dim = (time_series_size, 87)
 
 # SIMILARITY NETWORK
 bool_fixed_neutral_embedding = True
@@ -29,7 +29,7 @@ class BatchStrategy(Enum):
 
 
 # initialize batch strategy constant
-BATCH_STRATEGY = BatchStrategy.SEMI_HARD
+BATCH_STRATEGY = BatchStrategy.ALL
 
 # PARALLEL PROCESSING
 num_task = None
@@ -42,8 +42,10 @@ checkpoint_root_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarit
 all_bvh_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
 # bvh_subsets_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/data
 # /effort_tmp/"
-bvh_files_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking_105_34_552_tmp/"
+bvh_files_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/effort_walking_105_34_552_tmp/"
+# bvh_files_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking_105_34_552/"
 exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/tmp/"
+similarity_exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/similarity_exemplars/"
 output_metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity" \
                      "/job_model_metrics"
 efforts_labels_dict_file_name = 'labels_dict.pickle'

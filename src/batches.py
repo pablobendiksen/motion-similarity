@@ -5,13 +5,25 @@ import pickle
 import math
 
 
+def print_dict_structure(d, indent=0):
+    if d is None:
+        print("dict_similarity_exemplars is None, returning")
+        return
+    # print(f"printing structure of dict with key: {d.keys()[0]}")
+    for key, value in d.items():
+        if isinstance(value, dict):
+            print("  " * indent + f"{key} (dict):")
+            print_dict_structure(value, indent + 1)
+        else:
+            print("  " * indent + f"{key}: {type(value).__name__}")
+
 class Batches:
     """
     A singleton class that collects all batching logic for both the effort and similarity networks.
 
     Attributes:
         batch_size (int): The batch size for the efforts network.
-        exemplar_efforts_dim (tuple): The dimension of an exemplar for the efforts network.
+        efforts_network_exemplar_dim (tuple): The dimension of an exemplar for the efforts network.
         sample_idx (int): The current effort network exemplar index.
         batch_idx (int): The current effort network batch index.
         state_drive_exemplar_idx: The index for a given state-class (for similarity network).
@@ -26,13 +38,13 @@ class Batches:
 
     def __new__(cls):
         if cls._self is None:
-            print("Initializing Batches class")
+            # print("Initializing Batches class")
             cls._self = super(Batches, cls).__new__(cls)
         return cls._self
 
     def __init__(self):
         self.batch_size = conf.batch_size_efforts_network
-        self.exemplar_efforts_dim = conf.exemplar_dim_effort_network
+        self.efforts_network_exemplar_dim = conf.effort_network_exemplar_dim
         self.sample_idx = 0
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
@@ -44,6 +56,7 @@ class Batches:
 
     def append_efforts_batch_and_labels(self, exemplar):
         """
+        invoked in organize_synthetic_data:prep_all_data_for_training:apply_moving_window() as well as extend_final_batch()
         Append an exemplar to the current batch and its efforts to the list of batch efforts.
 
         Args:
@@ -52,12 +65,13 @@ class Batches:
         Returns:
             None
         """
+        # print(f"batches:append_efforts_batch_and_labels() - arg exemplar type: {type(exemplar)}, dim: {exemplar.shape}")
         # store efforts label
         self.list_batch_efforts.append(exemplar[0][0:conf.num_efforts])
         # drop efforts + anim name columns
         exemplar = np.delete(exemplar, slice(5), axis=1)
-        assert exemplar.shape == self.exemplar_efforts_dim, (f"Exemplar shape: {exemplar.shape} differs from expected:"
-                                                             f" {self.exemplar_efforts_dim}")
+        assert exemplar.shape == self.efforts_network_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from expected:"
+                                                             f" {self.efforts_network_exemplar_dim}")
         self.current_batch[self.batch_idx].append(exemplar)
         self.sample_idx += 1
 
@@ -104,8 +118,8 @@ class Batches:
             repeats = target_row_num - exemplar.shape[0]
         extended_rows = np.tile(last_row, (repeats, 1))
         concatenated_matrix = np.concatenate((exemplar, extended_rows), axis=0)
-        print(f"make_whole_exemplar: {make_whole_exemplar}, concatenated matrix shape:"
-              f"{concatenated_matrix.shape}")
+        # print(f"make_whole_exemplar: {make_whole_exemplar}, concatenated matrix shape:"
+        #       f"{concatenated_matrix.shape}")
         return concatenated_matrix
 
     def extend_final_batch(self, exemplar):
@@ -146,14 +160,17 @@ class Batches:
 
     def store_similarity_labels_exemplars_dict(self):
         """
-        Write out the dictionary of similarity labels and exemplars.
+        Write out the dictionary of similarity labels and exemplars. Note: self.dict_similarity_exemplars
+        contains k,v pairs as -> state_drive : [exemplar1, exemplar2, ...] where each state_drive is an int, and each
+        exemplar is of shape (100, 91) and includes PERFORM generated efforts.
 
         Returns:
             None
         """
-        with open(conf.exemplars_dir + conf.similarity_dict_file_name, 'wb') as handle:
+        print_dict_structure(self.dict_similarity_exemplars)
+        with open(conf.similarity_exemplars_dir + conf.similarity_dict_file_name, 'wb') as handle:
             pickle.dump(self.dict_similarity_exemplars, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity classes")
+        print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity classes at: {conf.similarity_exemplars_dir + conf.similarity_dict_file_name}")
 
     def pop_similarity_dict_element(self, key=(0, 0, 0, 0)):
         """
@@ -190,15 +207,19 @@ class Batches:
         for state_drive, inner_list in self.dict_similarity_exemplars.items():
             self.dict_similarity_exemplars[state_drive] = [tf.convert_to_tensor(exemplar, dtype=tf.float32) for
                                                            exemplar in inner_list]
-        print(f"converted {len(self.dict_similarity_exemplars[(0, -1, -1, 0)])} k,v similarity exemplars to type: "
+        print(f"converted {len(self.dict_similarity_exemplars[(0, -1, -1, 0)])} similarity exemplars, per class, to type: "
               f"{type(self.dict_similarity_exemplars[(0, -1, -1, 0)][0])}")
 
     def append_similarity_class_exemplar(self, state_drive, exemplar):
         """
         Append an exemplar into the similarity dict at the corresponding class.
+        self.dict_similarity_exemplars contains k,v pairs as -> state_drive : [exemplar1, exemplar2, ...] where each
+        exemplar is of shape (100, 91) and includes PERFORM generated efforts. The state_drive is a tuple of effort values.
+        The dict item with the most exemplars dictates the number of exemplars for all other classes and therefore the batch
+        count for the similarity network.
 
         Args:
-            state_drive (tuple): The similarity class.
+            state_drive (tuple): The similarity class, e.g. (0, -1, -1, 0).
             exemplar (numpy.ndarray): The exemplar to append.
 
         Returns:
@@ -247,7 +268,11 @@ class Batches:
         Returns:
             None
         """
-        max_inner_list = max(inner_list for inner_list in self.dict_similarity_exemplars.values())
+        inner_lists = [[inner_list, len(inner_list)] for inner_list in self.dict_similarity_exemplars.values()]
+        # get max inner list by second element of inner list
+        max_inner_list = max(inner_lists, key=lambda x: x[1])
+        max_inner_list = max_inner_list[0]
+        # max_inner_list = max(inner_list for inner_list in self.dict_similarity_exemplars.values())
         tmp_exemplar = max_inner_list[0]
         len_max_inner_list = len(max_inner_list)
         print(f"balance_similarity_classes: len_max_inner_list: {len_max_inner_list}")

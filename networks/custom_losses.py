@@ -185,11 +185,11 @@ def calculate_triplet_loss(y_true, y_pred, triplet_mining_instance, batch_strate
                                message="Comparisons loss tensor has incorrect shape")
     return losses
 
-
-#  custom loss function, a wrapper for calculate_triplet_loss, passed to Keras' compile method, that computes a triplet
-#  loss for a batch of embeddings
 def batch_triplet_loss(y_true, y_pred):
     """Build triplet loss over a batch of embeddings.
+
+       custom loss function——a wrapper for calculate_triplet_loss, passed to Keras' compile method;
+        computes a(n) (aggregated) triplet loss for a batch of embeddings
 
         We calculate triplet losses for all anchor-positive possibilities, and mask for semi-hard cases only.
 
