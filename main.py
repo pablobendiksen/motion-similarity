@@ -21,12 +21,6 @@ import conf
 
 remote_sliding_window_sizes = [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
 
-# effort network generator params
-params = {'exemplar_dim': (100, 87),
-          'batch_size': conf.batch_size_efforts_network,
-          'shuffle': True,
-          'exemplars_dir': conf.exemplars_dir}
-
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print("running on remote machine")
@@ -39,16 +33,16 @@ if __name__ == '__main__':
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
         conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_files_dir']
-        conf.exemplars_dir = params['exemplars_dir'] = (conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] +
-                                                        conf.num_task + '/')
+        conf.effort_network_exemplars_dir = conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS['exemplars_dir'] = (conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] +
+                                                                                                      conf.num_task + '/')
         conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']
         conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
 
     if not os.path.exists(conf.output_metrics_dir):
         os.makedirs(conf.output_metrics_dir)
 
-    if not os.path.exists(conf.exemplars_dir):
-        os.makedirs(conf.exemplars_dir)
+    if not os.path.exists(conf.effort_network_exemplars_dir):
+        os.makedirs(conf.effort_network_exemplars_dir)
 
     for window_size in sliding_window_sizes:
         checkpoint_dir = '_'.join(filter(None, [conf.checkpoint_root_dir, str(window_size)]))
@@ -59,9 +53,9 @@ if __name__ == '__main__':
 
         # load effort data and train effort network
         batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
-        effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **params)
-        effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **params)
-        effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **params)
+        effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict, **conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS)
+        effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict, **conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS)
+        effort_test_generator = MotionDataGenerator(batch_ids_partition['test'], labels_dict, **conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS)
         effort_network = EffortNetwork(train_generator=effort_train_generator, validation_generator=effort_validation_generator,
                                        test_generator=effort_test_generator, checkpoint_dir=checkpoint_dir)
         start_time = time.time()

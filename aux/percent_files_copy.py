@@ -40,20 +40,6 @@ def run_percent_files_copy(task_num):
         print(f"created new directory: {OUTPUT_DIR}")
 
     filenames = os.listdir(INPUT_DIR)
-    file_subset_names = []
-    # for k, path in enumerate(os.listdir(INPUT_DIR)):
-    #     if k < NUM_SAMPLES:
-    #         file_subset_names.append(str(path))  # because path is object not string
-    #     else:
-    #         i = random.randint(0, k)
-    #         if i < NUM_SAMPLES:
-    #             file_subset_names[i] = str(path)
-    # print(f"file_subset_names {file_subset_names}")
-    # num_files = len(filenames)
-    # for i in range(0, NUM_SAMPLES):
-        # j = random.randint(0, num_files)
-        # file_subset_names.append(filenames[j])
-        # file_subset_names.append(filenames[i])
 
     # Manually specify polarized states and drives as they are needed for training the similarity network
     files_to_copy = ['file1.txt', 'file2.txt', 'file3.txt']
@@ -64,7 +50,6 @@ def run_percent_files_copy(task_num):
 
     # Combine the specific files and random files to create the final list
     file_subset_names = files_to_copy + random_files
-
 
     for file_name in file_subset_names:
         print(f"copying: {file_name}")

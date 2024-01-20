@@ -28,17 +28,9 @@ class Utilities:
         ds = tf.data.Dataset.from_tensor_slices((x, y))
         train_ds = ds.take(train_size)
         test_ds = ds.skip(train_size)
-        train_ds = train_ds.shuffle(conf.buffer_size, reshuffle_each_iteration=True)
-        test_ds = test_ds.shuffle(conf.buffer_size, reshuffle_each_iteration=True)
-        # train_ds = tf.data.Dataset.from_tensor_slices((x[:train_size], y[:train_size]))
+        train_ds = train_ds.shuffle(60000, reshuffle_each_iteration=True)
+        test_ds = test_ds.shuffle(60000, reshuffle_each_iteration=True)
         print(type(train_ds))
-        # test_ds = tf.data.Dataset.from_tensor_slices((x[train_size:], y[train_size:]))
-        # ds = ds.shuffle(buffer_size=10000, seed=seed)
-        # train_size = int(train_split * x.shape[0])
-        # train_ds = ds.take(train_size)
-        # test_ds = ds.skip(train_size)
-        # train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
-        # test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size).repeat()
         return train_ds, test_ds
 
     def make_classes_from_labels(self, labels):
@@ -66,8 +58,8 @@ class Utilities:
         y_test_list = [elem[1] for elem in test_ds.as_numpy_iterator()]
         print(f"train classes #: {len(np.unique(y_train_list))}")
         print(f"test classes #: {len(np.unique(y_test_list))}")
-        self.train_ds = train_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
-        self.test_ds = test_ds.shuffle(conf.buffer_size).batch(conf.batch_size_efforts_network).repeat()
+        self.train_ds = train_ds.shuffle(60000).batch(conf.batch_size_efforts_network).repeat()
+        self.test_ds = test_ds.shuffle(60000).batch(conf.batch_size_efforts_network).repeat()
 
     @staticmethod
     def visualize_class_distribution(train_ds, test_ds, train_title, test_title):

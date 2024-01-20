@@ -252,9 +252,9 @@ def load_data(rotations=True, velocities=False):
         labels_dict (dict): A dictionary containing labels (efforts values).
     """
     csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
-    if path.exists(conf.exemplars_dir) and not path.exists(csv_file):
-        shutil.rmtree(conf.exemplars_dir)
-        os.makedirs(conf.exemplars_dir)
+    if path.exists(conf.effort_network_exemplars_dir) and not path.exists(csv_file):
+        shutil.rmtree(conf.effort_network_exemplars_dir)
+        os.makedirs(conf.effort_network_exemplars_dir)
         prepare_data(rotations=rotations, velocities=velocities)
     elif not path.exists(csv_file):
         prepare_data(rotations=rotations, velocities=velocities)
@@ -273,7 +273,7 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
         partition (dict): A dictionary containing the partitioned data.
         labels_dict (dict): A dictionary containing labels for the data.
     """
-    with open(conf.exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
+    with open(conf.effort_network_exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
         labels_dict = pickle.load(handle)
     batch_ids_list = list(labels_dict.keys())
     random.shuffle(batch_ids_list)
@@ -331,19 +331,3 @@ def load_similarity_data(train_val_split=0.8):
         'validation': validation_data,
         'test': test_data
     }
-
-
-# param efforts matched against synthetic_motion array indices and efforts removed from resulting array
-def load_effort_animation(animName, efforts):
-    name = path.splitext(conf.all_concatenated_motions_file)[0]  # exclude extension csv
-    file_name = name + "_" + str.upper(animName) + '.csv'
-
-    motions = np.genfromtxt(file_name, delimiter=',')
-
-    labels = motions[:, 0:conf.num_efforts]
-
-    indices = [i for i, val in enumerate(labels) if np.array_equal(val, efforts)]
-
-    data = np.delete(motions[indices], range(0, conf.num_efforts), axis=1)
-
-    return data

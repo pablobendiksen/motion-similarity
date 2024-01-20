@@ -7,16 +7,13 @@ import conf
 
 
 def unison_shuffling(batch_features, batch_labels):
-    # print(f"a:{len(a)}, b:{len(b)}")
-    # assert len(a) == len(b), f"len features: {len(a)}, len labels: {len(b)}"
-    # return: np arrays a, b indexed with list of randomized indices spanning len(a), len(b)
     p = np.random.permutation(len(batch_features))
     return batch_features[p], batch_labels[p]
 
 
 class MotionDataGenerator(keras.utils.Sequence):
     def __init__(self, list_batch_ids, labels, batch_size=conf.batch_size_efforts_network, exemplar_dim=(100, 87),
-                 exemplars_dir=conf.exemplars_dir, shuffle=True):
+                 exemplars_dir=conf.effort_network_exemplars_dir, shuffle=True):
         self.exemplar_dim = exemplar_dim
         self.batch_size = batch_size
         self.batch_group_size = 16

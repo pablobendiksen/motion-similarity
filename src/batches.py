@@ -44,13 +44,13 @@ class Batches:
 
     def __init__(self):
         self.batch_size = conf.batch_size_efforts_network
-        self.efforts_network_exemplar_dim = conf.effort_network_exemplar_dim
+        self.efforts_network_exemplar_dim = conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS["exemplar_dim"]
         self.sample_idx = 0
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
         self.current_batch = {0: []}
         self.list_batch_efforts = []
-        self.dict_efforts_labels = {0: np.zeros((self.batch_size, conf.num_efforts))}
+        self.dict_efforts_labels = {0: np.zeros((self.batch_size, 4))}
         self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
         self.sliding_window_start_index = conf.time_series_size
 
@@ -65,9 +65,8 @@ class Batches:
         Returns:
             None
         """
-        # print(f"batches:append_efforts_batch_and_labels() - arg exemplar type: {type(exemplar)}, dim: {exemplar.shape}")
         # store efforts label
-        self.list_batch_efforts.append(exemplar[0][0:conf.num_efforts])
+        self.list_batch_efforts.append(exemplar[0][0:4])
         # drop efforts + anim name columns
         exemplar = np.delete(exemplar, slice(5), axis=1)
         assert exemplar.shape == self.efforts_network_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from expected:"
@@ -87,7 +86,7 @@ class Batches:
                                                                     f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
 
         batch_array = np.array(self.current_batch[self.batch_idx])
-        np.save(conf.exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
+        np.save(conf.effort_network_exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
                 batch_array)
         print(
             f"Stored batch num {self.batch_idx}. Size: {batch_array.shape}.  exemplar count:"
@@ -96,7 +95,7 @@ class Batches:
         self.batch_idx += 1
         self.current_batch[self.batch_idx] = []
         self.list_batch_efforts = []
-        self.dict_efforts_labels[self.batch_idx] = np.zeros((self.batch_size, conf.num_efforts))
+        self.dict_efforts_labels[self.batch_idx] = np.zeros((self.batch_size, 4))
 
     @staticmethod
     def append_to_end_file_exemplar(exemplar, make_whole_exemplar=False):
@@ -153,7 +152,7 @@ class Batches:
         self.batch_idx -= 1
         print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
               f" {len(self.current_batch)}")
-        with open(conf.exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
+        with open(conf.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
             pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
         conf.exemplar_num = self.sample_idx
