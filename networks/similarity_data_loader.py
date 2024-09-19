@@ -18,11 +18,12 @@ class SimilarityDataLoader(keras.utils.Sequence):
         self.class_indexes, self.list_class_tuples = zip(
             *[(index + 1, value) for index, value in enumerate(list(self.dict_similarity_exemplars.keys()))])
         self.num_classes = len(self.class_indexes)
+        print(f"SimilarityDataLoader: num classes: {self.num_classes}")
         self.class_indexes = list(self.class_indexes)
         self.list_class_tuples = list(self.list_class_tuples)
         # self.num_batches = len(self.dict_similarity_exemplars[self.list_class_tuples[0]])
         self.num_batches = len(self.dict_similarity_exemplars[next(iter(self.dict_similarity_exemplars.keys()))])
-        print(f"num batches: {self.num_batches}")
+        print(f"SimilarityDataLoader: num batches: {self.num_batches}")
         self.exemplar_idx = random.randint(0, self.num_batches-1)
 
     def unison_shuffling(self):
@@ -43,6 +44,8 @@ class SimilarityDataLoader(keras.utils.Sequence):
 
     def __getitem__(self, index):
         # batch features shape: tensor: [ 56 100  91],  batch labels shape: tensor: [56]
+        # if not conf.bool_fixed_neutral_embedding:
+        #     pass
         batch_features = tf.stack([self.dict_similarity_exemplars[class_tuple][self.exemplar_idx] for class_tuple in
                                    self.list_class_tuples])
         batch_labels = tf.constant(self.class_indexes)

@@ -160,8 +160,9 @@ def prep_all_data_for_training(rotations=True, velocities=False):
                 exemplar = file_data[indices]
                 batches.append_efforts_batch_and_labels(exemplar)
             if tuple_effort_list in batches.dict_similarity_exemplars.keys():
+                # storing similarity class exemplar here while iterating through the file and storing effort batches
                 batches.append_similarity_class_exemplar(tuple_effort_list, file_data[indices])
-            if len(batches.current_batch[batches.batch_idx]) == conf.batch_size_efforts_network:
+            if len(batches.current_batch_exemplar[batches.batch_idx]) == conf.batch_size_efforts_network:
                 batches.store_efforts_batch()
 
     bvh_counter = 0
@@ -195,7 +196,9 @@ def prep_all_data_for_training(rotations=True, velocities=False):
                 data = _get_standardized_velocities(data_expmaps)
             else:
                 data_expmaps = _preprocess_pipeline(parsed_data)
+                data_expmaps = data_expmaps[:, 3:]
                 data = _get_standardized_rotations(data_expmaps)
+                # data = np.hstack((data_rotations, data_expmaps))
             bvh_counter += 1
             if data.shape[0] < conf.time_series_size:
                 assert False, f"Preprocessed file too small- {data.shape[0]} - relative to exemplar size -" \
@@ -212,10 +215,10 @@ def prep_all_data_for_training(rotations=True, velocities=False):
     conf.bvh_file_num = bvh_counter
     singleton_batches.store_effort_labels_dict()
     singleton_batches.balance_similarity_classes()
-    if conf.bool_fixed_neutral_embedding:
-        singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
-    else:
-        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
+    # if conf.bool_fixed_neutral_embedding:
+    #     singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
+    # else:
+    singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
     singleton_batches.convert_exemplar_np_arrays_to_tensors()
     singleton_batches.store_similarity_labels_exemplars_dict()
     assert singleton_batches.batch_idx == len(
@@ -223,20 +226,6 @@ def prep_all_data_for_training(rotations=True, velocities=False):
                                                              f"num" \
                                                              f"labels: {len(singleton_batches.dict_efforts_labels.values())}"
     singleton_batches.verify_dict_similarity_exemplars()
-
-
-def prepare_data(rotations=True, velocities=False):
-    """
-    Invoke data preprocessing for both efforts and similarity networks.
-
-    Args:
-        rotations (bool): Whether to include rotations in the data preprocessing.
-        velocities (bool): Whether to include velocities in the data preprocessing.
-
-    Returns:
-        None
-    """
-    prep_all_data_for_training(rotations=rotations, velocities=velocities)
 
 
 def load_data(rotations=True, velocities=False):
@@ -251,13 +240,16 @@ def load_data(rotations=True, velocities=False):
         partition (dict): A dictionary containing the partitioned efforts network data.
         labels_dict (dict): A dictionary containing labels (efforts values).
     """
-    csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
-    if path.exists(conf.effort_network_exemplars_dir) and not path.exists(csv_file):
-        shutil.rmtree(conf.effort_network_exemplars_dir)
+    if not os.path.exists(conf.effort_network_exemplars_dir):
         os.makedirs(conf.effort_network_exemplars_dir)
-        prepare_data(rotations=rotations, velocities=velocities)
-    elif not path.exists(csv_file):
-        prepare_data(rotations=rotations, velocities=velocities)
+        prep_all_data_for_training(rotations=rotations, velocities=velocities)
+    # csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
+    # if path.exists(conf.effort_network_exemplars_dir) and not path.exists(csv_file):
+    #     shutil.rmtree(conf.effort_network_exemplars_dir)
+    #     os.makedirs(conf.effort_network_exemplars_dir)
+    #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
+    # elif not path.exists(csv_file):
+    #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
     partition, labels_dict = _partition_effort_ids_and_labels()
     return partition, labels_dict
 
@@ -284,7 +276,7 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
     return partition, labels_dict
 
 
-def load_similarity_data(train_val_split=0.8):
+def load_similarity_data(bool_drop, train_val_split=0.8):
     """
     Load similarity dict of all class exemplars and split across train, validation, and test sets.
 
@@ -297,34 +289,67 @@ def load_similarity_data(train_val_split=0.8):
     """
     dict_similarity_classes_exemplars = pickle.load(open(
         conf.similarity_exemplars_dir + conf.similarity_dict_file_name, "rb"))
+    if bool_drop:
+        conf.similarity_batch_size = 56
+        dict_similarity_classes_exemplars.pop((0, 0, 0, 0))
+    else:
+        conf.similarity_batch_size = 57
+        # ensure element of key (0, 0, 0, 0) is at the front of the dict
+        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
     singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
     singleton_batches.verify_dict_similarity_exemplars()
     num_exemplars = len(dict_similarity_classes_exemplars[next(iter(dict_similarity_classes_exemplars.keys()))])
     print(f"Number of total exemplars per class: {num_exemplars}")
     p = np.random.permutation(num_exemplars-1)
     train_size = int(train_val_split * num_exemplars)
-    val_and_test_size = int(((1 - train_val_split) * num_exemplars) / 2)
+    # temp change to inc val set size
+    # val_and_test_size = int(((1 - train_val_split) * num_exemplars) / 2)
+    val_and_test_size = int(((1 - train_val_split) * num_exemplars))
     print(f"train size: {train_size}, val and test size: {val_and_test_size}")
 
     train_data = {}
     validation_data = {}
     test_data = {}
     for k, v in dict_similarity_classes_exemplars.items():
+        start_index = random.randint(0, len(v) - train_size)
+        # Interleave the training and validation data
+        # train_data[k] = []
+        # validation_data[k] = []
+        # test_data[k] = []
+        # for i in range(0, train_size, 2):
+        #     train_data[k].append(v[i])
+        #     if i < val_and_test_size:
+        #         validation_data[k].append(v[i+1])
+        #         test_data[k].append(v[i+1])
         train_data[k] = v[:train_size]
         validation_data[k] = v[train_size:train_size + val_and_test_size]
-        test_data[k] = v[-val_and_test_size:]
+        test_data[k] = v[train_size:train_size + val_and_test_size]
 
-    print(f"len dict_train_class_value: {len(train_data[(0, -1, -1, -1)])}")
-    print(f"dict_train_class_value element shape: {train_data[(0, -1, -1, -1)][0].shape}")
-    print(f"dict_train_class_value_element_type: {type(train_data[(0, 1, 1, 0)][0])}")
 
-    print(f"len dict_val_class_value: {len(validation_data[(0, -1, -1, -1)])}")
-    print(f"dict_val_class_value element shape: {validation_data[(0, -1, -1, -1)][0].shape}")
-    print(f"dict_val_class_value_element_type: {type(validation_data[(0, 1, 1, 0)][0])}")
 
-    print(f"len dict_test_class_value: {len(test_data[(0, -1, -1, -1)])}")
-    print(f"dict_test_class_value element shape: {test_data[(0, -1, -1, -1)][0].shape}")
-    print(f"dict_test_class_value_element_type: {type(test_data[(0, 1, 1, 0)][0])}")
+        # Generate a random starting index for the subsetting
+        # # start_index = random.randint(0, len(v) - (train_size + val_and_test_size))
+        # start_index = random.randint(0, len(v) - train_size)
+        # # Generate a random starting index for the subsetting of validation data
+        # start_index_val = random.randint(0, len(v) - val_and_test_size)
+        #
+        # # Perform the slicing with the random starting index
+        # train_data[k] = v[start_index:start_index + train_size]
+        # validation_data[k] = v[start_index_val:start_index_val + val_and_test_size]
+        # test_data[k] = v[start_index_val:start_index_val + val_and_test_size]
+        # # test_data[k] = v[start_index + train_size:start_index + train_size + val_and_test_size]
+
+    # print(f"len dict_train_class_value: {len(train_data[(0, -1, -1, -1)])}")
+    # print(f"dict_train_class_value element shape: {train_data[(0, -1, -1, -1)][0].shape}")
+    # print(f"dict_train_class_value_element_type: {type(train_data[(0, 1, 1, 0)][0])}")
+    #
+    # print(f"len dict_val_class_value: {len(validation_data[(0, -1, -1, -1)])}")
+    # print(f"dict_val_class_value element shape: {validation_data[(0, -1, -1, -1)][0].shape}")
+    # print(f"dict_val_class_value_element_type: {type(validation_data[(0, 1, 1, 0)][0])}")
+    #
+    # print(f"len dict_test_class_value: {len(test_data[(0, -1, -1, -1)])}")
+    # print(f"dict_test_class_value element shape: {test_data[(0, -1, -1, -1)][0].shape}")
+    # print(f"dict_test_class_value_element_type: {type(test_data[(0, 1, 1, 0)][0])}")
 
     return {
         'train': train_data,

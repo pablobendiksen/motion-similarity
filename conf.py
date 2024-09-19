@@ -1,12 +1,15 @@
 from enum import Enum
+"""
+Configuration file for motion similarity project.
+"""
 
 # HYPERPARAMETERS
 # number of frames per mocap exemplar (used both for effort and similarity networks)
-time_series_size = 100
-# number of frames to offset sliding window by between each training example
-window_delta = 10
+time_series_size = 30
+# number of frames to offset sliding window by between training examples
+window_delta = 3
 batch_size_efforts_network = 64
-n_effort_epochs = 100
+n_effort_epochs = 150
 
 # complete effort network model, once trained, is saved to this file
 effort_model_file = 'stored_trained_models_dir/effort_model.h5'
@@ -14,13 +17,27 @@ effort_model_file = 'stored_trained_models_dir/effort_model.h5'
 similarity_model_file = 'stored_trained_models_dir/similarity_model.h5'
 
 # SIMILARITY NETWORK
-bool_fixed_neutral_embedding = True
-similarity_exemplar_dim = (time_series_size, 91)
-embedding_size = 30
-similarity_batch_size = 56
-if not bool_fixed_neutral_embedding:
-    similarity_batch_size = 57
-n_similarity_epochs = 500
+# Should the neutral exemplar be dropped from the similarity network training examples
+# bool_drop_neutral_exemplar = False
+# # If the neutral embedding is fixed for all similarity network training examples
+# bool_fixed_neutral_embedding = True
+#
+# squared_left_right_euc_dist = None
+# squared_class_neut_dist = None
+
+# Similarity network shape per training example; last dimension is 4 more than the
+# effort network shape because effort values are included
+# similarity_exemplar_dim = (time_series_size, 91)
+similarity_exemplar_dim = (time_series_size, 88)
+embedding_size = 32
+n_similarity_epochs = 300
+# Number of training examples per batch corresponds to the number of states and drives for three valued
+# (poles plus zero) effort tuples
+# similarity_batch_size = 56
+# if not bool_fixed_neutral_embedding:
+#     similarity_batch_size = 57
+# else:
+#     similarity_batch_size = 56
 
 # PARALLEL PROCESSING
 num_task = None
@@ -52,7 +69,8 @@ REMOTE_MACHINE_DIR_VALUES = {
 }
 
 # effort network generator params
-EFFORT_EXEMPLAR_GENERATOR_PARAMS = {'exemplar_dim': (time_series_size, 87),
+# exemplar_dim changed from (time_series_size, 87) to (time_series_size, 84) as root joint absolute position removed
+EFFORT_EXEMPLAR_GENERATOR_PARAMS = {'exemplar_dim': (time_series_size, 84),
                                     'batch_size': 64,
                                     'shuffle': True,
                                     'exemplars_dir': effort_network_exemplars_dir}

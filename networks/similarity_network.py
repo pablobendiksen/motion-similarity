@@ -7,6 +7,9 @@ from keras import callbacks
 from keras.models import Sequential
 import numpy as np
 import tensorflow as tf
+
+# tf.config.experimental_run_functions_eagerly(True)
+
 from keras.layers import Conv2D, MaxPool2D, BatchNormalization, Flatten, Dense, Lambda, Dropout
 import logging
 import os
@@ -48,6 +51,7 @@ class SimilarityNetwork(Utilities):
         self.validation_set = validation_loader
         self.test_set = test_loader
         self.exemplar_dim = train_loader.exemplar_dim
+        print(f"SIM NETWORK CLASS: exemplar dim: {self.exemplar_dim}")
         self.checkpoint_dir = checkpoint_dir
         self.embedding_size = conf.embedding_size
         self.callbacks = [callbacks.EarlyStopping(monitor='val_batch_triplet_loss', patience=5, mode='min', verbose=1)]

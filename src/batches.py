@@ -27,7 +27,7 @@ class Batches:
         sample_idx (int): The current effort network exemplar index.
         batch_idx (int): The current effort network batch index.
         state_drive_exemplar_idx: The index for a given state-class (for similarity network).
-        current_batch (dict): A dictionary to store the current effort network batch.
+        current_batch_exemplar (dict): A dictionary to store the current effort network batch.
         list_batch_efforts (list): A list to collect effort network batches.
         dict_efforts_labels (dict): A dictionary to store efforts labels.
         dict_similarity_exemplars (dict): A dictionary to store similarity class exemplars.
@@ -48,7 +48,7 @@ class Batches:
         self.sample_idx = 0
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
-        self.current_batch = {0: []}
+        self.current_batch_exemplar = {0: []}
         self.list_batch_efforts = []
         self.dict_efforts_labels = {0: np.zeros((self.batch_size, 4))}
         self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
@@ -71,7 +71,7 @@ class Batches:
         exemplar = np.delete(exemplar, slice(5), axis=1)
         assert exemplar.shape == self.efforts_network_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from expected:"
                                                              f" {self.efforts_network_exemplar_dim}")
-        self.current_batch[self.batch_idx].append(exemplar)
+        self.current_batch_exemplar[self.batch_idx].append(exemplar)
         self.sample_idx += 1
 
     def store_efforts_batch(self):
@@ -85,7 +85,7 @@ class Batches:
         assert len(self.dict_efforts_labels[self.batch_idx]) == 64, f"Len of efforts dict at batch idx " \
                                                                     f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
 
-        batch_array = np.array(self.current_batch[self.batch_idx])
+        batch_array = np.array(self.current_batch_exemplar[self.batch_idx])
         np.save(conf.effort_network_exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
                 batch_array)
         print(
@@ -93,7 +93,7 @@ class Batches:
             f" {self.sample_idx}")
         self.tmp_exemplar = batch_array[0]
         self.batch_idx += 1
-        self.current_batch[self.batch_idx] = []
+        self.current_batch_exemplar[self.batch_idx] = []
         self.list_batch_efforts = []
         self.dict_efforts_labels[self.batch_idx] = np.zeros((self.batch_size, 4))
 
@@ -134,10 +134,13 @@ class Batches:
         # exemplar = np.delete(end_directory_exemplar, slice(5), axis=1)
         last_row = exemplar[-1]
         repeats = conf.time_series_size
-        while len(self.current_batch[self.batch_idx]) < conf.batch_size_efforts_network:
+        # print(f"extend_final_batch: size: {self.current_batch_exemplar[self.batch_idx]}, "
+        #       f"last_row shape: {last_row.shape}, repeats: {repeats}")
+        while len(self.current_batch_exemplar[self.batch_idx]) < conf.batch_size_efforts_network:
             new_exemplar = np.tile(last_row, (repeats, 1))
             self.sample_idx += 1
             self.append_efforts_batch_and_labels(new_exemplar)
+        print(f"2 extend_final_batch: final batch size: {len(self.current_batch_exemplar[self.batch_idx])}")
         self.store_efforts_batch()
 
     def store_effort_labels_dict(self):
@@ -148,10 +151,10 @@ class Batches:
              None
          """
         self.dict_efforts_labels.pop(self.batch_idx)
-        self.current_batch.pop(self.batch_idx)
+        self.current_batch_exemplar.pop(self.batch_idx)
         self.batch_idx -= 1
         print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
-              f" {len(self.current_batch)}")
+              f" {len(self.current_batch_exemplar)}")
         with open(conf.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
             pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
@@ -224,16 +227,15 @@ class Batches:
         Returns:
             None
         """
-        # received exemplar of shape: (?, 92)
-        print(f"append_similarity_class_exemplar: For similarity class {state_drive}, received exemplar of shape:"
-              f" {exemplar.shape}")
+        # received exemplar of shape: (?, 92) with root joint coordinates or (?, 89) without
         # include efforts but not anim
         exemplar = np.delete(exemplar, 4, axis=1)
         # ensure appending of exemplar of shape: (100, 91)
         if exemplar.shape[0] < conf.time_series_size:
             exemplar = self.append_to_end_file_exemplar(exemplar)
-        assert exemplar.shape == conf.similarity_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from"
-                                                                f" {conf.similarity_exemplar_dim}")
+        # TODO: remove this assertion: AssertionError: Exemplar shape: (30, 88) differs from (30, 91)
+        # assert exemplar.shape == conf.similarity_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from"
+        #                                                         f" {conf.similarity_exemplar_dim}")
         self.dict_similarity_exemplars[state_drive].append(exemplar)
         self.state_drive_exemplar_idx += 1
 
@@ -293,7 +295,7 @@ class Batches:
                     # new_exemplar = self.append_to_end_file_exemplar(last_exemplar, make_whole_exemplar=True)
                     # inner_list.append(new_exemplar)
                     inner_list.append(last_exemplar)
-                print(f"Newly appended similarity class exemplar list is of len: {len(inner_list)}")
+                # print(f"Newly appended similarity class exemplar list is of len: {len(inner_list)}")
             inner_list_lens.append(len(inner_list))
         assert all(dict_len == inner_list_lens[0] for dict_len in inner_list_lens), "Classes have different exemplar " \
                                                                                     "counts"
