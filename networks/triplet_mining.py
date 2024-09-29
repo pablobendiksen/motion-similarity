@@ -325,7 +325,7 @@ def pre_process_comparisons_data():
             # print(f"counter_df_comparisons_triplets: {counter_df_comparisons_triplets}")
 
             # Find the row within a triplet with the maximum 'count_normalized' value, thereby establishing the
-            # positive pair (i.e., selected0 and selected1)
+            # positive pair (i.e., selected0 and selected1 which could be (0,1), (0,2) or (1,2)
             max_row = group.loc[group['count_normalized'].idxmax()]
 
             max_selected_0, max_selected_1 = max_row['selected0'], max_row['selected1']
@@ -333,11 +333,12 @@ def pre_process_comparisons_data():
             # find the anchor_positive ratio value under the cases in which anchor is each of the positive pair,
             # respectively, and positive is the negative class
             if max_selected_0 == 0:
+                # means either 0-2 ratio if max_selected_1 is 1, else 0-1 ratio
                 ratio_positive_1_negative = \
                     group.loc[(group['selected0'] == max_selected_0) & (group['selected1'] ==
                                                                         negative_index)].iloc[0][
                         'count_normalized']
-                # means max_row selected_0 is 0. Thusly, 2 is the negative index; grab it from the corresponding row
+                # max_selected_1 being 1 means 2 is the negative index: 1-2 ratio
                 if max_selected_1 == 1:
                     ratio_positive_2_negative = \
                         group.loc[(group['selected0'] == max_selected_1) & (group['selected1'] ==

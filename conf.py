@@ -51,7 +51,9 @@ checkpoint_root_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarit
 all_bvh_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
 # directory containing bvh files that have been stylized with 0.5 step size
 # (i.e., effort values are either -1, -0.5, 0, 0.5, 1). This serves as training data for the effort predictor network
-bvh_files_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking_105_34_552/"
+bvh_files_dir_walking = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking_105_34_552/"
+bvh_files_dir_walking_2 = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking/"
+bvh_files_dir_jumping = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
 effort_network_exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/"
 similarity_exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/similarity_exemplars/"
 output_metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity" \

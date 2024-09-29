@@ -74,7 +74,7 @@ def clear_file(file):
     fin.close()
 
 
-def prep_all_data_for_training(rotations=True, velocities=False):
+def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True):
     """
     Prepare motion data for training.
 
@@ -167,17 +167,20 @@ def prep_all_data_for_training(rotations=True, velocities=False):
 
     bvh_counter = 0
     bvh_frame_rate = set()
-    filenames = os.listdir(conf.bvh_files_dir)
-    print(conf.bvh_files_dir)
+    filenames = os.listdir(conf.bvh_files_dir_walking)
+    print(conf.bvh_files_dir_walking)
     print(filenames)
     for f in filenames:
         if f.endswith("bvh"):
             name = path.splitext(f)[0]  # exclude extension bvh by returning the root
             name_split = name.split('_')  # get effort values from the file name
             anim = name_split[0]
-            f_full_path = conf.bvh_files_dir + f
+            f_full_path = conf.bvh_files_dir_walking + f
             efforts_list = [float(p) for p in name.split('_')[-4:]]
             tuple_effort_list = tuple(efforts_list)
+            if similarity_pre_processing_only:
+                if tuple_effort_list not in singleton_batches.dict_similarity_exemplars.keys():
+                    continue
             singleton_batches.state_drive_exemplar_idx = 0
             clear_file(f_full_path)  # remove the : from the file
             parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
@@ -210,7 +213,10 @@ def prep_all_data_for_training(rotations=True, velocities=False):
             file_data = np.concatenate((a_rep, data), axis=1)
             # append efforts (the first 4 column(s) will be the efforts)
             file_data = np.concatenate((f_rep, file_data), axis=1)
-            apply_moving_window(singleton_batches, file_data)
+            if similarity_pre_processing_only:
+                singleton_batches.append_similarity_class_exemplar(tuple_effort_list, file_data)
+            else:
+                apply_moving_window(singleton_batches, file_data)
 
     conf.bvh_file_num = bvh_counter
     singleton_batches.store_effort_labels_dict()
@@ -287,6 +293,7 @@ def load_similarity_data(bool_drop, train_val_split=0.8):
     Returns:
         similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
+    #TODO: Create pipeline to generate similarity data that is not dependent on effort data
     dict_similarity_classes_exemplars = pickle.load(open(
         conf.similarity_exemplars_dir + conf.similarity_dict_file_name, "rb"))
     if bool_drop:

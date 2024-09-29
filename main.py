@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     if conf.num_task:
         conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
-        conf.bvh_files_dir = conf.REMOTE_MACHINE_DIR_VALUES['bv_files_dir']
+        conf.bvh_files_dir_walking = conf.REMOTE_MACHINE_DIR_VALUES['bv_files_dir']
         conf.effort_network_exemplars_dir = conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS['exemplars_dir'] = (conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] +
                                                                                                       conf.num_task + '/')
         conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']

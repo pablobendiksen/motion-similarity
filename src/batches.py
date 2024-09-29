@@ -330,6 +330,7 @@ class Batches:
                         zeroes_counter += 1
                     effort_tuple.append(effort_vals[remainder])
                 if zeroes_counter == 2 or zeroes_counter == 1:
+                    print(f"similarity effort_tuple: {effort_tuple}")
                     states_and_drives.append(effort_tuple)
 
             states_and_drives = []
