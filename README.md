@@ -1,5 +1,5 @@
 # motion-similarity
-A Python project for learning a perceptually-accurate latent space for motion synthesis. This project defines a perceptual motion similarity metric and trains models on motion capture data features. To this end it employs a convolutional neural network (CNN) and an adaption of the triplet similarity network; these respectively allow for the generation of style labels (i.e., laban efforts) and capture user study perception-based similarity differences.  
+A Python project for learning a perceptually-accurate latent space for motion synthesis wherein geometric distance is monotic with dissimilarity ratings between inputs. This project trains models on motion capture data as well as data gathered from user studies. It employs an adaptation of the triplet network via a custom loss over user study data; this permits us to begin learning a perceptual similarity metric over human motion.  
 
 Final proposed network architecture is as follows: 
 
