@@ -15,8 +15,33 @@ from networks.similarity_data_loader import SimilarityDataLoader
 from networks.triplet_mining import TripletMining
 import src.organize_synthetic_data as osd
 import conf
+import tensorflow as tf
+
+
+def check_gpu_access():
+    # Check if GPUs are available
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        print(f"✅ TensorFlow detected {len(gpus)} GPU(s):")
+        for gpu in gpus:
+            print(f"  - {gpu}")
+
+        # Set TensorFlow to use GPU memory growth
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+
+        # Run a small computation on the GPU
+        with tf.device('/GPU:0'):
+            a = tf.constant([1.0, 2.0, 3.0])
+            b = tf.constant([4.0, 5.0, 6.0])
+            c = a + b
+        print(f"✅ GPU computation successful: {c.numpy()}")
+    else:
+        print("❌ No GPU detected by TensorFlow.")
+
 
 if __name__ == '__main__':
+    check_gpu_access()
     if len(sys.argv) > 1:
         print("running on remote machine")
         conf.num_task = sys.argv[1]  # This is the Slurm job array index
@@ -41,7 +66,7 @@ if __name__ == '__main__':
         print(f"created new similarity network checkpoint directory: {conf.checkpoint_root_dir}")
 
     # load effort data and train effort network
-    batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
+    # batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
     # effort_train_generator = MotionDataGenerator(batch_ids_partition['train'], labels_dict,
     #                                              **conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS)
     # effort_validation_generator = MotionDataGenerator(batch_ids_partition['validation'], labels_dict,
