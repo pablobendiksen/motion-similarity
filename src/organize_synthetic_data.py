@@ -13,7 +13,6 @@ import shutil
 import conf
 from sklearn.pipeline import Pipeline
 import numpy as np
-import seaborn as sns
 import pickle
 import warnings
 import random
@@ -117,19 +116,19 @@ def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_
         np_array = scaler.transform(np_array)
         return np_array
 
-    def create_corr_matrix(np_array, name):
-        print("NAME:", name)
-        dataframe = pd.DataFrame(np_array)
-        print("DATAFRAME :", dataframe)
-        a = dataframe.corr()
-        ax = sns.heatmap(
-            a,
-            vmin=-1, vmax=1, center=0,
-            cmap=sns.diverging_palette(20, 220, n=200),
-            square=True
-        )
-        plt.title(name)
-        plt.show()
+    # def create_corr_matrix(np_array, name):
+    #     print("NAME:", name)
+    #     dataframe = pd.DataFrame(np_array)
+    #     print("DATAFRAME :", dataframe)
+    #     a = dataframe.corr()
+    #     ax = sns.heatmap(
+    #         a,
+    #         vmin=-1, vmax=1, center=0,
+    #         cmap=sns.diverging_palette(20, 220, n=200),
+    #         square=True
+    #     )
+    #     plt.title(name)
+    #     plt.show()
 
     def apply_moving_window(batches, file_data):
         """
