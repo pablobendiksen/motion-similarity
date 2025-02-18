@@ -24,7 +24,7 @@ echo "using $SLURM_CPUS_ON_NODE CPUs"
 echo `date`
 
 eval "$(conda shell.bash hook)"
-conda conda activate motion_decoder_3
+conda conda activate tf-gpu-enabled
 
 python main.py $SLURM_ARRAY_TASK_ID
 echo "Finish Run"
