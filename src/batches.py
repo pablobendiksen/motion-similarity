@@ -1,3 +1,5 @@
+import os.path
+
 import conf
 import numpy as np
 import tensorflow as tf
@@ -150,17 +152,21 @@ class Batches:
          Returns:
              None
          """
-        self.dict_efforts_labels.pop(self.batch_idx)
-        self.current_batch_exemplar.pop(self.batch_idx)
-        self.batch_idx -= 1
-        print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
-              f" {len(self.current_batch_exemplar)}")
-        with open(conf.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
-            pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
-        conf.exemplar_num = self.sample_idx
+        try:
+            if len(self.dict_efforts_labels) > 0:
+                self.dict_efforts_labels.pop(self.batch_idx)
+                self.current_batch_exemplar.pop(self.batch_idx)
+                self.batch_idx -= 1
+            print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
+                  f" {len(self.current_batch_exemplar)}")
+            with open(conf.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
+                pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
+            conf.exemplar_num = self.sample_idx
+        except Exception as e:
+            print(f"Error, batches::store_effort_labels_dict(): {e}")
 
-    def store_similarity_labels_exemplars_dict(self):
+    def store_similarity_labels_exemplars_dict(self, anim_name):
         """
         Write out the dictionary of similarity labels and exemplars. Note: self.dict_similarity_exemplars
         contains k,v pairs as -> state_drive : [exemplar1, exemplar2, ...] where each state_drive is an int, and each
@@ -169,10 +175,16 @@ class Batches:
         Returns:
             None
         """
-        print_dict_structure(self.dict_similarity_exemplars)
-        with open(conf.similarity_exemplars_dir + conf.similarity_dict_file_name, 'wb') as handle:
+        keys = self.dict_similarity_exemplars.keys()
+        print(f"storing dict_similarity_exemplars for {anim_name} with len {len(self.dict_similarity_exemplars)},"
+              f" key example: {list(keys)[0]}, corresponding value's (list)"
+              f" entry's (tensor) shape: {self.dict_similarity_exemplars[next(iter(keys))][0].shape}")
+        similarity_dict_path = conf.similarity_exemplars_dir + anim_name + "_" + conf.similarity_dict_file_name
+        with open(similarity_dict_path, 'wb') as handle:
             pickle.dump(self.dict_similarity_exemplars, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity classes at: {conf.similarity_exemplars_dir + conf.similarity_dict_file_name}")
+        print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity class k,v pairs at: {similarity_dict_path}")
+        self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
+        # print(f"reset similarity dict to: {self.dict_similarity_exemplars}")
 
     def pop_similarity_dict_element(self, key=(0, 0, 0, 0)):
         """
@@ -227,17 +239,21 @@ class Batches:
         Returns:
             None
         """
-        # received exemplar of shape: (?, 92) with root joint coordinates or (?, 89) without
-        # include efforts but not anim
-        exemplar = np.delete(exemplar, 4, axis=1)
-        # ensure appending of exemplar of shape: (100, 91)
-        if exemplar.shape[0] < conf.time_series_size:
-            exemplar = self.append_to_end_file_exemplar(exemplar)
-        # TODO: remove this assertion: AssertionError: Exemplar shape: (30, 88) differs from (30, 91)
-        # assert exemplar.shape == conf.similarity_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from"
-        #                                                         f" {conf.similarity_exemplar_dim}")
-        self.dict_similarity_exemplars[state_drive].append(exemplar)
-        self.state_drive_exemplar_idx += 1
+        try:
+            # received exemplar of shape: (?, 92) with root joint coordinates or (?, 89) without
+            # include efforts but not anim
+            exemplar = np.delete(exemplar, 4, axis=1)
+            print(f"append_similarity_class_exemplar: state_drive: {state_drive}, exemplar shape: {exemplar.shape}")
+            # ensure appending of exemplar of shape: (100, 91)
+            # if exemplar.shape[0] < conf.time_series_size:
+            #     exemplar = self.append_to_end_file_exemplar(exemplar)
+            # TODO: remove this assertion: AssertionError: Exemplar shape: (30, 88) differs from (30, 91)
+            # assert exemplar.shape == conf.similarity_exemplar_dim, (f"Exemplar shape: {exemplar.shape} differs from"
+            #                                                         f" {conf.similarity_exemplar_dim}")
+            self.dict_similarity_exemplars[state_drive].append(exemplar)
+            self.state_drive_exemplar_idx += 1
+        except Exception as e:
+            print(f"Error batches::append_similarity_class_exemplar(): {e}")
 
     def verify_dict_similarity_exemplars(self):
         """
@@ -246,29 +262,31 @@ class Batches:
         Returns:
             None
         """
-        print("Verifying all classes have same number of exemplars")
+        print("batches::verify_dict_similarity_exemplars(): Verifying all classes have same number of exemplars")
         list_dict_lens = [len(inner_list) for inner_list in self.dict_similarity_exemplars.values()]
         assert all(dict_len == list_dict_lens[0] for dict_len in list_dict_lens), "Classes differ in exemplar cnt"
-        print("Verifying all exemplars of a class are of same shape, namely shape == conf.similarity_exemplar_dim")
-        for state_drive, inner_list in self.dict_similarity_exemplars.items():
-            list_exemplar_shapes = [exemplar.shape for exemplar in inner_list]
-            for exemplar_shape in list_exemplar_shapes:
-                assert exemplar_shape == conf.similarity_exemplar_dim, \
-                    (f"Exemplar shape: {exemplar_shape} of class {state_drive} differs from:"
-                     f" {conf.similarity_exemplar_dim}")
-        print("Verifying all exemplars are of same shape")
+        # print("Verifying all exemplars of a class are of same shape, namely shape == conf.similarity_exemplar_dim")
+        # for state_drive, inner_list in self.dict_similarity_exemplars.items():
+        #     list_exemplar_shapes = [exemplar.shape for exemplar in inner_list]
+        #     for exemplar_shape in list_exemplar_shapes:
+        #         assert exemplar_shape == conf.similarity_exemplar_dim, \
+        #             (f"Exemplar shape: {exemplar_shape} of class {state_drive} differs from:"
+        #              f" {conf.similarity_exemplar_dim}")
+        # print("Verifying all exemplars are of same shape")
         list_exemplar_shapes = [exemplar.shape for inner_list in self.dict_similarity_exemplars.values() for exemplar
                                 in inner_list]
-        assert all(exemplar_shape == list_exemplar_shapes[0] for exemplar_shape in list_exemplar_shapes), \
-            f"Exemplar shape differs from: {list_exemplar_shapes[0]}"
+        for exemplar_shape in list_exemplar_shapes:
+            if exemplar_shape != list_exemplar_shapes[0]:
+                raise AssertionError(f"Exemplar shape {exemplar_shape} differs from: {list_exemplar_shapes[0]}")
 
-    def balance_similarity_classes(self):
+    def balance_similarity_classes_by_exemplar_count(self):
         """
         Balance the similarity classes by extending them with exemplars.
 
         Returns:
             None
         """
+        print(f"batches::balance_similarity_classes() called ...")
         inner_lists = [[inner_list, len(inner_list)] for inner_list in self.dict_similarity_exemplars.values()]
         # get max inner list by second element of inner list
         max_inner_list = max(inner_lists, key=lambda x: x[1])
@@ -300,12 +318,90 @@ class Batches:
         assert all(dict_len == inner_list_lens[0] for dict_len in inner_list_lens), "Classes have different exemplar " \
                                                                                     "counts"
 
+    def balance_single_exemplar_similarity_classes_by_frame_count(self, anim_name):
+        """
+        Balance the similarity classes by extending them with exemplars.
+
+        Returns:
+            None
+        """
+        # Get the maximum frame count across all exemplars
+        max_frame_count = max(
+            len(exemplar) for inner_list in self.dict_similarity_exemplars.values() for exemplar in inner_list)
+
+        cached_frame_counts = []
+        for state_drive, value_list in self.dict_similarity_exemplars.items():
+            for i in range(len(value_list)):
+                lone_exemplar = value_list[i]
+                cached_frame_counts.append(len(lone_exemplar))
+                # If the exemplar's frame count is less than the max frame count, extend it
+                if len(lone_exemplar) < max_frame_count:
+                    last_frame = lone_exemplar[-1]
+                    additional_frames = np.repeat(last_frame[np.newaxis, :], max_frame_count - len(lone_exemplar), axis=0)
+                    value_list[i] = np.concatenate((lone_exemplar, additional_frames), axis=0)
+
+        # Verify that all exemplars now have the same frame count
+        count=0
+        for value_list in self.dict_similarity_exemplars.values():
+            count += 1
+            for lone_exemplar in value_list:
+                assert len(lone_exemplar) == max_frame_count, f"Exemplar {count} frame count {len(lone_exemplar)} does not match max frame count {max_frame_count}"
+        print(f"Anim {anim_name} max frame count: {max_frame_count} ... distribution of frame counts prior padding: {cached_frame_counts}")
+
+    @staticmethod
+    def balance_exemplar_similarity_classes_by_frame_count(list_of_dicts):
+        """
+        Balance the similarity classes by extending them with exemplars.
+
+        Args:
+            list_of_dicts (list): List of dictionaries to balance.
+
+        Returns:
+            list: List of balanced dictionaries.
+        """
+        balanced_dicts = []
+        print(f"batches::balance_exemplar_similarity_classes_by_frame_count() called ...")
+
+        # Get the maximum frame count across all exemplars in all dictionaries
+        max_frame_count = max(
+            len(exemplar) for dict_similarity_exemplars in list_of_dicts for inner_list in
+            dict_similarity_exemplars.values() for exemplar in inner_list)
+        print(f"balance_exemplar_similarity_classes_by_frame_count: max_frame_count: {max_frame_count}")
+
+        for dict_similarity_exemplars in list_of_dicts:
+            for state_drive, inner_list in dict_similarity_exemplars.items():
+                count_exemplars = 0
+                for i in range(len(inner_list)):
+                    exemplar = inner_list[i]
+                    count_exemplars += 1
+                    print(
+                        f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} shape: {exemplar.shape}")
+                    # If the exemplar's frame count is less than the max frame count, extend it
+                    if len(exemplar) < max_frame_count:
+                        last_frame = exemplar[-1]
+                        additional_frames = np.repeat(last_frame[np.newaxis, :], max_frame_count - len(exemplar),
+                                                      axis=0)
+                        inner_list[i] = np.concatenate((exemplar, additional_frames), axis=0)
+                    print(f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} final shape: {inner_list[i].shape}")
+
+            # Verify that all exemplars now have the same frame count
+            count = 0
+            for inner_list in dict_similarity_exemplars.values():
+                count += 1
+                for exemplar in inner_list:
+                    assert len(
+                        exemplar) == max_frame_count, f"Exemplar {count} frame count {len(exemplar)} does not match max frame count {max_frame_count}"
+
+            balanced_dicts.append(dict_similarity_exemplars)
+
+        return balanced_dicts
+
     @staticmethod
     def _generate_similarity_classes_exemplars_dict():
         """
         Generate Dict for mapping Similarity class to exemplar number and data
         Returns:
-            dict_similarity_exemplars: Dictionary. {similarity_class: {}}
+            dict_similarity_exemplars: Dictionary. {similarity_class: []}
 
         Once populated, using training dataset: stylized motion effort_walking_105_34_552.bvh, the dict will look like:
         {(0, 0, 0, 0): [tensor([100, 91]), tensor([100, 91]), ... ], (0, 0, 0, 1): ...} for 57 keys, each with
@@ -330,7 +426,7 @@ class Batches:
                         zeroes_counter += 1
                     effort_tuple.append(effort_vals[remainder])
                 if zeroes_counter == 2 or zeroes_counter == 1:
-                    print(f"similarity effort_tuple: {effort_tuple}")
+                    # print(f"polarized stat or drive found: {effort_tuple}")
                     states_and_drives.append(effort_tuple)
 
             states_and_drives = []
@@ -338,7 +434,7 @@ class Batches:
             values_per_effort = 3
             efforts_per_tuple = 4
             tuple_index = 0
-            while (tuple_index < math.pow(values_per_effort, 4)):
+            while tuple_index < math.pow(values_per_effort, 4):
                 tuple_index += 1
                 convert_to_nary(tuple_index, values_per_effort, efforts_per_tuple)
             # include the neutral tuple
@@ -346,6 +442,4 @@ class Batches:
             return states_and_drives
 
         states_and_drives = generate_states_and_drives()
-        # print(f"states_and_drives: {states_and_drives}")
-        # return {tuple(state_drive): {} for state_drive in states_and_drives}
         return {tuple(state_drive): [] for state_drive in states_and_drives}

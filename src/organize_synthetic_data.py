@@ -1,6 +1,7 @@
 """
 static module for organizing synthetic motion data in the context of both efforts and similarity networks
 """
+import sys
 
 from src.batches import Batches
 from pymo.parsers import BVHParser
@@ -74,7 +75,7 @@ def clear_file(file):
     fin.close()
 
 
-def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True):
+def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True, anim_name=None):
     """
     Prepare motion data for training.
 
@@ -85,6 +86,7 @@ def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_
     Returns:
         None
     """
+
     def _preprocess_pipeline(parsed_data):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -143,7 +145,7 @@ def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_
         Returns:
             None
         """
-
+        print(f"osd::apply_moving_window(): {anim_name} ... Applying moving window to file data")
         start_index = conf.time_series_size
         end_index = file_data.shape[0]
         for i in range(start_index, end_index + conf.window_delta, conf.window_delta):
@@ -165,73 +167,89 @@ def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_
             if len(batches.current_batch_exemplar[batches.batch_idx]) == conf.batch_size_efforts_network:
                 batches.store_efforts_batch()
 
-    bvh_counter = 0
-    bvh_frame_rate = set()
-    filenames = os.listdir(conf.bvh_files_dir_walking)
-    print(conf.bvh_files_dir_walking)
-    print(filenames)
-    for f in filenames:
-        if f.endswith("bvh"):
-            name = path.splitext(f)[0]  # exclude extension bvh by returning the root
-            name_split = name.split('_')  # get effort values from the file name
-            anim = name_split[0]
-            f_full_path = conf.bvh_files_dir_walking + f
-            efforts_list = [float(p) for p in name.split('_')[-4:]]
-            tuple_effort_list = tuple(efforts_list)
-            if similarity_pre_processing_only:
-                if tuple_effort_list not in singleton_batches.dict_similarity_exemplars.keys():
-                    continue
-            singleton_batches.state_drive_exemplar_idx = 0
-            clear_file(f_full_path)  # remove the : from the file
-            parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
-            bvh_frame_rate.add(parsed_data.framerate)
-            assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
-            if rotations and velocities:
-                file_name = 'data/all_synthetic_motions_velocities_effort.csv'
-                data_expmaps = _preprocess_pipeline(parsed_data)
-                # remove root joint absolute positions
-                data_expmaps = data_expmaps[:, 3:]
-                data_velocities = _get_standardized_velocities(parsed_data)
-                # stack expmap angles for all joints horizontally to data_velocities
-                data = np.hstack((data_velocities, data_expmaps))
-            elif not rotations and velocities:
-                data_expmaps = _preprocess_pipeline(parsed_data)
-                data = _get_standardized_velocities(data_expmaps)
-            else:
-                data_expmaps = _preprocess_pipeline(parsed_data)
-                data_expmaps = data_expmaps[:, 3:]
-                data = _get_standardized_rotations(data_expmaps)
-                # data = np.hstack((data_rotations, data_expmaps))
-            bvh_counter += 1
-            if data.shape[0] < conf.time_series_size:
-                assert False, f"Preprocessed file too small- {data.shape[0]} - relative to exemplar size -" \
-                              f" {conf.time_series_size}"
-            f_rep = np.tile(efforts_list, (data.shape[0], 1))
-            # append anim as an additional column
-            a_rep = np.tile(anim_ind[str.upper(anim)], (data.shape[0], 1))
-            # animation name is fifth column
-            file_data = np.concatenate((a_rep, data), axis=1)
-            # append efforts (the first 4 column(s) will be the efforts)
-            file_data = np.concatenate((f_rep, file_data), axis=1)
-            if similarity_pre_processing_only:
-                singleton_batches.append_similarity_class_exemplar(tuple_effort_list, file_data)
-            else:
-                apply_moving_window(singleton_batches, file_data)
+    try:
+        bvh_counter = 0
+        bvh_frame_rate = set()
+        if anim_name == "walking":
+            dir_filenames = conf.bvh_files_dir_walking
+            filenames = os.listdir(dir_filenames)
+        elif anim_name == "pointing":
+            dir_filenames = conf.bvh_files_dir_pointing
+            filenames = os.listdir(dir_filenames)
+        elif anim_name == "picking":
+            dir_filenames = conf.bvh_files_dir_picking
+            filenames = os.listdir(dir_filenames)
+        else:
+            raise ValueError("anim_name must be one of the following: WALKING, POINTING, PICKING")
+        print(
+            f"osd::prep_all_data_for_training(): {anim_name} filenames dir: {dir_filenames}, num files: {len(filenames)}")
+        for f in filenames:
+            if f.endswith("bvh"):
+                name = path.splitext(f)[0]  # exclude extension bvh by returning the root
+                name_split = name.split('_')  # get effort values from the file name
+                anim = name_split[0]
+                f_full_path = dir_filenames + f
+                efforts_list = [float(p) for p in name.split('_')[-4:]]
+                tuple_effort_list = tuple(efforts_list)
+                if similarity_pre_processing_only:
+                    if tuple_effort_list not in singleton_batches.dict_similarity_exemplars.keys():
+                        continue
+                singleton_batches.state_drive_exemplar_idx = 0
+                clear_file(f_full_path)  # remove the : from the file
+                parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
+                bvh_frame_rate.add(parsed_data.framerate)
+                assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
+                if rotations and velocities:
+                    file_name = 'data/all_synthetic_motions_velocities_effort.csv'
+                    data_expmaps = _preprocess_pipeline(parsed_data)
+                    # remove root joint absolute positions
+                    data_expmaps = data_expmaps[:, 3:]
+                    data_velocities = _get_standardized_velocities(parsed_data)
+                    # stack expmap angles for all joints horizontally to data_velocities
+                    data = np.hstack((data_velocities, data_expmaps))
+                elif not rotations and velocities:
+                    data_expmaps = _preprocess_pipeline(parsed_data)
+                    data = _get_standardized_velocities(data_expmaps)
+                else:
+                    data_expmaps = _preprocess_pipeline(parsed_data)
+                    data_expmaps = data_expmaps[:, 3:]
+                    data = _get_standardized_rotations(data_expmaps)
+                    # data = np.hstack((data_rotations, data_expmaps))
+                bvh_counter += 1
+                if data.shape[0] < conf.time_series_size:
+                    assert False, f"Preprocessed file too small- {data.shape[0]} - relative to exemplar size -" \
+                                  f" {conf.time_series_size}"
+                f_rep = np.tile(efforts_list, (data.shape[0], 1))
+                # append anim as an additional column
+                a_rep = np.tile(anim_ind[str.upper(anim)], (data.shape[0], 1))
+                # animation name is fifth column
+                file_data = np.concatenate((a_rep, data), axis=1)
+                # append efforts (the first 4 column(s) will be the efforts)
+                file_data = np.concatenate((f_rep, file_data), axis=1)
+                if similarity_pre_processing_only:
+                    print(
+                        f"Anim: {anim_name}, {bvh_counter} ... Appending similarity class exemplar for tuple: {tuple_effort_list}")
+                    singleton_batches.append_similarity_class_exemplar(tuple_effort_list, file_data)
+                else:
+                    apply_moving_window(singleton_batches, file_data)
 
-    conf.bvh_file_num = bvh_counter
-    singleton_batches.store_effort_labels_dict()
-    singleton_batches.balance_similarity_classes()
-    # if conf.bool_fixed_neutral_embedding:
-    #     singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
-    # else:
-    singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
-    singleton_batches.convert_exemplar_np_arrays_to_tensors()
-    singleton_batches.store_similarity_labels_exemplars_dict()
-    assert singleton_batches.batch_idx == len(
-        singleton_batches.dict_efforts_labels.values()) - 1, f"batch_idx: {singleton_batches.batch_idx}, " \
-                                                             f"num" \
-                                                             f"labels: {len(singleton_batches.dict_efforts_labels.values())}"
-    singleton_batches.verify_dict_similarity_exemplars()
+        conf.bvh_file_num = bvh_counter
+        singleton_batches.store_effort_labels_dict()
+        singleton_batches.balance_single_exemplar_similarity_classes_by_frame_count(anim_name)
+        # if conf.bool_fixed_neutral_embedding:
+        #     singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
+        # else:
+        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
+        singleton_batches.convert_exemplar_np_arrays_to_tensors()
+        singleton_batches.store_similarity_labels_exemplars_dict(anim_name)
+        assert singleton_batches.batch_idx == len(
+            singleton_batches.dict_efforts_labels.values()) - 1, f"batch_idx: {singleton_batches.batch_idx}, " \
+                                                                 f"num" \
+                                                                 f"labels: {len(singleton_batches.dict_efforts_labels.values())}"
+        singleton_batches.verify_dict_similarity_exemplars()
+    except Exception as e:
+        print(f"Error in prep_all_data_for_training: {e}")
+        sys.exit()
 
 
 def load_data(rotations=True, velocities=False):
@@ -282,7 +300,7 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
     return partition, labels_dict
 
 
-def load_similarity_data(bool_drop, train_val_split=0.8):
+def load_similarity_data(bool_drop, anim_name, train_val_split=1.0):
     """
     Load similarity dict of all class exemplars and split across train, validation, and test sets.
 
@@ -293,9 +311,18 @@ def load_similarity_data(bool_drop, train_val_split=0.8):
     Returns:
         similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
-    #TODO: Create pipeline to generate similarity data that is not dependent on effort data
-    dict_similarity_classes_exemplars = pickle.load(open(
-        conf.similarity_exemplars_dir + conf.similarity_dict_file_name, "rb"))
+
+    file_path = conf.similarity_exemplars_dir + anim_name + "_" + conf.similarity_dict_file_name
+    if os.path.isfile(file_path):
+        print(f"osd::load_similarity_data(): Generating similarity data for {anim_name} with path: {file_path}")
+        prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True,
+                                   anim_name=anim_name)
+    dict_similarity_classes_exemplars = pickle.load(open(file_path, "rb"))
+    # Keys (sample): [(0, 0, 0, 0), (0, -1, -1, -1), (-1, 0, -1, -1), (0, 0, -1, -1), (1, 0, -1, -1)]
+    # where each value is a list of a single tensor (e.g, shape: (137, 88)) and all such tensors have been made uniform
+    # in their frame count
+    print(f"loaded dict_similarity_classes_exemplars for anim {anim_name}")
+
     if bool_drop:
         conf.similarity_batch_size = 56
         dict_similarity_classes_exemplars.pop((0, 0, 0, 0))
@@ -303,11 +330,14 @@ def load_similarity_data(bool_drop, train_val_split=0.8):
         conf.similarity_batch_size = 57
         # ensure element of key (0, 0, 0, 0) is at the front of the dict
         singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
-    singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
-    singleton_batches.verify_dict_similarity_exemplars()
+    # singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
+    # next(iter(dict_similarity_classes_exemplars.keys())) gets the first key in the dictionary
+    # the length of the lone entry of the value (itself a list) somehow specifies the number of exemplars
     num_exemplars = len(dict_similarity_classes_exemplars[next(iter(dict_similarity_classes_exemplars.keys()))])
-    print(f"Number of total exemplars per class: {num_exemplars}")
-    p = np.random.permutation(num_exemplars-1)
+    print(f"{anim_name}: Number of total classes: {len(dict_similarity_classes_exemplars)}")
+    print(f"{anim_name}: Number of total exemplars per class: {num_exemplars}")
+    print(f"{anim_name}: Frame count for first exemplar: {len(dict_similarity_classes_exemplars[(0, 0, 0, 0)][0])}")
+    p = np.random.permutation(num_exemplars - 1)
     train_size = int(train_val_split * num_exemplars)
     # temp change to inc val set size
     # val_and_test_size = int(((1 - train_val_split) * num_exemplars) / 2)
@@ -318,7 +348,7 @@ def load_similarity_data(bool_drop, train_val_split=0.8):
     validation_data = {}
     test_data = {}
     for k, v in dict_similarity_classes_exemplars.items():
-        start_index = random.randint(0, len(v) - train_size)
+        # start_index = random.randint(0, len(v) - train_size)
         # Interleave the training and validation data
         # train_data[k] = []
         # validation_data[k] = []
@@ -329,37 +359,30 @@ def load_similarity_data(bool_drop, train_val_split=0.8):
         #         validation_data[k].append(v[i+1])
         #         test_data[k].append(v[i+1])
         train_data[k] = v[:train_size]
-        validation_data[k] = v[train_size:train_size + val_and_test_size]
-        test_data[k] = v[train_size:train_size + val_and_test_size]
-
-
-
-        # Generate a random starting index for the subsetting
-        # # start_index = random.randint(0, len(v) - (train_size + val_and_test_size))
-        # start_index = random.randint(0, len(v) - train_size)
-        # # Generate a random starting index for the subsetting of validation data
-        # start_index_val = random.randint(0, len(v) - val_and_test_size)
-        #
-        # # Perform the slicing with the random starting index
-        # train_data[k] = v[start_index:start_index + train_size]
-        # validation_data[k] = v[start_index_val:start_index_val + val_and_test_size]
-        # test_data[k] = v[start_index_val:start_index_val + val_and_test_size]
-        # # test_data[k] = v[start_index + train_size:start_index + train_size + val_and_test_size]
-
-    # print(f"len dict_train_class_value: {len(train_data[(0, -1, -1, -1)])}")
-    # print(f"dict_train_class_value element shape: {train_data[(0, -1, -1, -1)][0].shape}")
-    # print(f"dict_train_class_value_element_type: {type(train_data[(0, 1, 1, 0)][0])}")
-    #
-    # print(f"len dict_val_class_value: {len(validation_data[(0, -1, -1, -1)])}")
-    # print(f"dict_val_class_value element shape: {validation_data[(0, -1, -1, -1)][0].shape}")
-    # print(f"dict_val_class_value_element_type: {type(validation_data[(0, 1, 1, 0)][0])}")
-    #
-    # print(f"len dict_test_class_value: {len(test_data[(0, -1, -1, -1)])}")
-    # print(f"dict_test_class_value element shape: {test_data[(0, -1, -1, -1)][0].shape}")
-    # print(f"dict_test_class_value_element_type: {type(test_data[(0, 1, 1, 0)][0])}")
+        if val_and_test_size == 0:
+            validation_data[k] = v[:train_size]
+            test_data[k] = v[:train_size]
+        else:
+            validation_data[k] = v[train_size:train_size + val_and_test_size]
+            test_data[k] = v[train_size:train_size + val_and_test_size]
 
     return {
         'train': train_data,
         'validation': validation_data,
         'test': test_data
     }
+
+
+def balance_single_exemplar_similarity_classes_by_frame_count(list_similarity_dicts):
+    """
+    Balance the number of frames in each class exemplar to the same number of frames as the class exemplar with the
+    most frames.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    print("OSD:: Balancing single exemplar similarity classes by frame count")
+    return singleton_batches.balance_exemplar_similarity_classes_by_frame_count(list_similarity_dicts)

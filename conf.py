@@ -28,12 +28,11 @@ similarity_model_file = 'stored_trained_models_dir/similarity_model.h5'
 # Similarity network shape per training example; last dimension is 4 more than the
 # effort network shape because effort values are included
 # similarity_exemplar_dim = (time_series_size, 91)
-similarity_exemplar_dim = (time_series_size, 88)
+similarity_exemplar_dim = (137, 88)
 embedding_size = 32
-n_similarity_epochs = 300
-# Number of training examples per batch corresponds to the number of states and drives for three valued
-# (poles plus zero) effort tuples
-# similarity_batch_size = 56
+n_similarity_epochs = 500
+# Number of training examples per batch corresponds to the number of states and drives and possibly the neutral
+similarity_batch_size = 57
 # if not bool_fixed_neutral_embedding:
 #     similarity_batch_size = 57
 # else:
@@ -51,9 +50,9 @@ checkpoint_root_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarit
 all_bvh_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
 # directory containing bvh files that have been stylized with 0.5 step size
 # (i.e., effort values are either -1, -0.5, 0, 0.5, 1). This serves as training data for the effort predictor network
-bvh_files_dir_walking = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking_105_34_552/"
-bvh_files_dir_walking_2 = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_walking/"
-bvh_files_dir_jumping = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/effort_extended/"
+bvh_files_dir_walking = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/walking_perform_user_study_1/"
+bvh_files_dir_pointing = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/pointing_perform_user_study_1/"
+bvh_files_dir_picking = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/picking_perform_user_study_1/"
 effort_network_exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/"
 similarity_exemplars_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/similarity_exemplars/"
 output_metrics_dir = "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity" \
@@ -85,7 +84,7 @@ class BatchStrategy(Enum):
 
 
 # initialize batch strategy constant
-BATCH_STRATEGY = BatchStrategy.ALL
+BATCH_STRATEGY = BatchStrategy.HARD
 
 BATCH_SEMI_HARD_PARAMS = {
     "learning_rate": 0.0001,
