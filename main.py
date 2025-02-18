@@ -13,8 +13,8 @@ sys.path.append(curr_path + '\networks')
 from networks.similarity_network import SimilarityNetwork
 from networks.similarity_data_loader import SimilarityDataLoader
 from networks.triplet_mining import TripletMining
+from Config import Config
 import src.organize_synthetic_data as osd
-import conf
 import tensorflow as tf
 
 
@@ -42,28 +42,16 @@ def check_gpu_access():
 
 if __name__ == '__main__':
     check_gpu_access()
-    if len(sys.argv) > 1:
-        print("running on remote machine")
-        conf.num_task = sys.argv[1]  # This is the Slurm job array index
-        arch_variant = int(conf.num_task)  # Convert it to an integer
-    else:
-        conf.num_task = None
-        arch_variant = 0  # Default architecture variant
 
-    if conf.num_task:
-        conf.all_bvh_dir = conf.REMOTE_MACHINE_DIR_VALUES['all_bvh_dir']
-        conf.bvh_files_dir_walking = conf.REMOTE_MACHINE_DIR_VALUES['bv_files_dir']
-        conf.effort_network_exemplars_dir = conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS['exemplars_dir'] = (conf.REMOTE_MACHINE_DIR_VALUES['exemplars_dir'] +
-                                                                                                      conf.num_task + '/')
-        conf.output_metrics_dir = conf.REMOTE_MACHINE_DIR_VALUES['output_metrics_dir']
-        conf.checkpoint_root_dir = conf.REMOTE_MACHINE_DIR_VALUES['checkpoint_root_dir'] + conf.num_task + '/'
+    # Initialize configuration with task index if provided (happens only for remote machine)
+    task_index = sys.argv[1] if len(sys.argv) > 1 else None
+    config = Config(task_index)
 
-    if not os.path.exists(conf.output_metrics_dir):
-        os.makedirs(conf.output_metrics_dir)
+    # Ensure required directories exist
+    config.ensure_directories_exist()
 
-    if not os.path.exists(conf.checkpoint_root_dir):
-        os.makedirs(conf.checkpoint_root_dir)
-        print(f"created new similarity network checkpoint directory: {conf.checkpoint_root_dir}")
+    # Architecture variant is either from task index or default
+    arch_variant = int(config.num_task) if config.num_task else 0
 
     # load effort data and train effort network
     # batch_ids_partition, labels_dict = osd.load_data(rotations=True, velocities=False)
@@ -109,7 +97,7 @@ if __name__ == '__main__':
     similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
                                            validation_loader=similarity_validation_loader,
                                            test_loader=similarity_test_loader,
-                                           checkpoint_root_dir=conf.checkpoint_root_dir,
+                                           checkpoint_root_dir=config.checkpoint_root_dir,
                                            triplet_modules=[walking_triplet_mining, pointing_triplet_mining,
                                                             picking_triplet_mining],
                                            architecture_variant=arch_variant)
