@@ -77,11 +77,15 @@ class BVHParser():
         self.reset()
 
         with open(filename, 'r') as bvh_file:
+            print("a")
             raw_contents = bvh_file.read()
         tokens, remainder = self.scanner.scan(raw_contents)
+        print("b")
         self._parse_hierarchy(tokens)
+        print("c")
         self.current_token = self.current_token + 1
         self._parse_motion(tokens)
+        print("d")
         
         self.data.skeleton = self._skeleton
         self.data.channel_names = self._motion_channels
