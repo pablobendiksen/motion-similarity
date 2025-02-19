@@ -24,6 +24,7 @@ class Config:
         self.embedding_size = 32
         self.n_similarity_epochs = 500
         self.similarity_batch_size = 57
+        self.similarity_dict_file_name = 'similarity_labels_exemplars_dict_local.pickle'
 
         # File paths - initialized with local paths by default
         self._base_local_paths = {
