@@ -70,12 +70,15 @@ class Config:
             # Update paths for remote execution
             self.checkpoint_root_dir = os.path.join(self._remote_machine_paths['checkpoint_root_dir'],
                                                     f"{self.num_task}/")
+            # not used for sim network
             self.all_bvh_dir = self._remote_machine_paths['all_bvh_dir']
             self.bvh_files_dir_walking = self._remote_machine_paths['bvh_files_dir_walking']
             self.bvh_files_dir_pointing = self._remote_machine_paths['bvh_files_dir_pointing']
             self.bvh_files_dir_picking = self._remote_machine_paths['bvh_files_dir_picking']
             self.similarity_exemplars_dir = self._remote_machine_paths['similarity_exemplars_dir']
+            # not used for sim network
             self.effort_network_exemplars_dir = self._remote_machine_paths['effort_network_exemplars_dir']
+            # not used for sim network
             self.output_metrics_dir = self._remote_machine_paths['output_metrics_dir']
         else:
             # Use local paths
@@ -83,7 +86,7 @@ class Config:
 
     def ensure_directories_exist(self) -> None:
         """Ensure all required directories exist"""
-        directories = [self.output_metrics_dir, self.checkpoint_root_dir]
+        directories = [self.checkpoint_root_dir, self.similarity_exemplars_dir]
         for directory in directories:
             if not os.path.exists(directory):
                 os.makedirs(directory)
