@@ -317,8 +317,7 @@ def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
         similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
 
-    # file_path = config.similarity_exemplars_dir + anim_name + "_" + config.similarity_dict_file_name
-    file_path = "dummy_path"
+    file_path = config.similarity_exemplars_dir + anim_name + "_" + config.similarity_dict_file_name
     singleton_batches = Batches(config)
     if not os.path.isfile(file_path):
         print(f"osd::load_similarity_data(): Generating similarity data for {anim_name} with path: {file_path}")
