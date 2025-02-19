@@ -184,11 +184,12 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                 print(f"path: {path}")
                 name = path.splitext(f)[0]  # exclude extension bvh by returning the root
                 name_split = name.split('_')  # get effort values from the file name
-                print(f"name_split: {name_split}")
+                print(f"name_split: {name_split}, length: {len(name_split)}")
                 anim = name_split[0]
                 f_full_path = dir_filenames + f
                 print(1)
                 efforts_list = [float(p) for p in name.split('_')[-4:]]
+                print(1.5)
                 tuple_effort_list = tuple(efforts_list)
                 if similarity_pre_processing_only:
                     if tuple_effort_list not in singleton_batches.dict_similarity_exemplars.keys():
