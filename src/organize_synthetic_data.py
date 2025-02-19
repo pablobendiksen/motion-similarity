@@ -181,10 +181,13 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
             f"osd::prep_all_data_for_training(): {anim_name} filenames dir: {dir_filenames}, num files: {len(filenames)}")
         for f in filenames:
             if f.endswith("bvh"):
+                print(f"path: {path}")
                 name = path.splitext(f)[0]  # exclude extension bvh by returning the root
                 name_split = name.split('_')  # get effort values from the file name
+                print(f"name_split: {name_split}")
                 anim = name_split[0]
                 f_full_path = dir_filenames + f
+                print(1)
                 efforts_list = [float(p) for p in name.split('_')[-4:]]
                 tuple_effort_list = tuple(efforts_list)
                 if similarity_pre_processing_only:
@@ -194,6 +197,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                 clear_file(f_full_path)  # remove the : from the file
                 parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
                 bvh_frame_rate.add(parsed_data.framerate)
+                print(2)
                 assert len(bvh_frame_rate) == 1, f"More than one frame rate present!!! {bvh_frame_rate}"
                 if rotations and velocities:
                     file_name = 'data/all_synthetic_motions_velocities_effort.csv'
@@ -212,6 +216,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                     data = _get_standardized_rotations(data_expmaps)
                     # data = np.hstack((data_rotations, data_expmaps))
                 bvh_counter += 1
+                print(3)
                 if data.shape[0] < config_instance.time_series_size:
                     assert False, f"Preprocessed file too small- {data.shape[0]} - relative to exemplar size -" \
                                   f" {config_instance.time_series_size}"
@@ -222,6 +227,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                 file_data = np.concatenate((a_rep, data), axis=1)
                 # append efforts (the first 4 column(s) will be the efforts)
                 file_data = np.concatenate((f_rep, file_data), axis=1)
+                print(4)
                 if similarity_pre_processing_only:
                     print(
                         f"Anim: {anim_name}, {bvh_counter} ... Appending similarity class exemplar for tuple: {tuple_effort_list}")
@@ -229,6 +235,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                 else:
                     apply_moving_window(singleton_batches, file_data)
 
+        print(5)
         config_instance.bvh_file_num = bvh_counter
         singleton_batches.store_effort_labels_dict()
         singleton_batches.balance_single_exemplar_similarity_classes_by_frame_count(anim_name)
