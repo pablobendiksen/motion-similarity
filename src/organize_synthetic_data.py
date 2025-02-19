@@ -239,7 +239,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
 
         print(5)
         config_instance.bvh_file_num = bvh_counter
-        singleton_batches.store_effort_labels_dict()
+        # singleton_batches.store_effort_labels_dict()
         singleton_batches.balance_single_exemplar_similarity_classes_by_frame_count(anim_name)
         # if conf.bool_fixed_neutral_embedding:
         #     singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
