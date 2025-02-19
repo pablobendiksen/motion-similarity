@@ -9,8 +9,6 @@ from pymo.viz_tools import *
 from sklearn.preprocessing import StandardScaler
 from pymo.preprocessing import *
 from os import path
-import shutil
-import conf
 from sklearn.pipeline import Pipeline
 import numpy as np
 import pickle
@@ -143,13 +141,13 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
             None
         """
         print(f"osd::apply_moving_window(): {anim_name} ... Applying moving window to file data")
-        start_index = conf.time_series_size
+        start_index = config_instance.time_series_size
         end_index = file_data.shape[0]
-        for i in range(start_index, end_index + conf.window_delta, conf.window_delta):
-            indices = range(i - conf.time_series_size, i)
+        for i in range(start_index, end_index + config_instance.window_delta, config_instance.window_delta):
+            indices = range(i - config_instance.time_series_size, i)
             # end of file corner case correction
             if i > end_index:
-                indices = range(i - conf.time_series_size, end_index)
+                indices = range(i - config_instance.time_series_size, end_index)
                 exemplar = file_data[indices]
                 exemplar = batches.append_to_end_file_exemplar(exemplar)
                 batches.append_efforts_batch_and_labels(exemplar)
@@ -161,7 +159,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
             if tuple_effort_list in batches.dict_similarity_exemplars.keys():
                 # storing similarity class exemplar here while iterating through the file and storing effort batches
                 batches.append_similarity_class_exemplar(tuple_effort_list, file_data[indices])
-            if len(batches.current_batch_exemplar[batches.batch_idx]) == conf.batch_size_efforts_network:
+            if len(batches.current_batch_exemplar[batches.batch_idx]) == config_instance.batch_size_efforts_network:
                 batches.store_efforts_batch()
 
     try:
@@ -169,13 +167,13 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
         bvh_counter = 0
         bvh_frame_rate = set()
         if anim_name == "walking":
-            dir_filenames = conf.bvh_files_dir_walking
+            dir_filenames = config_instance.bvh_files_dir_walking
             filenames = os.listdir(dir_filenames)
         elif anim_name == "pointing":
-            dir_filenames = conf.bvh_files_dir_pointing
+            dir_filenames = config_instance.bvh_files_dir_pointing
             filenames = os.listdir(dir_filenames)
         elif anim_name == "picking":
-            dir_filenames = conf.bvh_files_dir_picking
+            dir_filenames = config_instance.bvh_files_dir_picking
             filenames = os.listdir(dir_filenames)
         else:
             raise ValueError("anim_name must be one of the following: WALKING, POINTING, PICKING")
@@ -214,9 +212,9 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                     data = _get_standardized_rotations(data_expmaps)
                     # data = np.hstack((data_rotations, data_expmaps))
                 bvh_counter += 1
-                if data.shape[0] < conf.time_series_size:
+                if data.shape[0] < config_instance.time_series_size:
                     assert False, f"Preprocessed file too small- {data.shape[0]} - relative to exemplar size -" \
-                                  f" {conf.time_series_size}"
+                                  f" {config_instance.time_series_size}"
                 f_rep = np.tile(efforts_list, (data.shape[0], 1))
                 # append anim as an additional column
                 a_rep = np.tile(anim_ind[str.upper(anim)], (data.shape[0], 1))
@@ -231,7 +229,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                 else:
                     apply_moving_window(singleton_batches, file_data)
 
-        conf.bvh_file_num = bvh_counter
+        config_instance.bvh_file_num = bvh_counter
         singleton_batches.store_effort_labels_dict()
         singleton_batches.balance_single_exemplar_similarity_classes_by_frame_count(anim_name)
         # if conf.bool_fixed_neutral_embedding:
@@ -250,52 +248,52 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
         sys.exit()
 
 
-def load_data(rotations=True, velocities=False):
-    """
-    Load motion data for training if available, otherwise prepare it first.
+# def load_data(rotations=True, velocities=False):
+#     """
+#     Load motion data for training if available, otherwise prepare it first.
+#
+#     Args:
+#         rotations (bool): Whether to include rotations in the loaded data.
+#         velocities (bool): Whether to include velocities in the loaded data.
+#
+#     Returns:
+#         partition (dict): A dictionary containing the partitioned efforts network data.
+#         labels_dict (dict): A dictionary containing labels (efforts values).
+#     """
+#     if not os.path.exists(config_instance.effort_network_exemplars_dir):
+#         os.makedirs(conf.effort_network_exemplars_dir)
+#         prep_all_data_for_training(rotations=rotations, velocities=velocities)
+#     # csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
+#     # if path.exists(conf.effort_network_exemplars_dir) and not path.exists(csv_file):
+#     #     shutil.rmtree(conf.effort_network_exemplars_dir)
+#     #     os.makedirs(conf.effort_network_exemplars_dir)
+#     #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
+#     # elif not path.exists(csv_file):
+#     #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
+#     partition, labels_dict = _partition_effort_ids_and_labels()
+#     return partition, labels_dict
 
-    Args:
-        rotations (bool): Whether to include rotations in the loaded data.
-        velocities (bool): Whether to include velocities in the loaded data.
 
-    Returns:
-        partition (dict): A dictionary containing the partitioned efforts network data.
-        labels_dict (dict): A dictionary containing labels (efforts values).
-    """
-    if not os.path.exists(conf.effort_network_exemplars_dir):
-        os.makedirs(conf.effort_network_exemplars_dir)
-        prep_all_data_for_training(rotations=rotations, velocities=velocities)
-    # csv_file = os.path.join(conf.output_metrics_dir, f'{conf.num_task}_{conf.window_delta}.csv')
-    # if path.exists(conf.effort_network_exemplars_dir) and not path.exists(csv_file):
-    #     shutil.rmtree(conf.effort_network_exemplars_dir)
-    #     os.makedirs(conf.effort_network_exemplars_dir)
-    #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
-    # elif not path.exists(csv_file):
-    #     prep_all_data_for_training(rotations=rotations, velocities=velocities)
-    partition, labels_dict = _partition_effort_ids_and_labels()
-    return partition, labels_dict
-
-
-def _partition_effort_ids_and_labels(train_val_split=0.8):
-    """
-    Partition effort IDs and labels for training, validation, and testing.
-
-    Args:
-        train_val_split (float): The percentage of data to be used for training.
-
-    Returns:
-        partition (dict): A dictionary containing the partitioned data.
-        labels_dict (dict): A dictionary containing labels for the data.
-    """
-    with open(conf.effort_network_exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
-        labels_dict = pickle.load(handle)
-    batch_ids_list = list(labels_dict.keys())
-    random.shuffle(batch_ids_list)
-    train_size = int(train_val_split * len(batch_ids_list))
-    test_val_size = int(((1 - train_val_split) * len(batch_ids_list)) / 2)
-    partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:test_val_size],
-                 'test': batch_ids_list[-test_val_size:]}
-    return partition, labels_dict
+# def _partition_effort_ids_and_labels(train_val_split=0.8):
+#     """
+#     Partition effort IDs and labels for training, validation, and testing.
+#
+#     Args:
+#         train_val_split (float): The percentage of data to be used for training.
+#
+#     Returns:
+#         partition (dict): A dictionary containing the partitioned data.
+#         labels_dict (dict): A dictionary containing labels for the data.
+#     """
+#     with open(conf.effort_network_exemplars_dir + conf.efforts_labels_dict_file_name, 'rb') as handle:
+#         labels_dict = pickle.load(handle)
+#     batch_ids_list = list(labels_dict.keys())
+#     random.shuffle(batch_ids_list)
+#     train_size = int(train_val_split * len(batch_ids_list))
+#     test_val_size = int(((1 - train_val_split) * len(batch_ids_list)) / 2)
+#     partition = {'train': batch_ids_list[:train_size], 'validation': batch_ids_list[train_size:test_val_size],
+#                  'test': batch_ids_list[-test_val_size:]}
+#     return partition, labels_dict
 
 
 def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
@@ -323,10 +321,10 @@ def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
     print(f"loaded dict_similarity_classes_exemplars for anim {anim_name}")
 
     if bool_drop:
-        conf.similarity_batch_size = 56
+        config.similarity_batch_size = 56
         dict_similarity_classes_exemplars.pop((0, 0, 0, 0))
     else:
-        conf.similarity_batch_size = 57
+        config.similarity_batch_size = 57
         # ensure element of key (0, 0, 0, 0) is at the front of the dict
         singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
     # singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
