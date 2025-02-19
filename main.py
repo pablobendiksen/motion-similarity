@@ -82,9 +82,9 @@ if __name__ == '__main__':
     list_similarity_dicts = [walking_similarity_dict_partition["train"], pointing_similarity_dict_partition["train"],
                              picking_similarity_dict_partition["train"]]
     list_similarity_dicts = osd.balance_single_exemplar_similarity_classes_by_frame_count(list_similarity_dicts)
-    walking_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "walking")
-    pointing_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "pointing")
-    picking_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "picking")
+    walking_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "walking", config)
+    pointing_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "pointing", config)
+    picking_triplet_mining = TripletMining(bool_drop_neutral_exemplar, bool_fixed_neutral_embedding, squared_left_right_euc_dist, squared_class_neut_euc_dist, "picking", config)
 
     # similarity_train_loader = SimilarityDataLoader(walking_similarity_dict_partition['train'])
     # similarity_validation_loader = SimilarityDataLoader(walking_similarity_dict_partition['validation'])

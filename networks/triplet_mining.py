@@ -2,7 +2,6 @@
 static module for organizing triplet mining data as well as performing online triplet mining
 """
 from pathlib import Path
-import conf
 import tensorflow as tf
 # tf.config.experimental_run_functions_eagerly(True)
 import numpy as np
@@ -12,7 +11,8 @@ import pickle
 
 
 class TripletMining:
-    def __init__(self, bool_drop, bool_fixed, squared_left_right, squared_class_neut, anim_name):
+    def __init__(self, bool_drop, bool_fixed, squared_left_right, squared_class_neut, anim_name, config):
+        self.config = config
         self.dict_similarity_classes_exemplars = {}
         self.matrix_alpha_left_right_right_left = None
         self.matrix_alpha_left_neut_neut_left = None
@@ -33,7 +33,7 @@ class TripletMining:
         self.bool_fixed_neutral_embedding = bool_fixed
         self.squared_left_right_euc_dist = squared_left_right
         self.squared_class_neut_dist = squared_class_neut
-        self.batch_size = conf.similarity_batch_size
+        self.batch_size = self.config.similarity_batch_size
         print(f"TripletMining: batch size: {self.batch_size}")
         self.initialize_triplet_mining(anim_name)
 
@@ -52,7 +52,7 @@ class TripletMining:
 
         print("Initializing Triplet Mining module state variables")
         self.dict_similarity_classes_exemplars = pickle.load(open(
-            conf.similarity_exemplars_dir + anim_name + "_" + conf.similarity_dict_file_name, "rb"))
+            self.config.similarity_exemplars_dir + anim_name + "_" + self.config.similarity_dict_file_name, "rb"))
         print(f"classes: {self.dict_similarity_classes_exemplars.keys()}")
 
         key_to_remove = (0, 0, 0, 0)
@@ -72,7 +72,7 @@ class TripletMining:
          self.matrix_bool_right_neut, self.matrix_bool_neut_right) = [tf.Variable(
             initial_value=tf.zeros((self.num_states_drives, self.num_states_drives), dtype=tf.float32)) for _ in range(9)]
         self.tensor_dists_class_neut = tf.Variable(initial_value=tf.zeros((self.num_states_drives,)))
-        self.neutral_embedding = tf.Variable(initial_value=tf.zeros((conf.embedding_size,)))
+        self.neutral_embedding = tf.Variable(initial_value=tf.zeros((self.config.embedding_size,)))
         self.subset_global_dict()
         self.pre_process_comparisons_data(anim_name)
 
