@@ -195,7 +195,8 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
                     if tuple_effort_list not in singleton_batches.dict_similarity_exemplars.keys():
                         continue
                 singleton_batches.state_drive_exemplar_idx = 0
-                clear_file(f_full_path)  # remove the : from the file
+                print(f"full path: {f_full_path}")
+                # clear_file(f_full_path)  # remove the : from the file
                 parsed_data = parser.parse(f_full_path)  # parsed file of type pymo.data.MocapData
                 bvh_frame_rate.add(parsed_data.framerate)
                 print(2)
