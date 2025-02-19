@@ -88,6 +88,8 @@ class Config:
             if not os.path.exists(directory):
                 os.makedirs(directory)
                 print(f"Created directory: {directory}")
+            else:
+                print(f"Directory confirmed to exist: {directory}")
 
 
 class BatchStrategy(Enum):
