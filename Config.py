@@ -24,6 +24,7 @@ class Config:
         self.embedding_size = 32
         self.n_similarity_epochs = 500
         self.similarity_batch_size = 57
+
         self.similarity_dict_file_name = 'similarity_labels_exemplars_dict_local.pickle'
 
         # File paths - initialized with local paths by default
@@ -54,7 +55,6 @@ class Config:
 
         # Dictionary file names
         self.efforts_labels_dict_file_name = 'labels_dict.pickle'
-        self.similarity_dict_file_name = 'similarity_labels_exemplars_dict_local.pickle'
 
         # Effort network generator parameters
         self.EFFORT_EXEMPLAR_GENERATOR_PARAMS = {
@@ -74,6 +74,7 @@ class Config:
             self.bvh_files_dir_walking = self._remote_machine_paths['bvh_files_dir_walking']
             self.bvh_files_dir_pointing = self._remote_machine_paths['bvh_files_dir_pointing']
             self.bvh_files_dir_picking = self._remote_machine_paths['bvh_files_dir_picking']
+            self.similarity_exemplars_dir = self._remote_machine_paths['similarity_exemplars_dir']
             self.effort_network_exemplars_dir = self._remote_machine_paths['effort_network_exemplars_dir']
             self.output_metrics_dir = self._remote_machine_paths['output_metrics_dir']
         else:
