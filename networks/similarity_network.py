@@ -70,7 +70,7 @@ class SimilarityNetwork(Utilities):
         self.callbacks = [callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=15, restore_best_weights=True, mode='min', verbose=1)]
         checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.checkpoint_dir,
-                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:02d}}_val_loss_{{val_loss:.2f}}.h5"),
+                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_loss_{{val_loss:.2f}}.weights.h5"),
             save_weights_only=True,
             save_best_only=True,  # Save only when validation loss improves
             monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
