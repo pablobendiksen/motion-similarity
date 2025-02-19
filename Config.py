@@ -43,8 +43,8 @@ class Config:
             "checkpoint_root_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/",
             "all_bvh_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/effort_extended/",
             "bvh_files_dir_walking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/walking_perform_user_study_1/",
-            "bvh_files_dir_pointing": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/pointing_perform_user_study_1/",
-            "bvh_files_dir_picking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/picking_perform_user_study_1/",
+            "bvh_files_dir_pointing": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/pointing_perform_user_study_1/",
+            "bvh_files_dir_picking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/picking_perform_user_study_1/",
             "effort_network_exemplars_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/",
             "similarity_exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/similarity_exemplars/",
             "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_metrics/"
