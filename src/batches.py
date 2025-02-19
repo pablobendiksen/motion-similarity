@@ -1,6 +1,3 @@
-import os.path
-
-import conf
 import numpy as np
 import tensorflow as tf
 import pickle
@@ -38,15 +35,16 @@ class Batches:
     """
     _self = None
 
-    def __new__(cls):
+    def __new__(cls, config):
         if cls._self is None:
             # print("Initializing Batches class")
             cls._self = super(Batches, cls).__new__(cls)
         return cls._self
 
-    def __init__(self):
-        self.batch_size = conf.batch_size_efforts_network
-        self.efforts_network_exemplar_dim = conf.EFFORT_EXEMPLAR_GENERATOR_PARAMS["exemplar_dim"]
+    def __init__(self, config):
+        self.config = config
+        self.batch_size = self.config.batch_size_efforts_network
+        self.efforts_network_exemplar_dim = self.config.effort_network_exemplars_dir
         self.sample_idx = 0
         self.batch_idx = 0
         self.state_drive_exemplar_idx = None
@@ -54,7 +52,7 @@ class Batches:
         self.list_batch_efforts = []
         self.dict_efforts_labels = {0: np.zeros((self.batch_size, 4))}
         self.dict_similarity_exemplars = self._generate_similarity_classes_exemplars_dict()
-        self.sliding_window_start_index = conf.time_series_size
+        self.sliding_window_start_index = self.config.time_series_size
 
     def append_efforts_batch_and_labels(self, exemplar):
         """
@@ -88,7 +86,7 @@ class Batches:
                                                                     f"{self.batch_idx} is {len(self.dict_efforts_labels[self.batch_idx])}"
 
         batch_array = np.array(self.current_batch_exemplar[self.batch_idx])
-        np.save(conf.effort_network_exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
+        np.save(self.config.effort_network_exemplars_dir + 'batch_' + str(self.batch_idx) + '.npy',
                 batch_array)
         print(
             f"Stored batch num {self.batch_idx}. Size: {batch_array.shape}.  exemplar count:"
@@ -99,8 +97,7 @@ class Batches:
         self.list_batch_efforts = []
         self.dict_efforts_labels[self.batch_idx] = np.zeros((self.batch_size, 4))
 
-    @staticmethod
-    def append_to_end_file_exemplar(exemplar, make_whole_exemplar=False):
+    def append_to_end_file_exemplar(self, exemplar, make_whole_exemplar=False):
         """
         Ensure last exemplar in file is of length conf.time_series_size.
 
@@ -111,7 +108,7 @@ class Batches:
         Returns:
             numpy.ndarray: The concatenated matrix.
         """
-        target_row_num = conf.time_series_size
+        target_row_num = self.config.time_series_size
         last_row = exemplar[-1]
         if make_whole_exemplar:
             repeats = target_row_num
@@ -135,10 +132,10 @@ class Batches:
         """
         # exemplar = np.delete(end_directory_exemplar, slice(5), axis=1)
         last_row = exemplar[-1]
-        repeats = conf.time_series_size
+        repeats = self.config.time_series_size
         # print(f"extend_final_batch: size: {self.current_batch_exemplar[self.batch_idx]}, "
         #       f"last_row shape: {last_row.shape}, repeats: {repeats}")
-        while len(self.current_batch_exemplar[self.batch_idx]) < conf.batch_size_efforts_network:
+        while len(self.current_batch_exemplar[self.batch_idx]) < self.config.batch_size_efforts_network:
             new_exemplar = np.tile(last_row, (repeats, 1))
             self.sample_idx += 1
             self.append_efforts_batch_and_labels(new_exemplar)
@@ -159,10 +156,10 @@ class Batches:
                 self.batch_idx -= 1
             print(f"storing dict_efforts_labels with len {len(self.dict_efforts_labels)} with dict of batches size"
                   f" {len(self.current_batch_exemplar)}")
-            with open(conf.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
+            with open(self.config.effort_network_exemplars_dir + '/labels_dict.pickle', 'wb') as handle:
                 pickle.dump(self.dict_efforts_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
             print(f"storing {len(self.dict_efforts_labels.keys())} batch labels")
-            conf.exemplar_num = self.sample_idx
+            self.config.exemplar_num = self.sample_idx
         except Exception as e:
             print(f"Error, batches::store_effort_labels_dict(): {e}")
 
@@ -179,7 +176,7 @@ class Batches:
         print(f"storing dict_similarity_exemplars for {anim_name} with len {len(self.dict_similarity_exemplars)},"
               f" key example: {list(keys)[0]}, corresponding value's (list)"
               f" entry's (tensor) shape: {self.dict_similarity_exemplars[next(iter(keys))][0].shape}")
-        similarity_dict_path = conf.similarity_exemplars_dir + anim_name + "_" + conf.similarity_dict_file_name
+        similarity_dict_path = self.config.similarity_exemplars_dir + anim_name + "_" + self.config.similarity_dict_file_name
         with open(similarity_dict_path, 'wb') as handle:
             pickle.dump(self.dict_similarity_exemplars, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"storing {len(self.dict_similarity_exemplars.keys())} similarity class k,v pairs at: {similarity_dict_path}")
@@ -348,53 +345,53 @@ class Batches:
                 assert len(lone_exemplar) == max_frame_count, f"Exemplar {count} frame count {len(lone_exemplar)} does not match max frame count {max_frame_count}"
         print(f"Anim {anim_name} max frame count: {max_frame_count} ... distribution of frame counts prior padding: {cached_frame_counts}")
 
-    @staticmethod
-    def balance_exemplar_similarity_classes_by_frame_count(list_of_dicts):
-        """
-        Balance the similarity classes by extending them with exemplars.
-
-        Args:
-            list_of_dicts (list): List of dictionaries to balance.
-
-        Returns:
-            list: List of balanced dictionaries.
-        """
-        balanced_dicts = []
-        print(f"batches::balance_exemplar_similarity_classes_by_frame_count() called ...")
-
-        # Get the maximum frame count across all exemplars in all dictionaries
-        max_frame_count = max(
-            len(exemplar) for dict_similarity_exemplars in list_of_dicts for inner_list in
-            dict_similarity_exemplars.values() for exemplar in inner_list)
-        print(f"balance_exemplar_similarity_classes_by_frame_count: max_frame_count: {max_frame_count}")
-
-        for dict_similarity_exemplars in list_of_dicts:
-            for state_drive, inner_list in dict_similarity_exemplars.items():
-                count_exemplars = 0
-                for i in range(len(inner_list)):
-                    exemplar = inner_list[i]
-                    count_exemplars += 1
-                    print(
-                        f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} shape: {exemplar.shape}")
-                    # If the exemplar's frame count is less than the max frame count, extend it
-                    if len(exemplar) < max_frame_count:
-                        last_frame = exemplar[-1]
-                        additional_frames = np.repeat(last_frame[np.newaxis, :], max_frame_count - len(exemplar),
-                                                      axis=0)
-                        inner_list[i] = np.concatenate((exemplar, additional_frames), axis=0)
-                    print(f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} final shape: {inner_list[i].shape}")
-
-            # Verify that all exemplars now have the same frame count
-            count = 0
-            for inner_list in dict_similarity_exemplars.values():
-                count += 1
-                for exemplar in inner_list:
-                    assert len(
-                        exemplar) == max_frame_count, f"Exemplar {count} frame count {len(exemplar)} does not match max frame count {max_frame_count}"
-
-            balanced_dicts.append(dict_similarity_exemplars)
-
-        return balanced_dicts
+    # @staticmethod
+    # def balance_exemplar_similarity_classes_by_frame_count(list_of_dicts):
+    #     """
+    #     Balance the similarity classes by extending them with exemplars.
+    #
+    #     Args:
+    #         list_of_dicts (list): List of dictionaries to balance.
+    #
+    #     Returns:
+    #         list: List of balanced dictionaries.
+    #     """
+    #     balanced_dicts = []
+    #     print(f"batches::balance_exemplar_similarity_classes_by_frame_count() called ...")
+    #
+    #     # Get the maximum frame count across all exemplars in all dictionaries
+    #     max_frame_count = max(
+    #         len(exemplar) for dict_similarity_exemplars in list_of_dicts for inner_list in
+    #         dict_similarity_exemplars.values() for exemplar in inner_list)
+    #     print(f"balance_exemplar_similarity_classes_by_frame_count: max_frame_count: {max_frame_count}")
+    #
+    #     for dict_similarity_exemplars in list_of_dicts:
+    #         for state_drive, inner_list in dict_similarity_exemplars.items():
+    #             count_exemplars = 0
+    #             for i in range(len(inner_list)):
+    #                 exemplar = inner_list[i]
+    #                 count_exemplars += 1
+    #                 print(
+    #                     f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} shape: {exemplar.shape}")
+    #                 # If the exemplar's frame count is less than the max frame count, extend it
+    #                 if len(exemplar) < max_frame_count:
+    #                     last_frame = exemplar[-1]
+    #                     additional_frames = np.repeat(last_frame[np.newaxis, :], max_frame_count - len(exemplar),
+    #                                                   axis=0)
+    #                     inner_list[i] = np.concatenate((exemplar, additional_frames), axis=0)
+    #                 print(f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} final shape: {inner_list[i].shape}")
+    #
+    #         # Verify that all exemplars now have the same frame count
+    #         count = 0
+    #         for inner_list in dict_similarity_exemplars.values():
+    #             count += 1
+    #             for exemplar in inner_list:
+    #                 assert len(
+    #                     exemplar) == max_frame_count, f"Exemplar {count} frame count {len(exemplar)} does not match max frame count {max_frame_count}"
+    #
+    #         balanced_dicts.append(dict_similarity_exemplars)
+    #
+    #     return balanced_dicts
 
     @staticmethod
     def _generate_similarity_classes_exemplars_dict():

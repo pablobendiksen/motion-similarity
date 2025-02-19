@@ -21,8 +21,6 @@ anim_ind = {'WALKING': 0, 'POINTING': 1, 'PICKING': 2, 'WAVING': 3, 'THROWING': 
             'RUNNING': 7}
 parser = BVHParser()
 
-singleton_batches = Batches()
-
 
 def visualize(file_bvh):
     """
@@ -74,7 +72,7 @@ def clear_file(file):
     fin.close()
 
 
-def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True, anim_name=None):
+def prep_all_data_for_training(config_instance, batches_instance, rotations=True, velocities=False, similarity_pre_processing_only=True, anim_name=None):
     """
     Prepare motion data for training.
 
@@ -167,6 +165,7 @@ def prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_
                 batches.store_efforts_batch()
 
     try:
+        singleton_batches = batches_instance
         bvh_counter = 0
         bvh_frame_rate = set()
         if anim_name == "walking":
@@ -299,7 +298,7 @@ def _partition_effort_ids_and_labels(train_val_split=0.8):
     return partition, labels_dict
 
 
-def load_similarity_data(bool_drop, anim_name, train_val_split=1.0):
+def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
     """
     Load similarity dict of all class exemplars and split across train, validation, and test sets.
 
@@ -311,10 +310,11 @@ def load_similarity_data(bool_drop, anim_name, train_val_split=1.0):
         similarity_dict: dict: partitioned similarity dict of all class exemplars
     """
 
-    file_path = conf.similarity_exemplars_dir + anim_name + "_" + conf.similarity_dict_file_name
-    if os.path.isfile(file_path):
+    file_path = config.similarity_exemplars_dir + anim_name + "_" + config.similarity_dict_file_name
+    singleton_batches = Batches(config)
+    if not os.path.isfile(file_path):
         print(f"osd::load_similarity_data(): Generating similarity data for {anim_name} with path: {file_path}")
-        prep_all_data_for_training(rotations=True, velocities=False, similarity_pre_processing_only=True,
+        prep_all_data_for_training(config_instance=config, batches_instance=singleton_batches, rotations=True, velocities=False, similarity_pre_processing_only=True,
                                    anim_name=anim_name)
     dict_similarity_classes_exemplars = pickle.load(open(file_path, "rb"))
     # Keys (sample): [(0, 0, 0, 0), (0, -1, -1, -1), (-1, 0, -1, -1), (0, 0, -1, -1), (1, 0, -1, -1)]
@@ -384,4 +384,39 @@ def balance_single_exemplar_similarity_classes_by_frame_count(list_similarity_di
         None
     """
     print("OSD:: Balancing single exemplar similarity classes by frame count")
-    return singleton_batches.balance_exemplar_similarity_classes_by_frame_count(list_similarity_dicts)
+    balanced_dicts = []
+    print(f"batches::balance_exemplar_similarity_classes_by_frame_count() called ...")
+    # Get the maximum frame count across all exemplars in all dictionaries
+    max_frame_count = max(
+        len(exemplar) for dict_similarity_exemplars in list_similarity_dicts for inner_list in
+        dict_similarity_exemplars.values() for exemplar in inner_list)
+    print(f"balance_exemplar_similarity_classes_by_frame_count: max_frame_count: {max_frame_count}")
+
+    for dict_similarity_exemplars in list_similarity_dicts:
+        for state_drive, inner_list in dict_similarity_exemplars.items():
+            count_exemplars = 0
+            for i in range(len(inner_list)):
+                exemplar = inner_list[i]
+                count_exemplars += 1
+                print(
+                    f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} shape: {exemplar.shape}")
+                # If the exemplar's frame count is less than the max frame count, extend it
+                if len(exemplar) < max_frame_count:
+                    last_frame = exemplar[-1]
+                    additional_frames = np.repeat(last_frame[np.newaxis, :], max_frame_count - len(exemplar),
+                                                  axis=0)
+                    inner_list[i] = np.concatenate((exemplar, additional_frames), axis=0)
+                print(
+                    f"balance_exemplar_similarity_classes_by_frame_count: state_drive: {state_drive}, exemplar count {count_exemplars} final shape: {inner_list[i].shape}")
+
+        # Verify that all exemplars now have the same frame count
+        count = 0
+        for inner_list in dict_similarity_exemplars.values():
+            count += 1
+            for exemplar in inner_list:
+                assert len(
+                    exemplar) == max_frame_count, f"Exemplar {count} frame count {len(exemplar)} does not match max frame count {max_frame_count}"
+
+        balanced_dicts.append(dict_similarity_exemplars)
+
+    return balanced_dicts

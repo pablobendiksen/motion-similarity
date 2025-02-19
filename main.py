@@ -76,9 +76,9 @@ if __name__ == '__main__':
     squared_class_neut_euc_dist = False
 
     # load similarity data and train similarity network
-    walking_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "walking")
-    pointing_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "pointing")
-    picking_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "picking")
+    walking_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "walking", config)
+    pointing_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "pointing", config)
+    picking_similarity_dict_partition = osd.load_similarity_data(bool_drop_neutral_exemplar, "picking", config)
     list_similarity_dicts = [walking_similarity_dict_partition["train"], pointing_similarity_dict_partition["train"],
                              picking_similarity_dict_partition["train"]]
     list_similarity_dicts = osd.balance_single_exemplar_similarity_classes_by_frame_count(list_similarity_dicts)
