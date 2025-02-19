@@ -90,9 +90,9 @@ if __name__ == '__main__':
     # similarity_validation_loader = SimilarityDataLoader(walking_similarity_dict_partition['validation'])
     # similarity_test_loader = SimilarityDataLoader(walking_similarity_dict_partition['test'])
 
-    similarity_train_loader = SimilarityDataLoader(list_similarity_dicts)
-    similarity_validation_loader = SimilarityDataLoader(list_similarity_dicts)
-    similarity_test_loader = SimilarityDataLoader(list_similarity_dicts)
+    similarity_train_loader = SimilarityDataLoader(list_similarity_dicts, config)
+    similarity_validation_loader = SimilarityDataLoader(list_similarity_dicts, config)
+    similarity_test_loader = SimilarityDataLoader(list_similarity_dicts, config)
 
     similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
                                            validation_loader=similarity_validation_loader,

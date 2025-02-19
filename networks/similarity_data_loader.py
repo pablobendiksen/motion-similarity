@@ -5,14 +5,14 @@ import random
 import os.path
 import numpy as np
 from glob import glob
-import conf
 
 
 class SimilarityDataLoader(keras.utils.Sequence):
-    def __init__(self, list_similarity_dicts, shuffle=False):
+    def __init__(self, list_similarity_dicts, config, shuffle=False):
         print("initializing similarity data loader")
-        self.exemplar_dim = conf.similarity_exemplar_dim
-        self.batch_size = conf.similarity_batch_size
+        self.config = config
+        self.exemplar_dim = self.config.similarity_exemplar_dim
+        self.batch_size = self.config.similarity_batch_size
         self.shuffle = shuffle
         self.dict_similarity_exemplars = {}
         self.class_indexes = []
