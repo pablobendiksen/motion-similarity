@@ -43,6 +43,7 @@ class Config:
             "bvh_files_dir_walking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/walking_perform_user_study_1/",
             "bvh_files_dir_pointing": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/pointing_perform_user_study_1/",
             "bvh_files_dir_picking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/picking_perform_user_study_1/",
+            "effort_network_exemplars_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/",
             "similarity_exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/similarity_exemplars/",
             "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_metrics/"
         }
@@ -69,9 +70,10 @@ class Config:
             self.checkpoint_root_dir = os.path.join(self._remote_machine_paths['checkpoint_root_dir'],
                                                     f"{self.num_task}/")
             self.all_bvh_dir = self._remote_machine_paths['all_bvh_dir']
-            self.bvh_files_dir_walking = self._remote_machine_paths['bvh_files_dir']
-            self.effort_network_exemplars_dir = os.path.join(self._remote_machine_paths['exemplars_dir'],
-                                                             f"{self.num_task}/")
+            self.bvh_files_dir_walking = self._remote_machine_paths['bvh_files_dir_walking']
+            self.bvh_files_dir_pointing = self._remote_machine_paths['bvh_files_dir_pointing']
+            self.bvh_files_dir_picking = self._remote_machine_paths['bvh_files_dir_picking']
+            self.effort_network_exemplars_dir = self._remote_machine_paths['effort_network_exemplars_dir']
             self.output_metrics_dir = self._remote_machine_paths['output_metrics_dir']
         else:
             # Use local paths
