@@ -1,5 +1,4 @@
 from keras.callbacks import ModelCheckpoint
-from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.layers import Dense
@@ -92,44 +91,44 @@ class SimilarityNetwork(Utilities):
         self.network = Sequential()
 
         if self.architecture_variant == 0:
-            self.network = model = Sequential([
-                Input(shape=input_shape),  # Explicit input layer
-                Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'),
-                Dropout(0.2),
-                BatchNormalization(),
-                MaxPool2D(2, 2),
-                Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'),
-                Dropout(0.2),
-                BatchNormalization(),
-                Conv2D(128, 3, strides=1, activation='relu'),
-                BatchNormalization(),
-                MaxPool2D(2, 2),
-                Flatten(),
-                Dense(self.embedding_size),
-                Dropout(0.2)
-            ])
+        #     self.network = model = Sequential([
+        #         Input(shape=input_shape),  # Explicit input layer
+        #         Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'),
+        #         Dropout(0.2),
+        #         BatchNormalization(),
+        #         MaxPool2D(2, 2),
+        #         Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'),
+        #         Dropout(0.2),
+        #         BatchNormalization(),
+        #         Conv2D(128, 3, strides=1, activation='relu'),
+        #         BatchNormalization(),
+        #         MaxPool2D(2, 2),
+        #         Flatten(),
+        #         Dense(self.embedding_size),
+        #         Dropout(0.2)
+        #     ])
 
-            # # Output size: (132,88,32)
-            # self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'))
-            # self.network.add(Dropout(0.2))
-            # self.network.add(BatchNormalization())
-            # # Output size: (66,44,32)
-            # self.network.add(MaxPool2D(2, 2))
-            # # Output size: (64,42,64)
-            # self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
-            # self.network.add(Dropout(0.2))
-            # self.network.add(BatchNormalization())
-            #
-            # self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
-            # self.network.add(BatchNormalization())
-            #
-            # # Output size: (32,21,64)
-            # self.network.add(MaxPool2D(2, 2))
-            # # Output size: (132 * 88 * 32) = 43008
-            # self.network.add(Flatten())
-            # # Output size: (32)
-            # self.network.add(Dense(self.embedding_size))
-            # self.network.add(Dropout(0.2))
+        # # Output size: (132,88,32)
+            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+            # Output size: (66,44,32)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (64,42,64)
+            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+
+            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            # Output size: (32,21,64)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (132 * 88 * 32) = 43008
+            self.network.add(Flatten())
+            # Output size: (32)
+            self.network.add(Dense(self.embedding_size))
+            self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
 
@@ -179,108 +178,108 @@ class SimilarityNetwork(Utilities):
             self.build_attention_network()
 
     # Variant 2: Efficient Network with Residual Connections
-    def build_efficient_residual_network(self):
-        input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
-        input_layer = Input(shape=input_shape)
-
-        # Initial convolution
-        x = Conv2D(32, 3, strides=2, activation='relu', padding='same')(input_layer)
-        x = BatchNormalization()(x)
-
-        # First residual block
-        residual = x
-        x = Conv2D(64, 3, strides=1, activation='relu', padding='same')(x)
-        x = BatchNormalization()(x)
-        x = Conv2D(64, 3, strides=1, padding='same')(x)
-        x = BatchNormalization()(x)
-        x = Add()([x, residual])
-        x = Activation('relu')(x)
-
-        # Efficient spatial pyramid pooling
-        b1 = GlobalAveragePooling2D()(x)
-        b1 = Dense(64)(b1)
-        b1 = Reshape((1, 1, 64))(b1)
-        b1 = UpSampling2D(size=(x.shape[1], x.shape[2]))(b1)
-
-        b2 = AveragePooling2D(pool_size=(2, 2))(x)
-        b2 = Conv2D(64, 1, activation='relu')(b2)
-        b2 = UpSampling2D(size=(2, 2))(b2)
-
-        x = Concatenate()([x, b1, b2])
-
-        # Final layers
-        x = Conv2D(128, 1, activation='relu')(x)
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(self.embedding_size)(x)
-
-        return Model(inputs=input_layer, outputs=x)
+    # def build_efficient_residual_network(self):
+    #     input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
+    #     input_layer = Input(shape=input_shape)
+    #
+    #     # Initial convolution
+    #     x = Conv2D(32, 3, strides=2, activation='relu', padding='same')(input_layer)
+    #     x = BatchNormalization()(x)
+    #
+    #     # First residual block
+    #     residual = x
+    #     x = Conv2D(64, 3, strides=1, activation='relu', padding='same')(x)
+    #     x = BatchNormalization()(x)
+    #     x = Conv2D(64, 3, strides=1, padding='same')(x)
+    #     x = BatchNormalization()(x)
+    #     x = Add()([x, residual])
+    #     x = Activation('relu')(x)
+    #
+    #     # Efficient spatial pyramid pooling
+    #     b1 = GlobalAveragePooling2D()(x)
+    #     b1 = Dense(64)(b1)
+    #     b1 = Reshape((1, 1, 64))(b1)
+    #     b1 = UpSampling2D(size=(x.shape[1], x.shape[2]))(b1)
+    #
+    #     b2 = AveragePooling2D(pool_size=(2, 2))(x)
+    #     b2 = Conv2D(64, 1, activation='relu')(b2)
+    #     b2 = UpSampling2D(size=(2, 2))(b2)
+    #
+    #     x = Concatenate()([x, b1, b2])
+    #
+    #     # Final layers
+    #     x = Conv2D(128, 1, activation='relu')(x)
+    #     x = GlobalAveragePooling2D()(x)
+    #     x = Dense(self.embedding_size)(x)
+    #
+    #     return Model(inputs=input_layer, outputs=x)
 
     # Variant 3: Lightweight MobileNet-style Architecture
-    def build_lightweight_network(self):
-        def depthwise_separable_conv(x, filters, stride=1):
-            x = DepthwiseConv2D(3, strides=stride, padding='same')(x)
-            x = BatchNormalization()(x)
-            x = Activation('relu')(x)
-            x = Conv2D(filters, 1, strides=1, padding='same')(x)
-            x = BatchNormalization()(x)
-            return Activation('relu')(x)
-
-        input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
-        input_layer = Input(shape=input_shape)
-
-        x = Conv2D(32, 3, strides=2, padding='same')(input_layer)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-
-        x = depthwise_separable_conv(x, 64)
-        x = depthwise_separable_conv(x, 128, stride=2)
-        x = depthwise_separable_conv(x, 128)
-        x = depthwise_separable_conv(x, 256, stride=2)
-        x = depthwise_separable_conv(x, 256)
-
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(self.embedding_size)(x)
-
-        return Model(inputs=input_layer, outputs=x)
+    # def build_lightweight_network(self):
+    #     def depthwise_separable_conv(x, filters, stride=1):
+    #         x = DepthwiseConv2D(3, strides=stride, padding='same')(x)
+    #         x = BatchNormalization()(x)
+    #         x = Activation('relu')(x)
+    #         x = Conv2D(filters, 1, strides=1, padding='same')(x)
+    #         x = BatchNormalization()(x)
+    #         return Activation('relu')(x)
+    #
+    #     input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
+    #     input_layer = Input(shape=input_shape)
+    #
+    #     x = Conv2D(32, 3, strides=2, padding='same')(input_layer)
+    #     x = BatchNormalization()(x)
+    #     x = Activation('relu')(x)
+    #
+    #     x = depthwise_separable_conv(x, 64)
+    #     x = depthwise_separable_conv(x, 128, stride=2)
+    #     x = depthwise_separable_conv(x, 128)
+    #     x = depthwise_separable_conv(x, 256, stride=2)
+    #     x = depthwise_separable_conv(x, 256)
+    #
+    #     x = GlobalAveragePooling2D()(x)
+    #     x = Dense(self.embedding_size)(x)
+    #
+    #     return Model(inputs=input_layer, outputs=x)
 
     # Variant 4: Channel Attention Network
-    def build_attention_network(self):
-        def channel_attention(x, ratio=8):
-            channel = x.shape[-1]
-
-            avg_pool = GlobalAveragePooling2D()(x)
-            avg_pool = Reshape((1, 1, channel))(avg_pool)
-            avg_pool = Dense(channel // ratio, activation='relu')(avg_pool)
-            avg_pool = Dense(channel, activation='sigmoid')(avg_pool)
-
-            max_pool = GlobalMaxPooling2D()(x)
-            max_pool = Reshape((1, 1, channel))(max_pool)
-            max_pool = Dense(channel // ratio, activation='relu')(max_pool)
-            max_pool = Dense(channel, activation='sigmoid')(max_pool)
-
-            attention = Add()([avg_pool, max_pool])
-
-            return Multiply()([x, attention])
-
-        input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
-        input_layer = Input(shape=input_shape)
-
-        x = Conv2D(32, 3, strides=2, activation='relu', padding='same')(input_layer)
-        x = BatchNormalization()(x)
-        x = channel_attention(x)
-
-        x = Conv2D(64, 3, strides=2, activation='relu', padding='same')(x)
-        x = BatchNormalization()(x)
-        x = channel_attention(x)
-
-        x = Conv2D(128, 3, strides=1, activation='relu', padding='same')(x)
-        x = BatchNormalization()(x)
-        x = channel_attention(x)
-
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(self.embedding_size)(x)
-
-        return Model(inputs=input_layer, outputs=x)
+    # def build_attention_network(self):
+    #     def channel_attention(x, ratio=8):
+    #         channel = x.shape[-1]
+    #
+    #         avg_pool = GlobalAveragePooling2D()(x)
+    #         avg_pool = Reshape((1, 1, channel))(avg_pool)
+    #         avg_pool = Dense(channel // ratio, activation='relu')(avg_pool)
+    #         avg_pool = Dense(channel, activation='sigmoid')(avg_pool)
+    #
+    #         max_pool = GlobalMaxPooling2D()(x)
+    #         max_pool = Reshape((1, 1, channel))(max_pool)
+    #         max_pool = Dense(channel // ratio, activation='relu')(max_pool)
+    #         max_pool = Dense(channel, activation='sigmoid')(max_pool)
+    #
+    #         attention = Add()([avg_pool, max_pool])
+    #
+    #         return Multiply()([x, attention])
+    #
+    #     input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
+    #     input_layer = Input(shape=input_shape)
+    #
+    #     x = Conv2D(32, 3, strides=2, activation='relu', padding='same')(input_layer)
+    #     x = BatchNormalization()(x)
+    #     x = channel_attention(x)
+    #
+    #     x = Conv2D(64, 3, strides=2, activation='relu', padding='same')(x)
+    #     x = BatchNormalization()(x)
+    #     x = channel_attention(x)
+    #
+    #     x = Conv2D(128, 3, strides=1, activation='relu', padding='same')(x)
+    #     x = BatchNormalization()(x)
+    #     x = channel_attention(x)
+    #
+    #     x = GlobalAveragePooling2D()(x)
+    #     x = Dense(self.embedding_size)(x)
+    #
+    #     return Model(inputs=input_layer, outputs=x)
 
 
     # def build_model(self):
