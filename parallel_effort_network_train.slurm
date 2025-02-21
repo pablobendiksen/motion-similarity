@@ -20,6 +20,7 @@
 . /etc/profile
 
 # check cpu number per task, should be equal to -n
+export = TF_USE_LEGACY_KERAS=1
 echo "using $SLURM_CPUS_ON_NODE CPUs"
 echo `date`
 
