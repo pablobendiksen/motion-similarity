@@ -1,10 +1,21 @@
 from keras.callbacks import ModelCheckpoint
-from tensorflow.keras.layers import (
-    MaxPool2D, BatchNormalization, Flatten, Input, Conv2D, BatchNormalization,
-    MaxPool2D, Dense, Dropout, Flatten, Reshape,
-    GlobalAveragePooling2D, Add, Activation, DepthwiseConv2D, Multiply,
-    Reshape, UpSampling2D, Concatenate, AveragePooling2D, GlobalMaxPooling2D
-)
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import MaxPool2D
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import Add
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import DepthwiseConv2D
+from tensorflow.keras.layers import Multiply
+from tensorflow.keras.layers import Reshape
+from tensorflow.keras.layers import UpSampling2D
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import AveragePooling2D
+from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.models import Model
 import conf
 import networks.custom_losses as custom_losses
