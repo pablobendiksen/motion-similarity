@@ -81,28 +81,44 @@ class SimilarityNetwork(Utilities):
         self.network = Sequential()
 
         if self.architecture_variant == 0:
-            # Output size: (132,88,32)
-            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu',
-                                    input_shape=input_shape))
-            self.network.add(Dropout(0.2))
-            self.network.add(BatchNormalization())
-            # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
-            # Output size: (64,42,64)
-            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
-            self.network.add(Dropout(0.2))
-            self.network.add(BatchNormalization())
+            self.network = model = Sequential([
+                Input(shape=input_shape),  # Explicit input layer
+                Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'),
+                Dropout(0.2),
+                BatchNormalization(),
+                MaxPool2D(2, 2),
+                Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'),
+                Dropout(0.2),
+                BatchNormalization(),
+                Conv2D(128, 3, strides=1, activation='relu'),
+                BatchNormalization(),
+                MaxPool2D(2, 2),
+                Flatten(),
+                Dense(self.embedding_size),
+                Dropout(0.2)
+            ])
 
-            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
-            self.network.add(BatchNormalization())
-
-            # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
-            # Output size: (132 * 88 * 32) = 43008
-            self.network.add(Flatten())
-            # Output size: (32)
-            self.network.add(Dense(self.embedding_size))
-            self.network.add(Dropout(0.2))
+            # # Output size: (132,88,32)
+            # self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'))
+            # self.network.add(Dropout(0.2))
+            # self.network.add(BatchNormalization())
+            # # Output size: (66,44,32)
+            # self.network.add(MaxPool2D(2, 2))
+            # # Output size: (64,42,64)
+            # self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            # self.network.add(Dropout(0.2))
+            # self.network.add(BatchNormalization())
+            #
+            # self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
+            # self.network.add(BatchNormalization())
+            #
+            # # Output size: (32,21,64)
+            # self.network.add(MaxPool2D(2, 2))
+            # # Output size: (132 * 88 * 32) = 43008
+            # self.network.add(Flatten())
+            # # Output size: (32)
+            # self.network.add(Dense(self.embedding_size))
+            # self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
 
