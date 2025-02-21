@@ -456,9 +456,9 @@ class SimilarityNetwork(Utilities):
                          steps_per_epoch=self.train_set.__len__(),
                          validation_steps=self.validation_set.__len__(), callbacks=self.callbacks)
 
-        weights_path = os.path.join(self.checkpoint_dir, "similarity_model_weights.h5")
-        self.network.save_weights(weights_path)
-        print(f"Model weights saved to {weights_path}")
+        # weights_path = os.path.join(self.checkpoint_dir, "similarity_model_weights.h5")
+        # self.network.save_weights(weights_path)
+        # print(f"Model weights saved to {weights_path}")
 
     def evaluate(self):
         """
