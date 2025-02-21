@@ -30,7 +30,11 @@ similarity_model_file = 'stored_trained_models_dir/similarity_model.h5'
 # similarity_exemplar_dim = (time_series_size, 91)
 similarity_exemplar_dim = (137, 88)
 embedding_size = 32
-n_similarity_epochs = 500
+
+
+n_similarity_epochs = 5
+
+
 # Number of training examples per batch corresponds to the number of states and drives and possibly the neutral
 similarity_batch_size = 57
 # if not bool_fixed_neutral_embedding:
