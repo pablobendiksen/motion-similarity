@@ -28,10 +28,12 @@ class SimilarityDataLoader(keras.utils.Sequence):
         # Each key is a tuple containing the dictionary identifier and the original key (state or drive index id).
         self.num_classes = len(self.class_indexes)/3
         print(f"SimilarityDataLoader: num classes: {self.num_classes}")
-        self._num_batches = len(self.list_class_tuples) // self.batch_size
-        if len(self.list_class_tuples) % self.batch_size != 0:
-            self._num_batches += 1
-        # self.num_batches = len(self.dict_similarity_exemplars[next(iter(self.dict_similarity_exemplars.keys()))][0])
+
+        # self._num_batches = len(self.list_class_tuples) // self.batch_size
+        # if len(self.list_class_tuples) % self.batch_size != 0:
+        #     self._num_batches += 1
+
+        self._num_batches = len(self.dict_similarity_exemplars[next(iter(self.dict_similarity_exemplars.keys()))][0])
         print(f"SimilarityDataLoader: num batches: {self._num_batches}")
         # self.exemplar_idx = random.randint(0, self.num_batches-1)
         self.exemplar_idx = 0
