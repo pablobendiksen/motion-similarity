@@ -72,17 +72,17 @@ class SimilarityNetwork(Utilities):
         self.checkpoint_dir = checkpoint_root_dir
         self.embedding_size = conf.embedding_size
         self.callbacks = [callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=15, restore_best_weights=True, mode='min', verbose=1)]
-        checkpoint_callback = ModelCheckpoint(
-            filepath=os.path.join(self.checkpoint_dir,
-                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_loss_{{val_loss:.2f}}.weights.h5"),
-            save_weights_only=True,
-            save_best_only=True,  # Save only when validation loss improves
-            monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
-            mode="min",  # Save when val_loss decreases
-            verbose=1
-        )
-        # Save weights every 10 epochs
-        self.callbacks.extend([checkpoint_callback])
+        # checkpoint_callback = ModelCheckpoint(
+        #     filepath=os.path.join(self.checkpoint_dir,
+        #                           f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_loss_{{val_loss:.2f}}.weights.h5"),
+        #     save_weights_only=True,
+        #     save_best_only=True,  # Save only when validation loss improves
+        #     monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
+        #     mode="min",  # Save when val_loss decreases
+        #     verbose=1
+        # )
+        # # Save weights every 10 epochs
+        # self.callbacks.extend([checkpoint_callback])
         self.network = Sequential()
         self.build_model()
         self.compile_model()
@@ -134,49 +134,137 @@ class SimilarityNetwork(Utilities):
             self.network.summary()
 
         elif self.architecture_variant == 1:
-            # Feature extraction with deeper convolution
-            self.network.add(Conv2D(32, 3, strides=1, activation='relu', padding='same', input_shape=input_shape))
+            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+            # Output size: (66,44,32)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (64,42,64)
+            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
 
-            self.network.add(Conv2D(64, 3, strides=1, activation='relu', padding='same'))
+            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
             self.network.add(BatchNormalization())
 
-            self.network.add(Conv2D(128, 3, strides=1, activation='relu', padding='same', dilation_rate=2))
-            self.network.add(BatchNormalization())
-
-            # Downsampling with MaxPooling (instead of strided convolution)
-            self.network.add(MaxPool2D(pool_size=(2, 2)))
-            # Output shape: (66, 44, 128) - Spatial size halved
-
-            # Further feature extraction
-            self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
-            self.network.add(BatchNormalization())
-
-            self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
-            self.network.add(BatchNormalization())
-
-            # Another MaxPooling for further downsampling
-            self.network.add(MaxPool2D(pool_size=(2, 2)))
-            # Output shape: (33, 22, 256) - Spatial size halved again
-
-            # Flatten instead of GlobalAveragePooling
+            # Output size: (32,21,64)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (132 * 88 * 32) = 43008
             self.network.add(Flatten())
-
-            # Bottleneck dense layer
+            # Output size: (32)
             self.network.add(Dense(self.embedding_size))
-            self.network.add(Dropout(0.2))  # Retaining dropout from the original model
-
+            self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
+            # Feature extraction with deeper convolution
+            # self.network.add(Conv2D(32, 3, strides=1, activation='relu', padding='same', input_shape=input_shape))
+            # self.network.add(BatchNormalization())
+            #
+            # self.network.add(Conv2D(64, 3, strides=1, activation='relu', padding='same'))
+            # self.network.add(BatchNormalization())
+            #
+            # self.network.add(Conv2D(128, 3, strides=1, activation='relu', padding='same', dilation_rate=2))
+            # self.network.add(BatchNormalization())
+            #
+            # # Downsampling with MaxPooling (instead of strided convolution)
+            # self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # # Output shape: (66, 44, 128) - Spatial size halved
+            #
+            # # Further feature extraction
+            # self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
+            # self.network.add(BatchNormalization())
+            #
+            # self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
+            # self.network.add(BatchNormalization())
+            #
+            # # Another MaxPooling for further downsampling
+            # self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # # Output shape: (33, 22, 256) - Spatial size halved again
+            #
+            # # Flatten instead of GlobalAveragePooling
+            # self.network.add(Flatten())
+            #
+            # # Bottleneck dense layer
+            # self.network.add(Dense(self.embedding_size))
+            # self.network.add(Dropout(0.2))  # Retaining dropout from the original model
+            #
+            # # Print the model summary
+            # self.network.summary()
 
         elif self.architecture_variant == 2:
-            self.build_efficient_residual_network()
+            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+            # Output size: (66,44,32)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (64,42,64)
+            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+
+            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            # Output size: (32,21,64)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (132 * 88 * 32) = 43008
+            self.network.add(Flatten())
+            # Output size: (32)
+            self.network.add(Dense(self.embedding_size))
+            self.network.add(Dropout(0.2))
+            # Print the model summary
+            self.network.summary()
+            #self.build_efficient_residual_network()
 
         elif self.architecture_variant == 3:
-            self.build_lightweight_network()
+            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+            # Output size: (66,44,32)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (64,42,64)
+            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+
+            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            # Output size: (32,21,64)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (132 * 88 * 32) = 43008
+            self.network.add(Flatten())
+            # Output size: (32)
+            self.network.add(Dense(self.embedding_size))
+            self.network.add(Dropout(0.2))
+            # Print the model summary
+            self.network.summary()
+            #self.build_lightweight_network()
 
         elif self.architecture_variant == 4:
-            self.build_attention_network()
+            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+            # Output size: (66,44,32)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (64,42,64)
+            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
+            self.network.add(Dropout(0.2))
+            self.network.add(BatchNormalization())
+
+            self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            # Output size: (32,21,64)
+            self.network.add(MaxPool2D(2, 2))
+            # Output size: (132 * 88 * 32) = 43008
+            self.network.add(Flatten())
+            # Output size: (32)
+            self.network.add(Dense(self.embedding_size))
+            self.network.add(Dropout(0.2))
+            # Print the model summary
+            self.network.summary()
+            #self.build_attention_network()
 
     # Variant 2: Efficient Network with Residual Connections
     # def build_efficient_residual_network(self):

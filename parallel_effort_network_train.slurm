@@ -13,8 +13,8 @@
 #SBATCH -export=NONE # Export no environment variables
 #SBATCH --mem=20G
 #SBATCH -t 3-23:59:59
-#SBATCH --output=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion_sim_arrays/%A-%a.out
-#SBATCH --error=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion_sim_arrays/%A-%a.err
+#SBATCH --output=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/sim_arrays/%A-%a.out
+#SBATCH --error=/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/sim_arrays/%A-%a.err
 #SBATCH --array=0-4
 
 . /etc/profile
