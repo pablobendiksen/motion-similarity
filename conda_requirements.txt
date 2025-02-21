@@ -1,0 +1,6 @@
+# Conda packages
+numpy
+pandas
+scikit-learn
+keras
+matplotlib

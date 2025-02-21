@@ -1,27 +1,20 @@
 from keras.callbacks import ModelCheckpoint
 from tensorflow.keras.layers import (
-    Input, Conv2D, BatchNormalization, MaxPool2D, Dense, Dropout, Flatten,
+    MaxPool2D, BatchNormalization, Flatten, Input, Conv2D, BatchNormalization,
+    MaxPool2D, Dense, Dropout, Flatten, Reshape,
     GlobalAveragePooling2D, Add, Activation, DepthwiseConv2D, Multiply,
     Reshape, UpSampling2D, Concatenate, AveragePooling2D, GlobalMaxPooling2D
 )
 from tensorflow.keras.models import Model
-
 import conf
 import networks.custom_losses as custom_losses
 from keras.optimizers import Adam
 from networks.utilities import Utilities
 from keras import callbacks
 from keras.models import Sequential
-import tensorflow as tf
-
 # tf.config.experimental_run_functions_eagerly(True)
-
-from keras.layers import Conv2D, MaxPool2D, BatchNormalization, Flatten, Dense, Lambda, Dropout, GlobalAveragePooling2D, \
-    Reshape, Conv1D, Multiply
 import logging
 import os
-
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPool2D, GlobalAveragePooling2D, Dense, Dropout, Multiply
 from tensorflow.keras.models import Model
 
 logging.basicConfig(level=logging.DEBUG,

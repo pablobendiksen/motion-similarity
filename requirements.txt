@@ -1,0 +1,6 @@
+# for pip fallback
+numpy
+pandas
+scikit-learn
+keras
+matplotlib
