@@ -32,7 +32,7 @@ similarity_exemplar_dim = (137, 88)
 embedding_size = 32
 
 
-n_similarity_epochs = 5
+n_similarity_epochs = 2
 
 
 # Number of training examples per batch corresponds to the number of states and drives and possibly the neutral
