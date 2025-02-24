@@ -77,10 +77,10 @@ class SimilarityNetwork(Utilities):
                                     verbose=1)]
         checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.checkpoint_dir,
-                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_triplet_loss_{{val_batch_triplet_loss:.2f}}.weights.h5"),
+                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}.weights.h5"),
             save_weights_only=True,
             save_best_only=True,  # Save only when validation loss improves
-            monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
+            monitor="batch_triplet_loss",  # Ensure it tracks validation loss
             mode="min",  # Save when val_loss decreases
             verbose=1
         )
