@@ -1,4 +1,4 @@
-# import tf_keras as keras
+import tf_keras as keras
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Conv2D
 from keras.layers import BatchNormalization
