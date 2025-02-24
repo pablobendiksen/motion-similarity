@@ -72,9 +72,9 @@ class SimilarityNetwork(Utilities):
         self.architecture_variant = architecture_variant
         self.checkpoint_dir = checkpoint_root_dir
         self.embedding_size = self.config.embedding_size
-        self.callbacks = [
-            callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=10, restore_best_weights=True, mode='min',
-                                    verbose=1)]
+        self.callbacks = []
+        # callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=10, restore_best_weights=True, mode='min',
+        #                                     verbose=1)
         checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.checkpoint_dir,
                                   f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}.weights.h5"),
@@ -84,7 +84,6 @@ class SimilarityNetwork(Utilities):
             mode="min",  # Save when val_loss decreases
             verbose=1
         )
-        # Save weights every 10 epochs
         self.callbacks.extend([checkpoint_callback])
         self.network = Sequential()
         self.build_model()

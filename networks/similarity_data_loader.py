@@ -13,7 +13,6 @@ class SimilarityDataLoader(keras.utils.Sequence):
         print("initializing similarity data loader")
         self.config = config
         self.exemplar_dim = self.config.similarity_exemplar_dim
-        self.batch_size = self.config.similarity_batch_size
         self.shuffle = shuffle
         self.dict_similarity_exemplars = {}
         self.class_indexes = []
@@ -27,14 +26,15 @@ class SimilarityDataLoader(keras.utils.Sequence):
                 self.list_class_tuples.append(new_key)
                 self.class_indexes.append(j)
         # Each key is a tuple containing the dictionary identifier and the original key (state or drive index id).
-        self.num_classes = len(self.class_indexes)/3
+        self.num_classes = len(self.class_indexes) // 3
         print(f"SimilarityDataLoader: num classes: {self.num_classes}")
 
         # self._num_batches = len(self.list_class_tuples) // self.batch_size
         # if len(self.list_class_tuples) % self.batch_size != 0:
         #     self._num_batches += 1
-
-        self._num_batches = len(self.dict_similarity_exemplars[next(iter(self.dict_similarity_exemplars.keys()))][0])
+        self.batch_size = len(self.dict_similarity_exemplars.keys())
+        self._num_batches = len(list_similarity_dicts)
+        # self._num_batches = len(self.dict_similarity_exemplars[next(iter(self.dict_similarity_exemplars.keys()))][0])
         print(f"SimilarityDataLoader: num batches: {self._num_batches}")
         # self.exemplar_idx = random.randint(0, self.num_batches-1)
         self.exemplar_idx = 0
@@ -52,6 +52,7 @@ class SimilarityDataLoader(keras.utils.Sequence):
     def on_epoch_end(self):
         if self.shuffle is True:
             self.unison_shuffling()
+        self.exemplar_idx = 0
 
     def __len__(self):
         # num_batches
