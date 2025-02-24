@@ -100,7 +100,8 @@ if __name__ == '__main__':
                                            checkpoint_root_dir=config.checkpoint_root_dir,
                                            triplet_modules=[walking_triplet_mining, pointing_triplet_mining,
                                                             picking_triplet_mining],
-                                           architecture_variant=arch_variant)
+                                           architecture_variant=arch_variant,
+                                           config = config)
     similarity_network.run_model_training()
 
     # similarity_network.evaluate()

@@ -9,6 +9,7 @@ from glob import glob
 
 class SimilarityDataLoader(keras.utils.Sequence):
     def __init__(self, list_similarity_dicts, config, shuffle=False):
+        super().__init__()
         print("initializing similarity data loader")
         self.config = config
         self.exemplar_dim = self.config.similarity_exemplar_dim

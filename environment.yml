@@ -1,0 +1,72 @@
+name: gpu_env
+channels:
+  - defaults
+  - conda-forge  # Add this for better compatibility
+dependencies:
+  - python=3.12
+  - pandas
+  - numpy
+  - keras
+  - scikit-learn
+  - matplotlib
+  - pip
+  - pip:
+      - absl-py
+      - asttokens==3.0.0
+      - astunparse==1.6.3
+      - Bottleneck
+      - Brotli
+      - certifi==2025.1.31
+      - charset-normalizer==3.4.1
+      - contourpy
+      - cycler
+      - decorator==5.1.1
+      - executing==2.2.0
+      - flatbuffers==25.2.10
+      - fonttools
+      - gast==0.6.0
+      - google-pasta==0.2.0
+      - grpcio==1.70.0
+      - h5py
+      - idna==3.10
+      - ipython==8.32.0
+      - jedi==0.19.2
+      - joblib
+      - kiwisolver
+      - libclang==18.1.1
+      - Markdown==3.7
+      - markdown-it-py==3.0.0
+      - MarkupSafe==3.0.2
+      - matplotlib-inline==0.1.7
+      - mdurl
+      - mkl_fft
+      - mkl_random
+      - ml-dtypes==0.4.1
+      - namex
+      - numexpr
+      - opt_einsum==3.4.0
+      - optree
+      - packaging
+      - parso==0.8.4
+      - pexpect==4.9.0
+      - pillow
+      - ply
+      - prompt_toolkit==3.0.50
+      - protobuf==5.29.3
+      - ptyprocess==0.7.0
+      - pure_eval==0.2.3
+      - Pygments==2.19.1
+      - pyparsing
+      - PyQt5==5.15.10
+      - PyQt5_sip
+      - python-dateutil
+      - pytz
+      - requests==2.32.3
+      - rich
+      - scipy
+      - setuptools==75.8.0
+      - sip
+      - six==1.17.0
+      - stack-data==0.6.3
+prefix: /home/p.bendiksen001/miniconda3/envs/gpu_env
+

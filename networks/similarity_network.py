@@ -1,4 +1,4 @@
-import tf_keras as keras
+# import tf_keras as keras
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Conv2D
 from keras.layers import BatchNormalization
@@ -17,7 +17,6 @@ from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import AveragePooling2D
 from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.models import Model
-import conf
 import networks.custom_losses as custom_losses
 from keras.optimizers import Adam
 from networks.utilities import Utilities
@@ -58,10 +57,12 @@ class SimilarityNetwork(Utilities):
         callbacks: List of Keras callbacks for training.
     """
 
-    def __init__(self, train_loader, validation_loader, test_loader, checkpoint_root_dir, triplet_modules, architecture_variant):
+    def __init__(self, train_loader, validation_loader, test_loader, checkpoint_root_dir, triplet_modules,
+                 architecture_variant, config):
         super().__init__()
         # train_generator's job is to randomly, and lazily, load batches from disk
         # SIM NETWORK CLASS: exemplar dim: (137, 88)
+        self.config = config
         self.train_set = train_loader
         self.validation_set = validation_loader
         self.test_set = test_loader
@@ -70,19 +71,21 @@ class SimilarityNetwork(Utilities):
         self.triplet_modules = triplet_modules
         self.architecture_variant = architecture_variant
         self.checkpoint_dir = checkpoint_root_dir
-        self.embedding_size = conf.embedding_size
-        self.callbacks = [callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=15, restore_best_weights=True, mode='min', verbose=1)]
-        # checkpoint_callback = ModelCheckpoint(
-        #     filepath=os.path.join(self.checkpoint_dir,
-        #                           f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_loss_{{val_loss:.2f}}.weights.h5"),
-        #     save_weights_only=True,
-        #     save_best_only=True,  # Save only when validation loss improves
-        #     monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
-        #     mode="min",  # Save when val_loss decreases
-        #     verbose=1
-        # )
-        # # Save weights every 10 epochs
-        # self.callbacks.extend([checkpoint_callback])
+        self.embedding_size = self.config.embedding_size
+        self.callbacks = [
+            callbacks.EarlyStopping(monitor='batch_triplet_loss', patience=10, restore_best_weights=True, mode='min',
+                                    verbose=1)]
+        checkpoint_callback = ModelCheckpoint(
+            filepath=os.path.join(self.checkpoint_dir,
+                                  f"{self.architecture_variant}_similarity_model_weights_epoch_{{epoch:03d}}_val_loss_{{val_loss:.2f}}.weights.h5"),
+            save_weights_only=True,
+            save_best_only=True,  # Save only when validation loss improves
+            monitor="val_batch_triplet_loss",  # Ensure it tracks validation loss
+            mode="min",  # Save when val_loss decreases
+            verbose=1
+        )
+        # Save weights every 10 epochs
+        self.callbacks.extend([checkpoint_callback])
         self.network = Sequential()
         self.build_model()
         self.compile_model()
@@ -92,24 +95,7 @@ class SimilarityNetwork(Utilities):
         self.network = Sequential()
 
         if self.architecture_variant == 0:
-        #     self.network = model = Sequential([
-        #         Input(shape=input_shape),  # Explicit input layer
-        #         Conv2D(filters=32, kernel_size=3, strides=1, activation='relu'),
-        #         Dropout(0.2),
-        #         BatchNormalization(),
-        #         MaxPool2D(2, 2),
-        #         Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'),
-        #         Dropout(0.2),
-        #         BatchNormalization(),
-        #         Conv2D(128, 3, strides=1, activation='relu'),
-        #         BatchNormalization(),
-        #         MaxPool2D(2, 2),
-        #         Flatten(),
-        #         Dense(self.embedding_size),
-        #         Dropout(0.2)
-        #     ])
-
-        # # Output size: (132,88,32)
+            # # Output size: (132,88,32)
             self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
             self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
@@ -134,62 +120,40 @@ class SimilarityNetwork(Utilities):
             self.network.summary()
 
         elif self.architecture_variant == 1:
-            self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
-            self.network.add(Dropout(0.2))
+            # Feature extraction with deeper convolution
+            self.network.add(Conv2D(32, 3, strides=1, activation='relu', padding='same', input_shape=input_shape))
             self.network.add(BatchNormalization())
-            # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
-            # Output size: (64,42,64)
-            self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
-            self.network.add(Dropout(0.2))
+
+            self.network.add(Conv2D(64, 3, strides=1, activation='relu'))
             self.network.add(BatchNormalization())
 
             self.network.add(Conv2D(128, 3, strides=1, activation='relu'))
             self.network.add(BatchNormalization())
 
-            # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
-            # Output size: (132 * 88 * 32) = 43008
+            # Downsampling with MaxPooling (instead of strided convolution)
+            self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # Output shape: (66, 44, 128) - Spatial size halved
+
+            # Further feature extraction
+            self.network.add(Conv2D(256, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            self.network.add(Conv2D(256, 3, strides=1, activation='relu'))
+            self.network.add(BatchNormalization())
+
+            # Another MaxPooling for further downsampling
+            self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # Output shape: (33, 22, 256) - Spatial size halved again
+
+            # Flatten instead of GlobalAveragePooling
             self.network.add(Flatten())
-            # Output size: (32)
+
+            # Bottleneck dense layer
             self.network.add(Dense(self.embedding_size))
-            self.network.add(Dropout(0.2))
+            self.network.add(Dropout(0.2))  # Retaining dropout from the original model
+
             # Print the model summary
             self.network.summary()
-            # Feature extraction with deeper convolution
-            # self.network.add(Conv2D(32, 3, strides=1, activation='relu', padding='same', input_shape=input_shape))
-            # self.network.add(BatchNormalization())
-            #
-            # self.network.add(Conv2D(64, 3, strides=1, activation='relu', padding='same'))
-            # self.network.add(BatchNormalization())
-            #
-            # self.network.add(Conv2D(128, 3, strides=1, activation='relu', padding='same', dilation_rate=2))
-            # self.network.add(BatchNormalization())
-            #
-            # # Downsampling with MaxPooling (instead of strided convolution)
-            # self.network.add(MaxPool2D(pool_size=(2, 2)))
-            # # Output shape: (66, 44, 128) - Spatial size halved
-            #
-            # # Further feature extraction
-            # self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
-            # self.network.add(BatchNormalization())
-            #
-            # self.network.add(Conv2D(256, 3, strides=1, activation='relu', padding='same'))
-            # self.network.add(BatchNormalization())
-            #
-            # # Another MaxPooling for further downsampling
-            # self.network.add(MaxPool2D(pool_size=(2, 2)))
-            # # Output shape: (33, 22, 256) - Spatial size halved again
-            #
-            # # Flatten instead of GlobalAveragePooling
-            # self.network.add(Flatten())
-            #
-            # # Bottleneck dense layer
-            # self.network.add(Dense(self.embedding_size))
-            # self.network.add(Dropout(0.2))  # Retaining dropout from the original model
-            #
-            # # Print the model summary
-            # self.network.summary()
 
         elif self.architecture_variant == 2:
             self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
@@ -214,7 +178,7 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
-            #self.build_efficient_residual_network()
+            # self.build_efficient_residual_network()
 
         elif self.architecture_variant == 3:
             self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
@@ -239,7 +203,7 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
-            #self.build_lightweight_network()
+            # self.build_lightweight_network()
 
         elif self.architecture_variant == 4:
             self.network.add(Conv2D(filters=32, kernel_size=3, strides=1, activation='relu', input_shape=input_shape))
@@ -264,7 +228,7 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             # Print the model summary
             self.network.summary()
-            #self.build_attention_network()
+            # self.build_attention_network()
 
     # Variant 2: Efficient Network with Residual Connections
     # def build_efficient_residual_network(self):
@@ -370,7 +334,6 @@ class SimilarityNetwork(Utilities):
     #
     #     return Model(inputs=input_layer, outputs=x)
 
-
     # def build_model(self):
     #     input_shape = (self.exemplar_dim[0], self.exemplar_dim[1], 1)  # (132, 88, 1)
     #     inputs = Input(shape=input_shape)
@@ -452,11 +415,12 @@ class SimilarityNetwork(Utilities):
            None
        """
 
-        self.network.fit(self.train_set, validation_data=self.validation_set, epochs=conf.n_similarity_epochs,
+        self.network.fit(self.train_set, validation_data=self.validation_set, epochs=self.config.n_similarity_epochs,
                          steps_per_epoch=self.train_set.__len__(),
                          validation_steps=self.validation_set.__len__(), callbacks=self.callbacks)
 
-        weights_path = os.path.join(self.checkpoint_dir, "similarity_model.weights.h5")
+        weights_path = os.path.join(self.checkpoint_dir,
+                                    f"{self.architecture_variant}_similarity_model_weights.weights.h5")
         self.network.save_weights(weights_path)
         print(f"Model weights saved to {weights_path}")
 
