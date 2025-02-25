@@ -118,7 +118,7 @@ class SimilarityNetwork(Utilities):
             mode="min",  # Save when val_loss decreases
             verbose=1
         )
-        self.callbacks.extend([checkpoint_callback, TrainingLogger(f"variant_{self.architecture_variant}")])
+        self.callbacks.extend([TrainingLogger(f"variant_{self.architecture_variant}")])
         self.network = Sequential()
         self.build_model()
         self.compile_model()
