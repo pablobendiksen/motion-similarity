@@ -22,7 +22,7 @@ class Config:
         # Network dimensions
         self.similarity_exemplar_dim = (137, 88)
         self.embedding_size = 32
-        self.n_similarity_epochs = 300
+        self.n_similarity_epochs = 500
         self.similarity_batch_size = 57
 
         self.similarity_dict_file_name = 'similarity_labels_exemplars_dict_local.pickle'
