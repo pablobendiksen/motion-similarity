@@ -1,4 +1,4 @@
-import tf_keras as keras
+# import tf_keras as keras
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Conv2D
 from keras.layers import BatchNormalization
@@ -25,13 +25,47 @@ from keras.models import Sequential
 # tf.config.experimental_run_functions_eagerly(True)
 import logging
 import os
+import time
 from tensorflow.keras.models import Model
 
 logging.basicConfig(level=logging.DEBUG,
                     filename=os.path.basename(__file__) + '.log',
                     format="{asctime} [{levelname:8}] {process} {thread} {module}: {message}",
                     style="{")
+logging.basicConfig(filename='training.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
+
+class TrainingLogger(callbacks.Callback):
+    def __init__(self, model_name):
+        super().__init__()
+        self.start_time = None
+        self.logger = logging.getLogger(model_name)
+        handler = logging.FileHandler(f'training_{model_name}.log')
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.start_time = time.time()
+
+    def on_epoch_end(self, epoch, logs=None):
+        duration = time.time() - self.start_time
+        loss = logs.get('loss', 'N/A')
+        self.logger.info(f"Epoch {epoch + 1}: Durée = {duration:.2f}s, Perte = {loss}")
+
+# class TrainingLogger(callbacks.Callback):
+#     def __init__(self):
+#         super().__init__()
+#         self.start_time = None
+#
+#     def on_epoch_begin(self, epoch, logs=None):
+#         self.start_time = time.time()
+#
+#     def on_epoch_end(self, epoch, logs=None):
+#         duration = time.time() - self.start_time
+#         loss = logs.get('loss', 'N/A')
+#         logging.info(f"Epoch {epoch + 1}: Durée = {duration:.2f}s, Perte = {loss}")
 
 
 # embedding network and training
@@ -84,7 +118,7 @@ class SimilarityNetwork(Utilities):
             mode="min",  # Save when val_loss decreases
             verbose=1
         )
-        self.callbacks.extend([checkpoint_callback])
+        self.callbacks.extend([checkpoint_callback, TrainingLogger(f"variant_{self.architecture_variant}")])
         self.network = Sequential()
         self.build_model()
         self.compile_model()
