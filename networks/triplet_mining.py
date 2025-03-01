@@ -33,7 +33,7 @@ class TripletMining:
         self.bool_fixed_neutral_embedding = bool_fixed
         self.squared_left_right_euc_dist = squared_left_right
         self.squared_class_neut_dist = squared_class_neut
-        self.batch_size = self.config.similarity_batch_size
+        self.batch_size = self.config.similarity_per_anim_class_num
         print(f"TripletMining: batch size: {self.batch_size}")
         self.initialize_triplet_mining(anim_name)
 

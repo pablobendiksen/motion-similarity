@@ -23,7 +23,7 @@ class Config:
         self.similarity_exemplar_dim = (137, 88)
         self.embedding_size = 32
         self.n_similarity_epochs = 601
-        self.similarity_batch_size = 57
+        self.similarity_per_anim_class_num = 57
 
         self.similarity_dict_file_name = 'similarity_labels_exemplars_dict_local.pickle'
 
@@ -36,7 +36,8 @@ class Config:
             "bvh_files_dir_picking": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/picking_perform_user_study_1/",
             "effort_network_exemplars_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/",
             "similarity_exemplars_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/similarity_exemplars/",
-            "output_metrics_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/motion-similarity/job_model_metrics"
+            "similarity_variant_0_weights": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/0_similarity_model_weights.weights.h5",
+            "similarity_variant_1_weights": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/1_similarity_model_weights.weights.h5"
         }
 
         self._remote_machine_paths = {
@@ -47,7 +48,9 @@ class Config:
             "bvh_files_dir_picking": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/picking_perform_user_study_1/",
             "effort_network_exemplars_dir": "/Users/bendiksen/Desktop/research/vr_lab/motion-similarity-project/exemplars_dir/effort_exemplars/",
             "similarity_exemplars_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/exemplars_dir/similarity_exemplars/",
-            "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_metrics/"
+            "output_metrics_dir": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/motion-similarity/job_metrics/",
+            "similarity_variant_0_weights": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/0_similarity_model_weights.weights.h5",
+            "similarity_variant_1_weights": "/hpcstor6/scratch01/p/p.bendiksen001/virtual_reality/model_checkpoint/1_similarity_model_weights.weights.h5"
         }
 
         # Set paths based on environment

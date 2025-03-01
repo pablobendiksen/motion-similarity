@@ -195,7 +195,7 @@ class Batches:
          """
         self.dict_similarity_exemplars.pop(key)
 
-    def move_tuple_to_similarity_dict_front(self, key=(0, 0, 0, 0)):
+    def move_tuple_to_dict_similarity_front(self, key=(0, 0, 0, 0), dict=None):
         """
         In general, move neutral tuple to front of the similarity dictionary.
 
@@ -205,8 +205,14 @@ class Batches:
         Returns:
             None
         """
-        neut_value = self.dict_similarity_exemplars.pop(key)
-        self.dict_similarity_exemplars = {key: neut_value} | self.dict_similarity_exemplars
+        if dict is None:
+            neut_value = self.dict_similarity_exemplars.pop(key)
+            self.dict_similarity_exemplars = {key: neut_value} | self.dict_similarity_exemplars
+        else:
+            neut_value = dict.pop(key)
+            dict_rearranged = {key: neut_value} | dict
+            return dict_rearranged
+
 
     def convert_exemplar_np_arrays_to_tensors(self):
         """

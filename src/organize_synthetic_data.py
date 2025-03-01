@@ -244,7 +244,7 @@ def prep_all_data_for_training(config_instance, batches_instance, rotations=True
         # if conf.bool_fixed_neutral_embedding:
         #     singleton_batches.pop_similarity_dict_element(key=(0, 0, 0, 0))
         # else:
-        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
+        singleton_batches.move_tuple_to_dict_similarity_front(key=(0, 0, 0, 0))
         singleton_batches.convert_exemplar_np_arrays_to_tensors()
         singleton_batches.store_similarity_labels_exemplars_dict(anim_name)
         assert singleton_batches.batch_idx == len(
@@ -330,12 +330,13 @@ def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
     print(f"loaded dict_similarity_classes_exemplars for anim {anim_name}")
 
     if bool_drop:
-        config.similarity_batch_size = 56
+        config.similarity_per_anim_class_num = 56
         dict_similarity_classes_exemplars.pop((0, 0, 0, 0))
     else:
-        config.similarity_batch_size = 57
+        config.similarity_per_anim_class_num = 57
         # ensure element of key (0, 0, 0, 0) is at the front of the dict
-        singleton_batches.move_tuple_to_similarity_dict_front(key=(0, 0, 0, 0))
+        print(f"Anim: {anim_name}, moving dict entry for key (0,0,0,0) to front of dict")
+        dict_similarity_classes_exemplars = singleton_batches.move_tuple_to_dict_similarity_front(key=(0, 0, 0, 0), dict=dict_similarity_classes_exemplars)
     # singleton_batches.dict_similarity_exemplars = dict_similarity_classes_exemplars
     # next(iter(dict_similarity_classes_exemplars.keys())) gets the first key in the dictionary
     # the length of the lone entry of the value (itself a list) somehow specifies the number of exemplars
@@ -343,6 +344,7 @@ def load_similarity_data(bool_drop, anim_name, config, train_val_split=1.0):
     print(f"{anim_name}: Number of total classes: {len(dict_similarity_classes_exemplars)}")
     print(f"{anim_name}: Number of total exemplars per class: {num_exemplars}")
     print(f"{anim_name}: Frame count for first exemplar: {len(dict_similarity_classes_exemplars[(0, 0, 0, 0)][0])}")
+    print(f"{anim_name}: Shape for first exemplar: {(dict_similarity_classes_exemplars[(0, 0, 0, 0)][0].shape)}")
     p = np.random.permutation(num_exemplars - 1)
     train_size = int(train_val_split * num_exemplars)
     # temp change to inc val set size

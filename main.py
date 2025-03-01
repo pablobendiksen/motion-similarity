@@ -90,18 +90,16 @@ if __name__ == '__main__':
     # similarity_validation_loader = SimilarityDataLoader(walking_similarity_dict_partition['validation'])
     # similarity_test_loader = SimilarityDataLoader(walking_similarity_dict_partition['test'])
 
-    similarity_train_loader = SimilarityDataLoader(list_similarity_dicts, config)
-    similarity_validation_loader = SimilarityDataLoader(list_similarity_dicts, config)
-    similarity_test_loader = SimilarityDataLoader(list_similarity_dicts, config)
+    similarity_train_loader = SimilarityDataLoader(list_similarity_dicts, config, True)
 
     similarity_network = SimilarityNetwork(train_loader=similarity_train_loader,
-                                           validation_loader=similarity_validation_loader,
-                                           test_loader=similarity_test_loader,
+                                           validation_loader=similarity_train_loader,
+                                           test_loader=similarity_train_loader,
                                            checkpoint_root_dir=config.checkpoint_root_dir,
                                            triplet_modules=[walking_triplet_mining, pointing_triplet_mining,
                                                             picking_triplet_mining],
                                            architecture_variant=arch_variant,
-                                           config = config)
+                                           config=config)
     similarity_network.run_model_training()
 
     # similarity_network.evaluate()

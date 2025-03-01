@@ -1,32 +1,31 @@
 # import tf_keras as keras
-from keras.callbacks import ModelCheckpoint
-from keras.layers import Conv2D
-from keras.layers import BatchNormalization
-from keras.layers import Dense
-from keras.layers import MaxPool2D
-from keras.layers import Dropout
-from keras.layers import Flatten
-from tensorflow.keras.layers import GlobalAveragePooling2D
-from tensorflow.keras.layers import Add
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.layers import DepthwiseConv2D
-from tensorflow.keras.layers import Multiply
-from tensorflow.keras.layers import Reshape
-from tensorflow.keras.layers import UpSampling2D
-from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.layers import AveragePooling2D
-from tensorflow.keras.layers import GlobalMaxPooling2D
-from tensorflow.keras.models import Model
+# from keras.callbacks import ModelCheckpoint
+# from keras.layers import Conv2D
+# from keras.layers import BatchNormalization
+# from keras.layers import Dense
+# from keras.layers import MaxPool2D
+# from keras.layers import Dropout
+# from keras.layers import Flatten
+# from keras.optimizers import Adam
+# from keras.models import Sequential
+
+from keras.src.callbacks.model_checkpoint import ModelCheckpoint
+from keras.src.layers import Conv2D
+from keras.src.layers import BatchNormalization
+from keras.src.layers import Dense
+from keras.src.layers.pooling.max_pooling2d import MaxPooling2D
+from keras.src.layers import Dropout
+from keras.src.layers import Flatten
+from keras.src.optimizers import Adam
+from keras.src.models import Sequential
+
 import networks.custom_losses as custom_losses
-from keras.optimizers import Adam
 from networks.utilities import Utilities
 from keras import callbacks
-from keras.models import Sequential
 # tf.config.experimental_run_functions_eagerly(True)
 import logging
 import os
 import time
-from tensorflow.keras.models import Model
 
 logging.basicConfig(level=logging.DEBUG,
                     filename=os.path.basename(__file__) + '.log',
@@ -34,6 +33,7 @@ logging.basicConfig(level=logging.DEBUG,
                     style="{")
 logging.basicConfig(filename='training.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
+
 
 class TrainingLogger(callbacks.Callback):
     def __init__(self, model_name):
@@ -53,19 +53,6 @@ class TrainingLogger(callbacks.Callback):
         duration = time.time() - self.start_time
         loss = logs.get('loss', 'N/A')
         self.logger.info(f"Epoch {epoch + 1}: Durée = {duration:.2f}s, Perte = {loss}")
-
-# class TrainingLogger(callbacks.Callback):
-#     def __init__(self):
-#         super().__init__()
-#         self.start_time = None
-#
-#     def on_epoch_begin(self, epoch, logs=None):
-#         self.start_time = time.time()
-#
-#     def on_epoch_end(self, epoch, logs=None):
-#         duration = time.time() - self.start_time
-#         loss = logs.get('loss', 'N/A')
-#         logging.info(f"Epoch {epoch + 1}: Durée = {duration:.2f}s, Perte = {loss}")
 
 
 # embedding network and training
@@ -133,7 +120,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
             # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (64,42,64)
             self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
             self.network.add(Dropout(0.2))
@@ -143,7 +131,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (132 * 88 * 32) = 43008
             self.network.add(Flatten())
             # Output size: (32)
@@ -164,7 +153,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Downsampling with MaxPooling (instead of strided convolution)
-            self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # self.network.add(MaxPool2D(pool_size=(2, 2)))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output shape: (66, 44, 128) - Spatial size halved
 
             # Further feature extraction
@@ -175,7 +165,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Another MaxPooling for further downsampling
-            self.network.add(MaxPool2D(pool_size=(2, 2)))
+            # self.network.add(MaxPool2D(pool_size=(2, 2)))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output shape: (33, 22, 256) - Spatial size halved again
 
             # Flatten instead of GlobalAveragePooling
@@ -193,7 +184,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
             # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (64,42,64)
             self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
             self.network.add(Dropout(0.2))
@@ -203,7 +195,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (132 * 88 * 32) = 43008
             self.network.add(Flatten())
             # Output size: (32)
@@ -218,7 +211,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
             # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (64,42,64)
             self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
             self.network.add(Dropout(0.2))
@@ -228,7 +222,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (132 * 88 * 32) = 43008
             self.network.add(Flatten())
             # Output size: (32)
@@ -243,7 +238,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(Dropout(0.2))
             self.network.add(BatchNormalization())
             # Output size: (66,44,32)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (64,42,64)
             self.network.add(Conv2D(filters=64, kernel_size=3, strides=1, activation='relu'))
             self.network.add(Dropout(0.2))
@@ -253,7 +249,8 @@ class SimilarityNetwork(Utilities):
             self.network.add(BatchNormalization())
 
             # Output size: (32,21,64)
-            self.network.add(MaxPool2D(2, 2))
+            # self.network.add(MaxPool2D(2, 2))
+            self.network.add(MaxPooling2D((2, 2)))
             # Output size: (132 * 88 * 32) = 43008
             self.network.add(Flatten())
             # Output size: (32)
